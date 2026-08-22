@@ -175,7 +175,7 @@ export default function DiChucPage() {
       {/* Intro */}
       <div className="rounded-2xl border border-[#670201]/25 bg-gradient-to-b from-[#0d0606] to-[#0a0404] p-5 sm:p-7">
         <p className="text-sm leading-7 text-gray-400">
-          Sinh tử tại Trùng Hoa không thể cưỡng cầu. Một khi người chơi tử vong, toàn bộ hành trình tại thế gian này sẽ chính thức khép lại.
+          Sinh tử tại Trùng Hoan không thể cưỡng cầu. Một khi người chơi tử vong, toàn bộ hành trình tại thế gian này sẽ chính thức khép lại.
           Những vật phẩm còn lưu giữ trong Balo sẽ được Hệ Thống xử lý theo quy định.
           Để tránh việc tài sản bị thất lạc sau khi chết, mỗi người chơi được quyền lập Di Chúc và gửi lên Hệ Thống để lưu trữ.
         </p>
@@ -202,7 +202,7 @@ export default function DiChucPage() {
             <div className="mt-4 rounded-lg border border-[#670201]/20 bg-[#670201]/10 p-4 text-center">
               <p className="font-serif text-sm italic text-amber-200/70">Một đời người chỉ có một lần kết thúc.</p>
               <p className="mt-1 font-serif text-sm italic text-amber-200/70">Hãy quyết định thứ gì sẽ được để lại trước khi tiếng chuông tang vang lên.</p>
-              <p className="mt-2 text-[10px] text-gray-600">— Hệ Thống Trùng Hoa Tái</p>
+              <p className="mt-2 text-[10px] text-gray-600">— Hệ Thống Trùng Hoan Tái</p>
             </div>
           </div>
         )}
