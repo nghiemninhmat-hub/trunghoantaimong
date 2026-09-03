@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry } from '@/lib/supabase';
+import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote } from '@/lib/supabase';
 import {
   Shield, Users, Coins, Store, BookOpen, Ghost, Check, X, Plus, Trash2,
   AlertCircle, CheckCircle2, History, Edit3, Eye, EyeOff, Dices, Package,
   Heart, Sparkle, Brain, Lock, Unlock, FileWarning, Crown, Save, ScrollText,
   Undo2, RotateCcw, Search, UserSearch, ArrowLeft, ChevronDown, ChevronUp, FileSignature, Info,
-  Download, FileDown, Loader2, Archive, Settings, Flower2
+  Download, FileDown, Loader2, Archive, Settings, Clock
 } from 'lucide-react';
+import { LotusIcon } from '@/components/LotusIcon';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import PlayerDetailCard from '@/components/PlayerDetailCard';
 
@@ -127,6 +128,9 @@ export default function AdminDashboard() {
   const [bachHoaMsg, setBachHoaMsg] = useState('');
   const [showAddBachHoa, setShowAddBachHoa] = useState(false);
   const [newBachHoa, setNewBachHoa] = useState({ identity_name: '', quote: '', avatar_url: '' });
+  const [bachHoaVotes, setBachHoaVotes] = useState<Record<string, BachHoaVote[]>>({});
+  const [expandedBachHoaVoters, setExpandedBachHoaVoters] = useState<Set<string>>(new Set());
+  const [bachHoaVoterLoading, setBachHoaVoterLoading] = useState(false);
 
   // Backup / export
   const [exporting, setExporting] = useState(false);
@@ -765,6 +769,72 @@ export default function AdminDashboard() {
     );
   };
 
+  const fetchBachHoaVotes = useCallback(async () => {
+    setBachHoaVoterLoading(true);
+    const { data, error } = await supabase
+      .from('bach_hoa_votes')
+      .select('id, entry_id, user_id, created_at, profiles(oc_name, anonymous_name)')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Lỗi tải lượt bình chọn Bách Hoa:', error.message);
+    } else if (data) {
+      const grouped: Record<string, BachHoaVote[]> = {};
+      for (const v of data as BachHoaVote[]) {
+        if (!grouped[v.entry_id]) grouped[v.entry_id] = [];
+        grouped[v.entry_id].push(v);
+      }
+      setBachHoaVotes(grouped);
+    }
+    setBachHoaVoterLoading(false);
+  }, []);
+
+  const toggleBachHoaVoters = (entryId: string) => {
+    setExpandedBachHoaVoters(prev => {
+      const next = new Set(prev);
+      if (next.has(entryId)) next.delete(entryId);
+      else next.add(entryId);
+      return next;
+    });
+  };
+
+  // Realtime: bach_hoa_votes — live voter updates in admin
+  useEffect(() => {
+    if (activeTab !== 'bachhoa') return;
+    fetchBachHoaVotes();
+    const channel = supabase
+      .channel('admin_bach_hoa_votes_rt')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bach_hoa_votes' }, async (payload) => {
+        const newVote = payload.new as { id: string; entry_id: string; user_id: string; created_at: string };
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('oc_name, anonymous_name')
+          .eq('id', newVote.user_id)
+          .maybeSingle();
+        const vote: BachHoaVote = {
+          ...newVote,
+          profiles: profileData as { oc_name: string | null; anonymous_name: string | null } | null,
+        };
+        setBachHoaVotes(prev => {
+          const list = prev[newVote.entry_id] || [];
+          if (list.some(v => v.id === newVote.id)) return prev;
+          return { ...prev, [newVote.entry_id]: [vote, ...list] };
+        });
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'bach_hoa_votes' }, (payload) => {
+        const oldId = payload.old?.id;
+        if (!oldId) return;
+        setBachHoaVotes(prev => {
+          const next: Record<string, BachHoaVote[]> = {};
+          for (const [eid, list] of Object.entries(prev)) {
+            next[eid] = list.filter(v => v.id !== oldId);
+          }
+          return next;
+        });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [activeTab, fetchBachHoaVotes]);
+
   const PAGE_SIZE = 1000;
   type PagedResult = { data: unknown[] | null; error: string | null };
   const fetchAllPaged = async (table: string, select: string, orderBy: string, ascending = false): Promise<PagedResult> => {
@@ -1232,7 +1302,7 @@ export default function AdminDashboard() {
     { id: 'wanted', label: 'Truy Nã', icon: FileWarning },
     { id: 'wills', label: 'Di Chúc', icon: FileSignature },
     { id: 'kimbang', label: 'Kim Bảng', icon: Crown },
-    { id: 'bachhoa', label: 'Bách Hoa', icon: Flower2 },
+    { id: 'bachhoa', label: 'Bách Hoa', icon: LotusIcon },
     { id: 'archive', label: 'Lưu Trữ Bản Cũ', icon: Archive },
     { id: 'audit', label: 'Nhật Ký', icon: ScrollText },
     { id: 'settings', label: 'Cài Đặt & Sao Lưu', icon: Settings },
@@ -2528,8 +2598,8 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
             <p className="text-xs text-amber-300/80">
-              <Flower2 className="w-4 h-4 inline mr-1" />
-              Quản lý ứng viên Bách Hoa Triều Phụng: thêm, chỉnh sửa, cập nhật hoặc xóa các ứng viên. Thay đổi sẽ hiển thị ngay trên trang Bách Hoa công khai.
+              <LotusIcon className="w-4 h-4 inline mr-1" />
+              Quản lý ứng viên Bách Hoa Triều Phụng: thêm, chỉnh sửa, cập nhật hoặc xóa các ứng viên. Nhấn vào một ứng viên để xem danh sách người đã bình chọn (cập nhật theo thời gian thực).
             </p>
           </div>
           {bachHoaMsg && (
@@ -2604,7 +2674,10 @@ export default function AdminDashboard() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {bachHoaEntries.map((entry, idx) => (
+            {bachHoaEntries.map((entry, idx) => {
+              const voters = bachHoaVotes[entry.id] || [];
+              const isExpanded = expandedBachHoaVoters.has(entry.id);
+              return (
               <div key={entry.id} className="p-4 rounded-xl bg-black/30 border border-amber-500/15">
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2 min-w-0">
@@ -2688,8 +2761,45 @@ export default function AdminDashboard() {
                     />
                   </div>
                 </div>
+
+                {/* Voter list — clickable to expand */}
+                <button
+                  onClick={() => toggleBachHoaVoters(entry.id)}
+                  className="w-full mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-[#670201]/10 hover:bg-[#670201]/20 border border-[#670201]/20 transition-all"
+                >
+                  <Users className="w-3.5 h-3.5 text-amber-300/60 flex-shrink-0" />
+                  <span className="text-xs text-amber-300/80 font-semibold">Người bình chọn</span>
+                  <span className="text-[10px] text-gray-500 ml-1">({voters.length})</span>
+                  {bachHoaVoterLoading && <Loader2 className="w-3 h-3 animate-spin text-amber-300/40 ml-1" />}
+                  <span className="ml-auto">
+                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-500" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-500" />}
+                  </span>
+                </button>
+
+                {isExpanded && (
+                  <div className="mt-2 space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    {voters.length === 0 ? (
+                      <p className="text-xs text-gray-600 text-center py-3">Chưa có lượt bình chọn nào.</p>
+                    ) : (
+                      voters.map((v) => {
+                        const name = v.profiles?.oc_name || v.profiles?.anonymous_name || `ID:${v.user_id.slice(0, 8)}`;
+                        return (
+                          <div key={v.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/20 border border-white/5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400/50 flex-shrink-0" />
+                            <span className="text-xs text-amber-100/80 font-medium truncate flex-1">{name}</span>
+                            <span className="flex items-center gap-1 text-[10px] text-gray-600 flex-shrink-0">
+                              <Clock className="w-2.5 h-2.5" />
+                              {new Date(v.created_at).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

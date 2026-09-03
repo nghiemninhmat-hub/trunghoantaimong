@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
-import { supabase, BachHoaEntry } from '@/lib/supabase';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { supabase, BachHoaEntry, BachHoaVote } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
-import { Flower2, Heart, Quote, Crown, Sparkles, Loader2, CheckCircle2, Lock } from 'lucide-react';
+import { LotusIcon } from '@/components/LotusIcon';
+import { Heart, Quote, Crown, Loader2, CheckCircle2, Lock, ChevronDown, ChevronUp, Users } from 'lucide-react';
 
 const RANK_STYLES = [
   { ring: 'ring-amber-300/60', badge: 'bg-gradient-to-r from-amber-300 to-amber-500 text-[#1a0a05]', label: 'Hoa Quán', glow: 'shadow-amber-400/30' },
@@ -9,13 +10,20 @@ const RANK_STYLES = [
   { ring: 'ring-orange-400/50', badge: 'bg-gradient-to-r from-orange-300 to-orange-500 text-[#1a0a05]', label: 'Hoa Tam', glow: 'shadow-orange-400/20' },
 ];
 
+function voterDisplayName(v: BachHoaVote): string {
+  return v.profiles?.oc_name || v.profiles?.anonymous_name || `ID:${v.user_id.slice(0, 8)}`;
+}
+
 export default function BachHoaTrieuPhungPage() {
   const { profile } = useAuth();
   const [entries, setEntries] = useState<BachHoaEntry[]>([]);
+  const [votesByEntry, setVotesByEntry] = useState<Record<string, BachHoaVote[]>>({});
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState<string | null>(null);
   const [votedIds, setVotedIds] = useState<Set<string>>(new Set());
   const [voteMsg, setVoteMsg] = useState('');
+  const [expandedVoters, setExpandedVoters] = useState<Set<string>>(new Set());
+  const votesFetchedRef = useRef(false);
 
   const fetchEntries = useCallback(async () => {
     const { data, error } = await supabase
@@ -30,6 +38,26 @@ export default function BachHoaTrieuPhungPage() {
     setLoading(false);
   }, []);
 
+  const fetchAllVotes = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('bach_hoa_votes')
+      .select('id, entry_id, user_id, created_at, profiles(oc_name, anonymous_name)')
+      .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Lỗi tải lượt bình chọn:', error.message);
+      return;
+    }
+    if (data) {
+      const grouped: Record<string, BachHoaVote[]> = {};
+      for (const v of data as BachHoaVote[]) {
+        if (!grouped[v.entry_id]) grouped[v.entry_id] = [];
+        grouped[v.entry_id].push(v);
+      }
+      setVotesByEntry(grouped);
+      votesFetchedRef.current = true;
+    }
+  }, []);
+
   const fetchMyVotes = useCallback(async () => {
     if (!profile) return;
     const { data } = await supabase
@@ -41,19 +69,57 @@ export default function BachHoaTrieuPhungPage() {
 
   useEffect(() => {
     fetchEntries();
+    fetchAllVotes();
     fetchMyVotes();
-  }, [fetchEntries, fetchMyVotes]);
+  }, [fetchEntries, fetchAllVotes, fetchMyVotes]);
 
-  // Realtime subscription
+  // Realtime: entries table
   useEffect(() => {
     const channel = supabase
-      .channel('bach_hoa_trieu_phung_changes')
+      .channel('bach_hoa_entries_rt')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bach_hoa_entries' }, () => {
         fetchEntries();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [fetchEntries]);
+
+  // Realtime: votes table — incrementally update voter lists
+  useEffect(() => {
+    const channel = supabase
+      .channel('bach_hoa_votes_rt')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bach_hoa_votes' }, async (payload) => {
+        const newVote = payload.new as { id: string; entry_id: string; user_id: string; created_at: string };
+        // Fetch the voter's profile info
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('oc_name, anonymous_name')
+          .eq('id', newVote.user_id)
+          .maybeSingle();
+        const vote: BachHoaVote = {
+          ...newVote,
+          profiles: profileData as { oc_name: string | null; anonymous_name: string | null } | null,
+        };
+        setVotesByEntry(prev => {
+          const list = prev[newVote.entry_id] || [];
+          if (list.some(v => v.id === newVote.id)) return prev;
+          return { ...prev, [newVote.entry_id]: [vote, ...list] };
+        });
+      })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'bach_hoa_votes' }, (payload) => {
+        const oldId = payload.old?.id;
+        if (!oldId) return;
+        setVotesByEntry(prev => {
+          const next: Record<string, BachHoaVote[]> = {};
+          for (const [eid, list] of Object.entries(prev)) {
+            next[eid] = list.filter(v => v.id !== oldId);
+          }
+          return next;
+        });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
 
   const handleVote = async (entryId: string) => {
     if (!profile) {
@@ -77,6 +143,15 @@ export default function BachHoaTrieuPhungPage() {
     setVoting(null);
   };
 
+  const toggleVoters = (entryId: string) => {
+    setExpandedVoters(prev => {
+      const next = new Set(prev);
+      if (next.has(entryId)) next.delete(entryId);
+      else next.add(entryId);
+      return next;
+    });
+  };
+
   const totalVotes = entries.reduce((sum, e) => sum + e.vote_count, 0);
 
   if (loading) {
@@ -93,7 +168,7 @@ export default function BachHoaTrieuPhungPage() {
       <div className="text-center relative py-2">
         <div className="absolute left-1/2 -translate-x-1/2 top-0 w-40 h-px bg-gradient-to-r from-transparent via-[#670201]/40 to-transparent" />
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#670201]/20 border border-[#670201]/30 mb-4 mt-4">
-          <Flower2 className="w-3.5 h-3.5 text-amber-400" />
+          <LotusIcon className="w-3.5 h-3.5 text-amber-400" />
           <span className="text-xs text-amber-200/80 tracking-widest uppercase font-serif">Kỳ Hoa Trân Giám</span>
         </div>
         <h2 className="text-3xl sm:text-4xl font-serif font-bold text-amber-100/90">Bách Hoa Triều Phụng</h2>
@@ -102,7 +177,7 @@ export default function BachHoaTrieuPhungPage() {
         </p>
         <div className="flex items-center justify-center gap-4 mt-4">
           <div className="flex items-center gap-1.5 text-xs text-gray-500">
-            <Flower2 className="w-3.5 h-3.5" />
+            <LotusIcon className="w-3.5 h-3.5" />
             <span>{entries.length} ứng viên</span>
           </div>
           <div className="w-px h-4 bg-white/10" />
@@ -129,6 +204,9 @@ export default function BachHoaTrieuPhungPage() {
           const hasVoted = votedIds.has(entry.id);
           const maxVotes = entries[0]?.vote_count || 1;
           const votePercent = Math.round((entry.vote_count / maxVotes) * 100);
+          const voters = votesByEntry[entry.id] || [];
+          const isExpanded = expandedVoters.has(entry.id);
+          const visibleVoters = isExpanded ? voters : voters.slice(0, 4);
 
           return (
             <div
@@ -166,7 +244,7 @@ export default function BachHoaTrieuPhungPage() {
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-[#670201]/10">
-                    <Flower2 className="w-10 h-10 text-[#670201]/30" />
+                    <LotusIcon className="w-10 h-10 text-[#670201]/30" />
                   </div>
                 )}
                 {/* Gradient overlay */}
@@ -201,6 +279,37 @@ export default function BachHoaTrieuPhungPage() {
                   </div>
                 </div>
 
+                {/* Voter list */}
+                {voters.length > 0 && (
+                  <div className="rounded-lg bg-black/20 border border-white/5 p-2.5">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Users className="w-3 h-3 text-amber-300/50" />
+                      <span className="text-[10px] text-amber-300/60 font-semibold uppercase tracking-wider">Người bình chọn</span>
+                      <span className="text-[10px] text-gray-600 ml-auto">{voters.length}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {visibleVoters.map((v, i) => (
+                        <span
+                          key={v.id}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#670201]/15 border border-[#670201]/20 text-[10px] text-amber-100/70 font-medium"
+                          title={new Date(v.created_at).toLocaleString('vi-VN')}
+                        >
+                          {voterDisplayName(v)}
+                          {i === 0 && voters.length > 1 && <span className="text-amber-400/50">·</span>}
+                        </span>
+                      ))}
+                    </div>
+                    {voters.length > 4 && (
+                      <button
+                        onClick={() => toggleVoters(entry.id)}
+                        className="flex items-center gap-1 mt-2 text-[10px] text-amber-300/60 hover:text-amber-300/90 transition-colors"
+                      >
+                        {isExpanded ? <><ChevronUp className="w-3 h-3" /> Thu gọn</> : <><ChevronDown className="w-3 h-3" /> Xem tất cả ({voters.length})</>}
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 {/* Vote button */}
                 <button
                   onClick={() => handleVote(entry.id)}
@@ -229,7 +338,7 @@ export default function BachHoaTrieuPhungPage() {
 
       {entries.length === 0 && (
         <div className="text-center py-12">
-          <Flower2 className="w-10 h-10 text-[#670201]/30 mx-auto mb-3" />
+          <LotusIcon className="w-10 h-10 text-[#670201]/30 mx-auto mb-3" />
           <p className="text-sm text-gray-500">Chưa có ứng viên nào.</p>
         </div>
       )}

@@ -290,6 +290,14 @@ export interface BachHoaEntry {
   updated_at: string;
 }
 
+export interface BachHoaVote {
+  id: string;
+  entry_id: string;
+  user_id: string;
+  created_at: string;
+  profiles?: { oc_name: string | null; anonymous_name: string | null } | null;
+}
+
 export type WillStatus = 'pending' | 'approved' | 'revision_requested' | 'rejected';
 
 export interface Will {
