@@ -2380,8 +2380,11 @@ export default function AdminDashboard() {
               profile={approvedProfiles.find(p => p.id === lookupSelectedId) || allProfiles.find(p => p.id === lookupSelectedId)}
               transactions={transactions.filter(t => t.user_id === lookupSelectedId)}
               inventory={allInventory.filter(i => i.user_id === lookupSelectedId)}
+              shopItems={shopItems}
               onBack={() => setLookupSelectedId(null)}
               onStatusUpdate={handleStatusUpdate}
+              onRefresh={fetchAllData}
+              onLogAction={logAction}
             />
           ) : (
             <div className="space-y-4">

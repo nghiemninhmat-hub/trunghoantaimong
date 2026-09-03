@@ -1,7 +1,11 @@
 import { Profile, Transaction, InventoryItem, ShopItem, CURRENCY_LABELS } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Users, Package, History, Mail, Lock, Eye, EyeOff, Heart, Sparkle, Brain } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import {
+  ArrowLeft, Users, Package, History, Mail, Lock, Eye, EyeOff,
+  Heart, Sparkle, Brain, Coins, Gift, Plus, Minus, Dices, Loader2,
+  CheckCircle2, AlertCircle, Trash2, UserCircle,
+} from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 
 const STATUS_TAGS = [
   { value: 'Bình Thường', label: 'Thẻ lá', badgeClass: 'bg-emerald-500/20 text-emerald-300', activeClass: 'bg-emerald-500/30 border-emerald-500/50 text-emerald-200', idleClass: 'bg-emerald-500/5 border-emerald-500/15 text-emerald-400/70' },
@@ -16,30 +20,51 @@ interface Props {
   profile?: Profile;
   transactions: Transaction[];
   inventory: (InventoryItem & { shop_items?: ShopItem | null; profiles?: { oc_name: string } | null })[];
+  shopItems: ShopItem[];
   onBack: () => void;
   onStatusUpdate?: (userId: string, field: 'status_physical' | 'status_spiritual' | 'status_mental', value: string) => Promise<void>;
+  onRefresh?: () => void;
+  onLogAction?: (action: string, targetUserId?: string, targetDesc?: string, details?: Record<string, unknown>) => Promise<void>;
 }
 
-export default function PlayerDetailCard({ profile, transactions: initialTx, inventory, onBack, onStatusUpdate }: Props) {
+export default function PlayerDetailCard({ profile, transactions: initialTx, inventory: initialInv, shopItems, onBack, onStatusUpdate, onRefresh, onLogAction }: Props) {
   const [revealPwd, setRevealPwd] = useState(false);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>(initialTx);
+  const [allInventory, setAllInventory] = useState(initialInv);
   const [txLoading, setTxLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
+  const [actionMsg, setActionMsg] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+
+  // Currency form state
+  const [curType, setCurType] = useState('HUA_TIEN');
+  const [curAmount, setCurAmount] = useState(0);
+  const [curReason, setCurReason] = useState('');
+
+  // Inventory grant state
+  const [grantItemId, setGrantItemId] = useState('');
+
+  // Wheel spins state
+  const [spinAmount, setSpinAmount] = useState(1);
+
+  const refreshData = useCallback(async () => {
+    if (!profile) return;
+    setTxLoading(true);
+    const [txRes, invRes] = await Promise.all([
+      supabase.from('transactions').select('*, profiles(oc_name, email)').eq('user_id', profile.id).order('created_at', { ascending: false }),
+      supabase.from('inventories').select('*, shop_items(name, category), profiles(oc_name)').eq('user_id', profile.id).order('acquired_at', { ascending: false }),
+    ]);
+    if (txRes.data) setAllTransactions(txRes.data as Transaction[]);
+    if (invRes.data) setAllInventory(invRes.data as (InventoryItem & { shop_items?: ShopItem | null; profiles?: { oc_name: string } | null })[]);
+    setTxLoading(false);
+  }, [profile]);
 
   useEffect(() => {
     if (!profile) return;
     setAllTransactions(initialTx);
-    setTxLoading(true);
-    supabase
-      .from('transactions')
-      .select('*, profiles(oc_name, email)')
-      .eq('user_id', profile.id)
-      .order('created_at', { ascending: false })
-      .then(({ data, error }) => {
-        if (!error && data) setAllTransactions(data as Transaction[]);
-        setTxLoading(false);
-      });
-  }, [profile, initialTx]);
+    setAllInventory(initialInv);
+    refreshData();
+  }, [profile, initialTx, initialInv, refreshData]);
 
   if (!profile) {
     return (
@@ -52,6 +77,80 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
     );
   }
 
+  const showMsg = (msg: string, isError = false) => {
+    setActionMsg(isError ? `Lỗi: ${msg}` : msg);
+    setTimeout(() => setActionMsg(''), 4000);
+  };
+
+  const handleCurrency = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (curAmount === 0) { showMsg('Số lượng phải khác 0.', true); return; }
+    if (!curReason.trim()) { showMsg('Vui lòng nhập lý do.', true); return; }
+    setActionLoading(true);
+    const { data, error } = await supabase.rpc('admin_adjust_currency', {
+      p_user_id: profile.id,
+      p_amount: curAmount,
+      p_currency_type: curType,
+      p_reason: curReason.trim(),
+    });
+    setActionLoading(false);
+    if (error) { showMsg(error.message, true); return; }
+    if (data && data.success) {
+      onLogAction?.('adjust_currency', profile.id,
+        `${curAmount > 0 ? 'Cộng' : 'Trừ'} ${Math.abs(curAmount)} ${CURRENCY_LABELS[curType]} cho ${profile.oc_name}`,
+        { amount: curAmount, currency_type: curType, reason: curReason.trim() });
+      showMsg(`Đã ${curAmount > 0 ? 'cộng' : 'trừ'} ${Math.abs(curAmount)} ${CURRENCY_LABELS[curType]} thành công.`);
+      setCurAmount(0);
+      setCurReason('');
+      onRefresh?.();
+      refreshData();
+    }
+  };
+
+  const handleGrantItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!grantItemId) { showMsg('Vui lòng chọn vật phẩm.', true); return; }
+    setActionLoading(true);
+    const { data, error } = await supabase.rpc('admin_grant_inventory_item', {
+      p_user_id: profile.id,
+      p_item_id: grantItemId,
+    });
+    setActionLoading(false);
+    if (error) { showMsg(error.message, true); return; }
+    const itemName = data?.item_name || 'Vật phẩm';
+    onLogAction?.('grant_inventory_item', profile.id, `Cấp "${itemName}" cho ${profile.oc_name}`, { item_id: grantItemId });
+    showMsg(`Đã tặng "${itemName}" thành công.`);
+    setGrantItemId('');
+    onRefresh?.();
+    refreshData();
+  };
+
+  const handleRemoveItem = async (invId: string, itemName: string) => {
+    if (!confirm(`Thu hồi "${itemName}" khỏi kho của ${profile.oc_name}? Vật phẩm sẽ bị xóa vĩnh viễn.`)) return;
+    setActionLoading(true);
+    const { error } = await supabase.from('inventories').delete().eq('id', invId);
+    setActionLoading(false);
+    if (error) { showMsg(error.message, true); return; }
+    onLogAction?.('revoke_inventory_item', profile.id, `Thu hồi "${itemName}" khỏi kho ${profile.oc_name}`, { inv_id: invId, item_name: itemName });
+    showMsg(`Đã thu hồi "${itemName}".`);
+    onRefresh?.();
+    refreshData();
+  };
+
+  const handleSpinAdjust = async (mode: 'grant' | 'revoke') => {
+    if (spinAmount < 1) { showMsg('Số lượt phải >= 1.', true); return; }
+    const rpc = mode === 'grant' ? 'admin_grant_spins' : 'admin_revoke_spins';
+    const label = mode === 'grant' ? 'cấp' : 'trừ';
+    setActionLoading(true);
+    const { error } = await supabase.rpc(rpc, { p_user_id: profile.id, p_amount: spinAmount });
+    setActionLoading(false);
+    if (error) { showMsg(error.message, true); return; }
+    onLogAction?.(mode === 'grant' ? 'grant_spins' : 'revoke_spins', profile.id, `${mode === 'grant' ? 'Cấp' : 'Trừ'} ${spinAmount} lượt quay cho ${profile.oc_name}`, { amount: spinAmount });
+    showMsg(`Đã ${label} ${spinAmount} lượt quay thành công.`);
+    setSpinAmount(1);
+    onRefresh?.();
+  };
+
   const handleStatus = async (field: 'status_physical' | 'status_spiritual' | 'status_mental', value: string) => {
     if (!onStatusUpdate) return;
     setStatusMsg('');
@@ -60,13 +159,16 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
     setTimeout(() => setStatusMsg(''), 3000);
   };
 
+  const inputCls = "w-full px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#670201]/50 transition-all";
+  const labelCls = "block text-[10px] text-gray-500 mb-1 uppercase tracking-wider";
+
   return (
     <div className="space-y-4">
       <button onClick={() => { onBack(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="flex items-center gap-2 text-sm text-gray-400 hover:text-amber-300 transition-all">
         <ArrowLeft className="w-4 h-4" /> Quay lại danh sách
       </button>
 
-      {/* Profile header */}
+      {/* Profile header — anonymous name, email, password */}
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-amber-500/20">
         <div className="flex flex-col sm:flex-row sm:items-start gap-4">
           {profile.avatar_url ? (
@@ -81,23 +183,32 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
             {profile.danh_vong && profile.danh_vong !== 'Vô Danh' && (
               <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold mt-1">{profile.danh_vong}</span>
             )}
-            <div className="mt-2 space-y-1">
-              <p className="text-xs text-gray-500 flex items-center justify-center sm:justify-start gap-1.5"><Mail className="w-3 h-3 flex-shrink-0" /> <span className="truncate">{profile.email}</span></p>
-              <p className="text-xs text-gray-500 flex items-center justify-center sm:justify-start gap-1.5">
-                <Lock className="w-3 h-3 flex-shrink-0" />
-                <span className="font-mono">{revealPwd ? (profile.password || '(chưa có)') : '••••••••'}</span>
+            <div className="mt-2 space-y-1.5">
+              <p className="text-xs text-gray-400 flex items-center justify-center sm:justify-start gap-1.5">
+                <UserCircle className="w-3.5 h-3.5 flex-shrink-0 text-amber-300/60" />
+                <span className="text-gray-500">Tên ẩn danh:</span>
+                <span className="font-semibold text-amber-100/90">{profile.anonymous_name || '—'}</span>
+              </p>
+              <p className="text-xs text-gray-400 flex items-center justify-center sm:justify-start gap-1.5">
+                <Mail className="w-3.5 h-3.5 flex-shrink-0 text-amber-300/60" />
+                <span className="text-gray-500">Email:</span>
+                <span className="font-semibold text-gray-200 truncate">{profile.email}</span>
+              </p>
+              <p className="text-xs text-gray-400 flex items-center justify-center sm:justify-start gap-1.5">
+                <Lock className="w-3.5 h-3.5 flex-shrink-0 text-amber-300/60" />
+                <span className="text-gray-500">Mật khẩu:</span>
+                <span className="font-mono font-semibold text-amber-100/90">{revealPwd ? (profile.password || '(chưa có)') : '••••••••'}</span>
                 <button onClick={() => setRevealPwd(!revealPwd)} className="p-0.5 text-gray-600 hover:text-amber-300 transition-all">
                   {revealPwd ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                 </button>
               </p>
-              <p className="text-[10px] text-gray-600 font-mono">ID: {profile.id}</p>
-              <p className="text-xs text-gray-500">Ẩn danh: {profile.anonymous_name} · {profile.gender}</p>
+              <p className="text-[10px] text-gray-600 font-mono">ID: {profile.id} · {profile.gender}</p>
             </div>
           </div>
         </div>
 
-        {/* Currency balances */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-4">
+        {/* Currency balances + wheel spins */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4">
           <div className="p-2 sm:p-3 rounded-lg bg-black/20 border border-amber-500/10 text-center">
             <p className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-wider">Hoa Tiền</p>
             <p className="text-base sm:text-lg font-bold text-amber-300 mt-1">🪙 {profile.hua_tien}</p>
@@ -110,81 +221,171 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
             <p className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-wider">Âm Đức</p>
             <p className="text-base sm:text-lg font-bold text-amber-300 mt-1">🌑 {profile.am_duc}</p>
           </div>
+          <div className="p-2 sm:p-3 rounded-lg bg-black/20 border border-rose-500/10 text-center">
+            <p className="text-[9px] sm:text-[10px] text-gray-500 uppercase tracking-wider">Lượt Quay</p>
+            <p className="text-base sm:text-lg font-bold text-rose-300 mt-1 flex items-center justify-center gap-1">
+              <Dices className="w-4 h-4" />{profile.wheel_spins ?? 0}
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Status Update */}
-      {onStatusUpdate && (
-        <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
-          <div className="flex items-center gap-2 mb-4">
-            <Heart className="w-5 h-5 text-red-400/70" />
-            <h4 className="text-base font-serif font-bold text-amber-100/80">Cập Nhật Trạng Thái</h4>
-          </div>
-          {statusMsg && (
-            <p className="text-xs text-emerald-400 mb-3">{statusMsg}</p>
-          )}
-          <div className="space-y-4">
-            {([
-              { field: 'status_physical' as const, label: 'Thể Chất', icon: Heart, color: 'text-red-400' },
-              { field: 'status_spiritual' as const, label: 'Tâm Linh', icon: Sparkle, color: 'text-amber-400' },
-              { field: 'status_mental' as const, label: 'Tinh Thần', icon: Brain, color: 'text-purple-400' },
-            ]).map(({ field, label, icon: Icon, color }) => {
-              const currentVal = (profile as Record<string, unknown>)[field] as string;
-              const tagInfo = STATUS_TAGS.find(t => t.value === currentVal) || STATUS_TAGS[0];
-              return (
-                <div key={field}>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Icon className={`w-3.5 h-3.5 ${color} flex-shrink-0`} />
-                    <span className="text-[10px] uppercase tracking-wider text-gray-500">{label}</span>
-                    <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold ${tagInfo.badgeClass}`}>
-                      {currentVal}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {STATUS_TAGS.map(tag => (
-                      <button
-                        key={tag.value}
-                        onClick={() => { if (tag.value !== currentVal) handleStatus(field, tag.value); }}
-                        className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all ${
-                          tag.value === currentVal
-                            ? `${tag.activeClass} cursor-default`
-                            : `${tag.idleClass} hover:scale-105`
-                        }`}
-                      >
-                        {tag.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      {/* Action message */}
+      {actionMsg && (
+        <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${actionMsg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
+          {actionMsg.startsWith('Lỗi') ? <AlertCircle className="w-4 h-4 flex-shrink-0" /> : <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
+          {actionMsg}
         </div>
       )}
 
-      {/* Inventory */}
+      {/* Admin actions grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Cộng/Trừ tài sản */}
+        <div className="p-4 rounded-xl bg-black/30 border border-white/10">
+          <div className="flex items-center gap-2 mb-3">
+            <Coins className="w-5 h-5 text-amber-300/70" />
+            <h4 className="text-sm font-serif font-bold text-amber-100/80">Cộng / Trừ Tài Sản</h4>
+          </div>
+          <form onSubmit={handleCurrency} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Loại tiền</label>
+                <select value={curType} onChange={e => setCurType(e.target.value)} className={inputCls}>
+                  <option value="HUA_TIEN">Hoa Tiền</option>
+                  <option value="CONG_DUC">Công Đức</option>
+                  <option value="AM_DUC">Âm Đức</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Số lượng (âm = trừ)</label>
+                <input type="number" value={curAmount} onChange={e => setCurAmount(parseInt(e.target.value) || 0)} className={inputCls} placeholder="vd: 500 hoặc -200" />
+              </div>
+            </div>
+            <div>
+              <label className={labelCls}>Lý do</label>
+              <input type="text" value={curReason} onChange={e => setCurReason(e.target.value)} className={inputCls} placeholder="Lý do cộng/trừ..." />
+            </div>
+            <button type="submit" disabled={actionLoading} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#670201]/20 hover:bg-[#670201]/30 text-amber-100 text-sm font-bold border border-[#670201]/30 transition-all disabled:opacity-50 w-full justify-center">
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Coins className="w-4 h-4" />}
+              Thực hiện
+            </button>
+          </form>
+        </div>
+
+        {/* Cộng/Trừ lượt quay */}
+        <div className="p-4 rounded-xl bg-black/30 border border-white/10">
+          <div className="flex items-center gap-2 mb-3">
+            <Dices className="w-5 h-5 text-rose-300/70" />
+            <h4 className="text-sm font-serif font-bold text-amber-100/80">Cộng / Trừ Lượt Quay</h4>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">Hiện có: <span className="font-bold text-rose-300">{profile.wheel_spins ?? 0}</span> lượt</p>
+          <div className="space-y-3">
+            <div>
+              <label className={labelCls}>Số lượt</label>
+              <input type="number" min={1} value={spinAmount} onChange={e => setSpinAmount(parseInt(e.target.value) || 1)} className={inputCls} />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => handleSpinAdjust('grant')} disabled={actionLoading} className="flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-sm font-bold border border-emerald-500/20 transition-all disabled:opacity-50 justify-center">
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                Cấp lượt
+              </button>
+              <button onClick={() => handleSpinAdjust('revoke')} disabled={actionLoading} className="flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-bold border border-red-500/20 transition-all disabled:opacity-50 justify-center">
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Minus className="w-4 h-4" />}
+                Trừ lượt
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Tặng vật phẩm */}
+        <div className="p-4 rounded-xl bg-black/30 border border-white/10">
+          <div className="flex items-center gap-2 mb-3">
+            <Gift className="w-5 h-5 text-amber-300/70" />
+            <h4 className="text-sm font-serif font-bold text-amber-100/80">Tặng Vật Phẩm</h4>
+          </div>
+          <form onSubmit={handleGrantItem} className="space-y-3">
+            <div>
+              <label className={labelCls}>Chọn vật phẩm</label>
+              <select value={grantItemId} onChange={e => setGrantItemId(e.target.value)} className={inputCls}>
+                <option value="">— Chọn vật phẩm —</option>
+                {shopItems.map(item => (
+                  <option key={item.id} value={item.id}>{item.name} ({item.category})</option>
+                ))}
+              </select>
+            </div>
+            <button type="submit" disabled={actionLoading} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-sm font-bold border border-amber-500/20 transition-all disabled:opacity-50 w-full justify-center">
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Gift className="w-4 h-4" />}
+              Tặng vật phẩm
+            </button>
+          </form>
+        </div>
+
+        {/* Status update */}
+        {onStatusUpdate && (
+          <div className="p-4 rounded-xl bg-black/30 border border-white/10">
+            <div className="flex items-center gap-2 mb-3">
+              <Heart className="w-5 h-5 text-red-400/70" />
+              <h4 className="text-sm font-serif font-bold text-amber-100/80">Trạng Thái Nhân Vật</h4>
+            </div>
+            {statusMsg && <p className="text-xs text-emerald-400 mb-2">{statusMsg}</p>}
+            <div className="space-y-3">
+              {([
+                { field: 'status_physical' as const, label: 'Thể Chất', icon: Heart, color: 'text-red-400' },
+                { field: 'status_spiritual' as const, label: 'Tâm Linh', icon: Sparkle, color: 'text-amber-400' },
+                { field: 'status_mental' as const, label: 'Tinh Thần', icon: Brain, color: 'text-purple-400' },
+              ]).map(({ field, label, icon: Icon, color }) => {
+                const currentVal = (profile as Record<string, unknown>)[field] as string;
+                const tagInfo = STATUS_TAGS.find(t => t.value === currentVal) || STATUS_TAGS[0];
+                return (
+                  <div key={field}>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Icon className={`w-3.5 h-3.5 ${color} flex-shrink-0`} />
+                      <span className="text-[10px] uppercase tracking-wider text-gray-500">{label}</span>
+                      <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold ${tagInfo.badgeClass}`}>{currentVal}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {STATUS_TAGS.map(tag => (
+                        <button key={tag.value} onClick={() => { if (tag.value !== currentVal) handleStatus(field, tag.value); }}
+                          className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all ${tag.value === currentVal ? `${tag.activeClass} cursor-default` : `${tag.idleClass} hover:scale-105`}`}>
+                          {tag.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Vật phẩm trong kho + thu hồi */}
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
         <div className="flex items-center gap-2 mb-4">
           <Package className="w-5 h-5 text-amber-300/70" />
-          <h4 className="text-base font-serif font-bold text-amber-100/80">Vật Phẩm Trong Kho ({inventory.length})</h4>
+          <h4 className="text-base font-serif font-bold text-amber-100/80">Vật Phẩm Trong Kho ({allInventory.length})</h4>
         </div>
-        {inventory.length === 0 ? (
+        {allInventory.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-4">Chưa có vật phẩm nào.</p>
         ) : (
           <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-1 sm:pr-2">
-            {inventory.map(inv => (
+            {allInventory.map(inv => (
               <div key={inv.id} className="flex items-center justify-between gap-2 p-2.5 sm:p-3 rounded-lg bg-black/20 border border-white/5">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-amber-100/90 truncate">{inv.shop_items?.name || 'Vật phẩm đã xóa'}</p>
                   <p className="text-[11px] sm:text-xs text-gray-500">{inv.shop_items?.category || '—'} · {new Date(inv.acquired_at).toLocaleDateString('vi-VN')}</p>
                 </div>
+                <button onClick={() => handleRemoveItem(inv.id, inv.shop_items?.name || 'Vật phẩm')} disabled={actionLoading}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold transition-all flex-shrink-0 disabled:opacity-50">
+                  <Trash2 className="w-3.5 h-3.5" /> Thu hồi
+                </button>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Transactions — full history */}
+      {/* Lịch sử giao dịch */}
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
         <div className="flex items-center gap-2 mb-4">
           <History className="w-5 h-5 text-amber-300/70" />
