@@ -10,12 +10,13 @@ const CURRENCY_META: Record<string, { label: string; icon: typeof Coins; color: 
 };
 
 interface Props {
-  open: boolean;
-  onClose: () => void;
+  open?: boolean;
+  onClose?: () => void;
+  inline?: boolean;
   onProfileUpdate: () => void;
 }
 
-export default function AvatarFrameShop({ open, onClose, onProfileUpdate }: Props) {
+export default function AvatarFrameShop({ open = false, onClose, inline = false, onProfileUpdate }: Props) {
   const { user, profile } = useAuth();
   const [frames, setFrames] = useState<AvatarFrame[]>([]);
   const [ownedIds, setOwnedIds] = useState<Set<string>>(new Set());
@@ -40,8 +41,8 @@ export default function AvatarFrameShop({ open, onClose, onProfileUpdate }: Prop
   }, [user]);
 
   useEffect(() => {
-    if (open) fetchData();
-  }, [open, fetchData]);
+    if (inline || open) fetchData();
+  }, [inline, open, fetchData]);
 
   const handleBuy = async (frame: AvatarFrame) => {
     if (!user) return;
@@ -104,7 +105,187 @@ export default function AvatarFrameShop({ open, onClose, onProfileUpdate }: Prop
     setTimeout(() => setMsg(''), 4000);
   };
 
-  if (!open) return null;
+  if (!inline && !open) return null;
+
+  const frameGrid = (
+    <>
+      {/* Current currencies */}
+      {profile && (
+        <div className="flex items-center gap-4 px-4 py-2.5 border-b border-white/5">
+          <span className="text-xs text-gray-500 uppercase tracking-wider">Số dư:</span>
+          <span className="flex items-center gap-1 text-xs text-amber-300"><Coins className="w-3.5 h-3.5" /> {profile.hua_tien}</span>
+          <span className="flex items-center gap-1 text-xs text-emerald-300"><Sparkles className="w-3.5 h-3.5" /> {profile.cong_duc}</span>
+          <span className="flex items-center gap-1 text-xs text-purple-300"><Skull className="w-3.5 h-3.5" /> {profile.am_duc}</span>
+        </div>
+      )}
+
+      {/* Message */}
+      {msg && (
+        <div className={`mx-4 mt-3 p-2.5 rounded-lg text-xs ${msg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
+          {msg}
+        </div>
+      )}
+
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-[#670201]/50" />
+        </div>
+      )}
+
+      {/* Frame grid */}
+      {!loading && (
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {frames.map(frame => {
+            const owned = ownedIds.has(frame.id);
+            const isActive = activeFrameId === frame.id;
+            const currency = CURRENCY_META[frame.currency_type];
+            const CurrencyIcon = currency.icon;
+            const canAfford = profile ? (frame.currency_type === 'hua_tien' ? profile.hua_tien : frame.currency_type === 'cong_duc' ? profile.cong_duc : profile.am_duc) >= frame.price : false;
+
+            return (
+              <div
+                key={frame.id}
+                className={`relative rounded-xl border overflow-hidden transition-all ${
+                  isActive ? 'border-amber-400/50 ring-1 ring-amber-400/30' :
+                  owned ? 'border-emerald-500/30' : 'border-[#670201]/25'
+                } bg-gradient-to-b from-[#0d0606] to-[#0a0404]`}
+              >
+                {isActive && (
+                  <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-400/40 text-[9px] font-bold text-amber-200">
+                    <Check className="w-2.5 h-2.5" /> Đang dùng
+                  </div>
+                )}
+                {owned && !isActive && (
+                  <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[9px] font-bold text-emerald-300">
+                    <Check className="w-2.5 h-2.5" /> Đã sở hữu
+                  </div>
+                )}
+
+                {/* Preview */}
+                <div
+                  className="relative h-36 flex items-center justify-center cursor-pointer bg-black/30"
+                  onClick={() => setSelectedFrame(frame)}
+                >
+                  <div className="relative w-24 h-24">
+                    <img src={frame.image_path} alt={frame.name} className="absolute inset-0 w-full h-full pointer-events-none" />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      {profile?.avatar_url ? (
+                        <img src={profile.avatar_url} alt="preview" className="w-16 h-16 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full bg-[#670201]/30 flex items-center justify-center">
+                          <ShoppingBag className="w-5 h-5 text-[#670201]/40" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Info */}
+                <div className="p-3 space-y-2">
+                  <div>
+                    <h4 className="text-xs font-serif font-bold text-amber-100/90">{frame.name}</h4>
+                    <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{frame.description}</p>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <CurrencyIcon className={`w-3.5 h-3.5 ${currency.color}`} />
+                    <span className={`text-xs font-bold ${currency.color}`}>{frame.price.toLocaleString()}</span>
+                    <span className="text-[10px] text-gray-500">{currency.label}</span>
+                  </div>
+
+                  <div className="flex gap-1.5">
+                    {owned ? (
+                      isActive ? (
+                        <button
+                          onClick={handleUnequip}
+                          disabled={actionFrame === 'unequip'}
+                          className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[10px] font-bold text-gray-400 transition-all"
+                        >
+                          {actionFrame === 'unequip' ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+                          Gỡ khung
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleEquip(frame)}
+                          disabled={actionFrame === frame.id}
+                          className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-[10px] font-bold text-amber-200 transition-all"
+                        >
+                          {actionFrame === frame.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                          Dùng
+                        </button>
+                      )
+                    ) : (
+                      <button
+                        onClick={() => handleBuy(frame)}
+                        disabled={actionFrame === frame.id || !canAfford}
+                        className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+                          canAfford
+                            ? 'bg-[#670201] hover:bg-[#a00404] text-amber-100'
+                            : 'bg-red-500/5 text-red-400/50 border border-red-500/15 cursor-not-allowed'
+                        }`}
+                      >
+                        {actionFrame === frame.id ? <Loader2 className="w-3 h-3 animate-spin" /> : !canAfford ? <Lock className="w-3 h-3" /> : <ShoppingBag className="w-3 h-3" />}
+                        {canAfford ? 'Mua' : 'Không đủ'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Detail popup */}
+      {selectedFrame && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={() => setSelectedFrame(null)}>
+          <div className="relative max-w-sm w-full rounded-2xl bg-gradient-to-b from-[#1a0a08] to-[#0d0606] border border-[#670201]/40 shadow-2xl p-6" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setSelectedFrame(null)} className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-all">
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative w-40 h-40">
+                <img src={selectedFrame.image_path} alt={selectedFrame.name} className="absolute inset-0 w-full h-full pointer-events-none" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="preview" className="w-28 h-28 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-28 h-28 rounded-full bg-[#670201]/30 flex items-center justify-center">
+                      <ShoppingBag className="w-7 h-7 text-[#670201]/40" />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="text-center">
+                <h4 className="text-base font-serif font-bold text-amber-100/90">{selectedFrame.name}</h4>
+                <p className="text-xs text-gray-400 mt-2 leading-relaxed">{selectedFrame.description}</p>
+                <div className="flex items-center justify-center gap-1.5 mt-3">
+                  {(() => {
+                    const c = CURRENCY_META[selectedFrame.currency_type];
+                    const Icon = c.icon;
+                    return <><Icon className={`w-4 h-4 ${c.color}`} /><span className={`text-sm font-bold ${c.color}`}>{selectedFrame.price.toLocaleString()}</span><span className="text-xs text-gray-500">{c.label}</span></>;
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  if (inline) {
+    return (
+      <div className="rounded-xl bg-black/20 border border-[#670201]/20 overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[#670201]/20">
+          <Crown className="w-4 h-4 text-amber-300/70" />
+          <span className="text-xs font-bold text-amber-100/80">Khung Viền Ảnh Đại Diện</span>
+        </div>
+        {frameGrid}
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
@@ -112,7 +293,6 @@ export default function AvatarFrameShop({ open, onClose, onProfileUpdate }: Prop
         className="relative w-full max-w-4xl max-h-[85vh] overflow-y-auto rounded-2xl bg-gradient-to-b from-[#1a0a08] to-[#0d0606] border border-[#670201]/40 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 bg-gradient-to-b from-[#1a0a08] to-[#1a0a08]/95 border-b border-[#670201]/30 backdrop-blur-sm">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-[#670201]/20 border border-[#670201]/40 flex items-center justify-center">
@@ -127,177 +307,7 @@ export default function AvatarFrameShop({ open, onClose, onProfileUpdate }: Prop
             <X className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Current currencies */}
-        {profile && (
-          <div className="flex items-center gap-4 px-5 py-3 border-b border-white/5">
-            <span className="text-xs text-gray-500 uppercase tracking-wider">Số dư:</span>
-            <span className="flex items-center gap-1.5 text-xs text-amber-300"><Coins className="w-3.5 h-3.5" /> {profile.hua_tien}</span>
-            <span className="flex items-center gap-1.5 text-xs text-emerald-300"><Sparkles className="w-3.5 h-3.5" /> {profile.cong_duc}</span>
-            <span className="flex items-center gap-1.5 text-xs text-purple-300"><Skull className="w-3.5 h-3.5" /> {profile.am_duc}</span>
-          </div>
-        )}
-
-        {/* Message */}
-        {msg && (
-          <div className={`mx-5 mt-4 p-3 rounded-lg text-sm ${msg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
-            {msg}
-          </div>
-        )}
-
-        {/* Loading */}
-        {loading && (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-[#670201]/50" />
-          </div>
-        )}
-
-        {/* Frame grid */}
-        {!loading && (
-          <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {frames.map(frame => {
-              const owned = ownedIds.has(frame.id);
-              const isActive = activeFrameId === frame.id;
-              const currency = CURRENCY_META[frame.currency_type];
-              const CurrencyIcon = currency.icon;
-              const canAfford = profile ? (frame.currency_type === 'hua_tien' ? profile.hua_tien : frame.currency_type === 'cong_duc' ? profile.cong_duc : profile.am_duc) >= frame.price : false;
-
-              return (
-                <div
-                  key={frame.id}
-                  className={`relative rounded-xl border overflow-hidden transition-all ${
-                    isActive ? 'border-amber-400/50 ring-1 ring-amber-400/30 shadow-lg shadow-amber-400/10' :
-                    owned ? 'border-emerald-500/30' : 'border-[#670201]/25'
-                  } bg-gradient-to-b from-[#0d0606] to-[#0a0404]`}
-                >
-                  {/* Active badge */}
-                  {isActive && (
-                    <div className="absolute top-3 left-3 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-400/20 border border-amber-400/40 text-[10px] font-bold text-amber-200">
-                      <Check className="w-3 h-3" /> Đang dùng
-                    </div>
-                  )}
-                  {/* Owned badge */}
-                  {owned && !isActive && (
-                    <div className="absolute top-3 left-3 z-10 flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-bold text-emerald-300">
-                      <Check className="w-3 h-3" /> Đã sở hữu
-                    </div>
-                  )}
-
-                  {/* Preview */}
-                  <div
-                    className="relative h-48 flex items-center justify-center cursor-pointer bg-black/30"
-                    onClick={() => setSelectedFrame(frame)}
-                  >
-                    <div className="relative w-32 h-32">
-                      <img src={frame.image_path} alt={frame.name} className="absolute inset-0 w-full h-full pointer-events-none" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        {profile?.avatar_url ? (
-                          <img src={profile.avatar_url} alt="preview" className="w-20 h-20 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-20 h-20 rounded-full bg-[#670201]/30 flex items-center justify-center">
-                            <ShoppingBag className="w-6 h-6 text-[#670201]/40" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="absolute bottom-2 right-2 text-[10px] text-gray-600 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" /> Nhấn để xem
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-4 space-y-3">
-                    <div>
-                      <h4 className="text-sm font-serif font-bold text-amber-100/90">{frame.name}</h4>
-                      <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">{frame.description}</p>
-                    </div>
-
-                    {/* Price */}
-                    <div className="flex items-center gap-1.5">
-                      <CurrencyIcon className={`w-4 h-4 ${currency.color}`} />
-                      <span className={`text-sm font-bold ${currency.color}`}>{frame.price.toLocaleString()}</span>
-                      <span className="text-xs text-gray-500">{currency.label}</span>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2">
-                      {owned ? (
-                        isActive ? (
-                          <button
-                            onClick={handleUnequip}
-                            disabled={actionFrame === 'unequip'}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-bold text-gray-400 transition-all"
-                          >
-                            {actionFrame === 'unequip' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
-                            Gỡ khung
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleEquip(frame)}
-                            disabled={actionFrame === frame.id}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-xs font-bold text-amber-200 transition-all"
-                          >
-                            {actionFrame === frame.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                            Dùng
-                          </button>
-                        )
-                      ) : (
-                        <button
-                          onClick={() => handleBuy(frame)}
-                          disabled={actionFrame === frame.id || !canAfford}
-                          className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
-                            canAfford
-                              ? 'bg-[#670201] hover:bg-[#a00404] text-amber-100'
-                              : 'bg-red-500/5 text-red-400/50 border border-red-500/15 cursor-not-allowed'
-                          }`}
-                        >
-                          {actionFrame === frame.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : !canAfford ? <Lock className="w-3.5 h-3.5" /> : <ShoppingBag className="w-3.5 h-3.5" />}
-                          {canAfford ? 'Mua' : 'Không đủ'}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Detail modal */}
-        {selectedFrame && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={() => setSelectedFrame(null)}>
-            <div className="relative max-w-md w-full rounded-2xl bg-gradient-to-b from-[#1a0a08] to-[#0d0606] border border-[#670201]/40 shadow-2xl p-6" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setSelectedFrame(null)} className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 transition-all">
-                <X className="w-4 h-4" />
-              </button>
-              <div className="flex flex-col items-center gap-4">
-                <div className="relative w-48 h-48">
-                  <img src={selectedFrame.image_path} alt={selectedFrame.name} className="absolute inset-0 w-full h-full pointer-events-none" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    {profile?.avatar_url ? (
-                      <img src={profile.avatar_url} alt="preview" className="w-32 h-32 rounded-full object-cover" />
-                    ) : (
-                      <div className="w-32 h-32 rounded-full bg-[#670201]/30 flex items-center justify-center">
-                        <ShoppingBag className="w-8 h-8 text-[#670201]/40" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="text-center">
-                  <h4 className="text-lg font-serif font-bold text-amber-100/90">{selectedFrame.name}</h4>
-                  <p className="text-sm text-gray-400 mt-2 leading-relaxed">{selectedFrame.description}</p>
-                  <div className="flex items-center justify-center gap-1.5 mt-3">
-                    {(() => {
-                      const c = CURRENCY_META[selectedFrame.currency_type];
-                      const Icon = c.icon;
-                      return <><Icon className={`w-4 h-4 ${c.color}`} /><span className={`text-base font-bold ${c.color}`}>{selectedFrame.price.toLocaleString()}</span><span className="text-xs text-gray-500">{c.label}</span></>;
-                    })()}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {frameGrid}
       </div>
     </div>
   );

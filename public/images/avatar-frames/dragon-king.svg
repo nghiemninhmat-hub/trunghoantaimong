@@ -1,85 +1,106 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
   <defs>
     <linearGradient id="dkGold" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#a67c00"/>
-      <stop offset="25%" stop-color="#ffd700"/>
-      <stop offset="50%" stop-color="#fff5b4"/>
-      <stop offset="75%" stop-color="#ffd700"/>
-      <stop offset="100%" stop-color="#a67c00"/>
+      <stop offset="0%" stop-color="#8a6d1b"/>
+      <stop offset="20%" stop-color="#e8c84a"/>
+      <stop offset="40%" stop-color="#fff5b4"/>
+      <stop offset="50%" stop-color="#fffae0"/>
+      <stop offset="60%" stop-color="#fff5b4"/>
+      <stop offset="80%" stop-color="#e8c84a"/>
+      <stop offset="100%" stop-color="#8a6d1b"/>
     </linearGradient>
-    <filter id="dkGlow">
-      <feGaussianBlur stdDeviation="2" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
+    <radialGradient id="dkInnerGlow" cx="50%" cy="50%" r="48%">
+      <stop offset="85%" stop-color="transparent"/>
+      <stop offset="92%" stop-color="#e8c84a" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#8a6d1b" stop-opacity="0.5"/>
+    </radialGradient>
+    <filter id="dkGlow"><feGaussianBlur stdDeviation="1.5"/></filter>
   </defs>
-  <!-- Outer thick gold ring -->
-  <circle cx="100" cy="100" r="94" fill="none" stroke="url(#dkGold)" stroke-width="18"/>
-  <!-- Inner ring -->
-  <circle cx="100" cy="100" r="76" fill="none" stroke="#a67c00" stroke-width="1.5" opacity="0.6"/>
-  <!-- Dragon coiling full ring - left arc -->
-  <g filter="url(#dkGlow)">
-    <path d="M100,6 C70,10 45,30 35,60 C30,75 35,85 45,88 C55,91 62,85 58,75 C54,65 60,55 70,55 C80,55 85,65 80,75 C75,85 65,90 55,88" fill="none" stroke="url(#dkGold)" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="120" cy="120" r="100" fill="url(#dkInnerGlow)"/>
+  <!-- Thick polished gold ring -->
+  <circle cx="120" cy="120" r="100" fill="none" stroke="url(#dkGold)" stroke-width="3"/>
+  <circle cx="120" cy="120" r="96" fill="none" stroke="url(#dkGold)" stroke-width="7" opacity="0.95"/>
+  <circle cx="120" cy="120" r="89" fill="none" stroke="#8a6d1b" stroke-width="0.8" opacity="0.4"/>
+  <!-- Dragon coiling left — full body from top to bottom -->
+  <g filter="url(#dkGlow)" opacity="0.92">
+    <path d="M120,18 C88,22 62,40 52,72 C48,88 54,96 64,98 C74,100 80,92 76,82 C72,72 78,62 88,62 C98,62 104,72 100,82 C96,92 86,98 76,96" fill="none" stroke="url(#dkGold)" stroke-width="4" stroke-linecap="round"/>
     <!-- Dragon head top-left -->
-    <g transform="translate(68,28)">
-      <ellipse cx="0" cy="0" rx="6" ry="4" fill="url(#dkGold)" stroke="#a67c00" stroke-width="0.5"/>
-      <circle cx="-2.5" cy="-1" r="1.2" fill="#c0392b"/>
-      <path d="M-5,2 L-9,4 L-6,2" fill="url(#dkGold)"/>
-      <path d="M2,-4 L5,-8 L3,-3" fill="url(#dkGold)" stroke="#a67c00" stroke-width="0.3"/>
-      <path d="M-2,-4 L-5,-8 L-3,-3" fill="url(#dkGold)" stroke="#a67c00" stroke-width="0.3"/>
+    <g transform="translate(84,40)">
+      <ellipse cx="0" cy="0" rx="8" ry="5.5" fill="url(#dkGold)" stroke="#8a6d1b" stroke-width="0.4"/>
+      <circle cx="-3" cy="-1" r="1.8" fill="#c8392b"/>
+      <circle cx="-3" cy="-1" r="0.6" fill="#fff" opacity="0.8"/>
+      <path d="M-7,3 L-11,5 L-8,2" fill="url(#dkGold)"/>
+      <path d="M-8,4 L-9,7 L-7,4" fill="#fff" opacity="0.6"/>
+      <!-- Horns -->
+      <path d="M4,-4 L8,-12 L5,-3" fill="url(#dkGold)" stroke="#8a6d1b" stroke-width="0.3"/>
+      <path d="M0,-4 L-2,-12 L2,-3" fill="url(#dkGold)" stroke="#8a6d1b" stroke-width="0.3"/>
+      <!-- Whisker -->
+      <path d="M-9,3 Q-16,5 -18,3" fill="none" stroke="url(#dkGold)" stroke-width="0.8" opacity="0.5"/>
     </g>
-    <!-- Scales -->
-    <g fill="none" stroke="#a67c00" stroke-width="0.5" opacity="0.4">
-      <path d="M65,36 Q67,34 69,36"/>
-      <path d="M62,42 Q64,40 66,42"/>
-      <path d="M58,48 Q60,46 62,48"/>
-      <path d="M52,56 Q54,54 56,56"/>
-      <path d="M46,64 Q48,62 50,64"/>
-    </g>
-  </g>
-  <!-- Dragon coiling right arc -->
-  <g filter="url(#dkGlow)">
-    <path d="M100,6 C130,10 155,30 165,60 C170,75 165,85 155,88 C145,91 138,85 142,75 C146,65 140,55 130,55 C120,55 115,65 120,75 C125,85 135,90 145,88" fill="none" stroke="url(#dkGold)" stroke-width="3.5" stroke-linecap="round"/>
-    <!-- Dragon head top-right -->
-    <g transform="translate(132,28)">
-      <ellipse cx="0" cy="0" rx="6" ry="4" fill="url(#dkGold)" stroke="#a67c00" stroke-width="0.5"/>
-      <circle cx="2.5" cy="-1" r="1.2" fill="#c0392b"/>
-      <path d="M5,2 L9,4 L6,2" fill="url(#dkGold)"/>
-      <path d="M-2,-4 L-5,-8 L-3,-3" fill="url(#dkGold)" stroke="#a67c00" stroke-width="0.3"/>
-      <path d="M2,-4 L5,-8 L3,-3" fill="url(#dkGold)" stroke="#a67c00" stroke-width="0.3"/>
-    </g>
-    <!-- Scales -->
-    <g fill="none" stroke="#a67c00" stroke-width="0.5" opacity="0.4">
-      <path d="M135,36 Q133,34 131,36"/>
-      <path d="M138,42 Q136,40 134,42"/>
-      <path d="M142,48 Q140,46 138,48"/>
-      <path d="M148,56 Q146,54 144,56"/>
-      <path d="M154,64 Q152,62 150,64"/>
+    <!-- Detailed scales -->
+    <g fill="none" stroke="#8a6d1b" stroke-width="0.4" opacity="0.35">
+      <path d="M80,48 Q82,46 84,48"/>
+      <path d="M76,54 Q78,52 80,54"/>
+      <path d="M72,60 Q74,58 76,60"/>
+      <path d="M68,68 Q70,66 72,68"/>
+      <path d="M64,76 Q66,74 68,76"/>
+      <path d="M62,84 Q64,82 66,84"/>
+      <path d="M66,92 Q68,90 70,92"/>
     </g>
   </g>
-  <!-- Flaming pearl at top center -->
-  <g transform="translate(100,12)" filter="url(#dkGlow)">
-    <circle cx="0" cy="0" r="5" fill="url(#dkGold)"/>
-    <circle cx="0" cy="0" r="3" fill="#fff" opacity="0.7"/>
-    <circle cx="0" cy="0" r="1.5" fill="#fff"/>
-    <!-- Flames -->
-    <path d="M0,-5 C-3,-8 -1,-11 0,-13 C1,-11 3,-8 0,-5" fill="url(#dkGold)" opacity="0.8"/>
-    <path d="M-4,-3 C-6,-5 -5,-7 -3,-8" fill="url(#dkGold)" opacity="0.5"/>
-    <path d="M4,-3 C6,-5 5,-7 3,-8" fill="url(#dkGold)" opacity="0.5"/>
+  <!-- Dragon coiling right — mirror -->
+  <g filter="url(#dkGlow)" opacity="0.92">
+    <path d="M120,18 C152,22 178,40 188,72 C192,88 186,96 176,98 C166,100 160,92 164,82 C168,72 162,62 152,62 C142,62 136,72 140,82 C144,92 154,98 164,96" fill="none" stroke="url(#dkGold)" stroke-width="4" stroke-linecap="round"/>
+    <g transform="translate(156,40)">
+      <ellipse cx="0" cy="0" rx="8" ry="5.5" fill="url(#dkGold)" stroke="#8a6d1b" stroke-width="0.4"/>
+      <circle cx="3" cy="-1" r="1.8" fill="#c8392b"/>
+      <circle cx="3" cy="-1" r="0.6" fill="#fff" opacity="0.8"/>
+      <path d="M7,3 L11,5 L8,2" fill="url(#dkGold)"/>
+      <path d="M8,4 L9,7 L7,4" fill="#fff" opacity="0.6"/>
+      <path d="M-4,-4 L-8,-12 L-5,-3" fill="url(#dkGold)" stroke="#8a6d1b" stroke-width="0.3"/>
+      <path d="M0,-4 L2,-12 L-2,-3" fill="url(#dkGold)" stroke="#8a6d1b" stroke-width="0.3"/>
+      <path d="M9,3 Q16,5 18,3" fill="none" stroke="url(#dkGold)" stroke-width="0.8" opacity="0.5"/>
+    </g>
+    <g fill="none" stroke="#8a6d1b" stroke-width="0.4" opacity="0.35">
+      <path d="M160,48 Q158,46 156,48"/>
+      <path d="M164,54 Q162,52 160,54"/>
+      <path d="M168,60 Q166,58 164,60"/>
+      <path d="M172,68 Q170,66 168,68"/>
+      <path d="M176,76 Q174,74 172,76"/>
+      <path d="M178,84 Q176,82 174,84"/>
+      <path d="M174,92 Q172,90 170,92"/>
+    </g>
   </g>
-  <!-- Cloud patterns bottom -->
-  <g transform="translate(100,188)" opacity="0.7">
-    <path d="M-18,0 Q-12,-5 -6,0 Q0,-5 6,0 Q12,-5 18,0" fill="none" stroke="url(#dkGold)" stroke-width="2.5"/>
+  <!-- Flaming pearl at top center — large, prominent -->
+  <g transform="translate(120,16)" filter="url(#dkGlow)">
+    <circle cx="0" cy="0" r="7" fill="url(#dkGold)"/>
+    <circle cx="0" cy="0" r="5" fill="#fff" opacity="0.5"/>
+    <circle cx="0" cy="0" r="2.5" fill="#fff"/>
+    <!-- Dynamic flames -->
+    <path d="M0,-7 C-4,-12 -1,-16 0,-18 C1,-16 4,-12 0,-7" fill="url(#dkGold)" opacity="0.8"/>
+    <path d="M-5,-5 C-8,-9 -6,-13 -3,-14" fill="url(#dkGold)" opacity="0.5"/>
+    <path d="M5,-5 C8,-9 6,-13 3,-14" fill="url(#dkGold)" opacity="0.5"/>
+    <!-- Sparkle -->
+    <path d="M0,-10 L0,-14 M-3,-12 L3,-12" stroke="#fff" stroke-width="0.5" opacity="0.6"/>
   </g>
-  <!-- Ruby accents -->
-  <g fill="#c0392b" stroke="#a67c00" stroke-width="0.3">
-    <circle cx="40" cy="100" r="2.5"/>
-    <circle cx="160" cy="100" r="2.5"/>
+  <!-- Auspicious cloud patterns at bottom -->
+  <g transform="translate(120,220)" opacity="0.65">
+    <path d="M-25,0 Q-18,-7 -12,-2 Q-6,-8 0,-2 Q6,-8 12,-2 Q18,-7 25,0" fill="none" stroke="url(#dkGold)" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+  <!-- Ruby accents at sides -->
+  <g fill="#c8392b" stroke="#8a6d1b" stroke-width="0.3">
+    <circle cx="28" cy="120" r="3"/>
+    <circle cx="212" cy="120" r="3"/>
+  </g>
+  <g fill="#ff6b4a" opacity="0.4">
+    <circle cx="27" cy="119" r="1.5"/>
+    <circle cx="211" cy="119" r="1.5"/>
   </g>
   <!-- Gold sparkles -->
-  <g fill="#fff5b4" opacity="0.6">
-    <circle cx="55" cy="55" r="1"/>
-    <circle cx="145" cy="55" r="1"/>
-    <circle cx="55" cy="145" r="1"/>
-    <circle cx="145" cy="145" r="1"/>
+  <g fill="#fffae0" opacity="0.6">
+    <circle cx="60" cy="60" r="1.5"/>
+    <circle cx="180" cy="60" r="1.5"/>
+    <circle cx="60" cy="180" r="1.5"/>
+    <circle cx="180" cy="180" r="1.5"/>
   </g>
 </svg>

@@ -59,11 +59,10 @@ export default function ProfilePage() {
   const [avatarError, setAvatarError] = useState('');
   const [avatarPreviewOk, setAvatarPreviewOk] = useState(true);
   const [avatarUploading, setAvatarUploading] = useState(false);
-  const [avatarMode, setAvatarMode] = useState<'upload' | 'url'>('upload');
+  const [avatarMode, setAvatarMode] = useState<'upload' | 'url' | 'frame'>('upload');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [emailVisible, setEmailVisible] = useState(false);
   const [statusDescOpen, setStatusDescOpen] = useState(false);
-  const [frameShopOpen, setFrameShopOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -335,17 +334,6 @@ export default function ProfilePage() {
                   <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               )}
-              {/* Frame shop button */}
-              {!avatarEditing && (
-                <button
-                  onClick={() => setFrameShopOpen(true)}
-                  className="absolute top-0 right-0 m-1 sm:m-2 p-2 sm:p-2.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 shadow-lg transition-all backdrop-blur-sm border border-amber-400/30 z-30"
-                  title="Cửa hàng khung viền"
-                  aria-label="Cửa hàng khung viền"
-                >
-                  <Frame className="w-4 h-4 sm:w-5 sm:h-5" />
-                </button>
-              )}
             </div>
           </div>
 
@@ -487,13 +475,19 @@ export default function ProfilePage() {
                 onClick={() => setAvatarMode('upload')}
                 className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-md transition-all ${avatarMode === 'upload' ? 'bg-[#670201] text-amber-100' : 'text-gray-400 hover:text-gray-200'}`}
               >
-                <Upload className="w-4 h-4" /> Tải ảnh lên
+                <Upload className="w-4 h-4" /> Tải ảnh
               </button>
               <button
                 onClick={() => setAvatarMode('url')}
                 className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-md transition-all ${avatarMode === 'url' ? 'bg-[#670201] text-amber-100' : 'text-gray-400 hover:text-gray-200'}`}
               >
-                <Link className="w-4 h-4" /> Dán liên kết
+                <Link className="w-4 h-4" /> Liên kết
+              </button>
+              <button
+                onClick={() => setAvatarMode('frame')}
+                className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-md transition-all ${avatarMode === 'frame' ? 'bg-[#670201] text-amber-100' : 'text-gray-400 hover:text-gray-200'}`}
+              >
+                <Frame className="w-4 h-4" /> Khung viền
               </button>
             </div>
             {/* Upload mode */}
@@ -540,6 +534,10 @@ export default function ProfilePage() {
                 </button>
                 {!avatarPreviewOk && avatarInput && <p className="text-xs text-amber-400">Không tải được ảnh — kiểm tra lại liên kết.</p>}
               </div>
+            )}
+            {/* Frame mode */}
+            {avatarMode === 'frame' && (
+              <AvatarFrameShop inline onProfileUpdate={refreshProfile} />
             )}
             {avatarError && <p className="text-xs text-red-400">{avatarError}</p>}
           </div>
@@ -922,13 +920,6 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
-
-      {/* Avatar Frame Shop */}
-      <AvatarFrameShop
-        open={frameShopOpen}
-        onClose={() => setFrameShopOpen(false)}
-        onProfileUpdate={refreshProfile}
-      />
     </div>
   );
 }
