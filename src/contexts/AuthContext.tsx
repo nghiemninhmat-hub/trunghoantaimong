@@ -29,7 +29,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq('id', uid)
       .maybeSingle();
     if (!error && data) {
-      setProfile(data as Profile);
+      const prof = data as Profile;
+      if (prof.is_disabled) {
+        await supabase.auth.signOut();
+        setProfile(null);
+        return;
+      }
+      setProfile(prof);
     } else {
       setProfile(null);
     }
@@ -77,7 +83,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: email.trim().toLowerCase(),
       password,
     });
-    return { error: error?.message ?? null };
+    if (error) return { error: error?.message ?? null };
+
+    // Check if the user's profile is disabled
+    const { data: authData } = await supabase.auth.getUser();
+    if (authData.user) {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('is_disabled')
+        .eq('id', authData.user.id)
+        .maybeSingle();
+      if (prof?.is_disabled) {
+        await supabase.auth.signOut();
+        return { error: 'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ Ban Quản Lý.' };
+      }
+    }
+    return { error: null };
   };
 
   const signUp = async (email: string, password: string) => {

@@ -6,7 +6,7 @@ import {
   AlertCircle, CheckCircle2, History, Edit3, Eye, EyeOff, Dices, Package,
   Heart, Sparkle, Brain, Lock, Unlock, FileWarning, Crown, Save, ScrollText,
   Undo2, RotateCcw, Search, UserSearch, ArrowLeft, ChevronDown, ChevronUp, FileSignature, Info,
-  Download, FileDown, Loader2
+  Download, FileDown, Loader2, Archive, Settings
 } from 'lucide-react';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import PlayerDetailCard from '@/components/PlayerDetailCard';
@@ -20,7 +20,7 @@ const STATUS_TAGS = [
   { value: 'Ngưỡng sinh tử', label: 'Thẻ tím đậm', badgeClass: 'bg-purple-700/20 text-purple-400', activeClass: 'bg-purple-700/30 border-purple-700/50 text-purple-300', idleClass: 'bg-purple-700/5 border-purple-700/15 text-purple-500/70' },
 ];
 
-type Tab = 'accounts' | 'currency' | 'identities' | 'shop' | 'pages' | 'wheel' | 'inventories' | 'status' | 'settings' | 'wanted' | 'kimbang' | 'audit' | 'lookup' | 'wills' | 'backup';
+type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'audit' | 'lookup' | 'wills' | 'settings';
 
 export default function AdminDashboard() {
   const { profile, isAdmin } = useAuth();
@@ -56,6 +56,9 @@ export default function AdminDashboard() {
 
   // Page management
   const [newPage, setNewPage] = useState({ page_number: 1, title: '', category: '', content: '' });
+  const [editingPageId, setEditingPageId] = useState<string | null>(null);
+  const [editPage, setEditPage] = useState<Partial<SitePage>>({});
+  const [archiveSubTab, setArchiveSubTab] = useState<'currency' | 'identities' | 'inventories' | 'wheel' | 'status'>('currency');
 
   // Identity reveal
   const [revealIds, setRevealIds] = useState<Set<string>>(new Set());
@@ -305,6 +308,37 @@ export default function AdminDashboard() {
     fetchAllData();
   };
 
+  const handleDisableUser = (userId: string) => {
+    const targetUser = allProfiles.find(p => p.id === userId);
+    const name = targetUser?.oc_name || userId.slice(0, 8);
+    const email = targetUser?.email || '';
+    requireConfirm(
+      'Vô Hiệu Hóa Tài Khoản',
+      `Bạn sắp vô hiệu hóa tài khoản "${name}". Người chơi sẽ không thể đăng nhập nữa và sẽ thấy thông báo "tài khoản vô hiệu". Hành động này có thể khôi phục bằng nút "Mở Khóa" sau khi vô hiệu hóa.`,
+      async () => {
+        const { error } = await supabase.rpc('admin_disable_user', { p_user_id: userId });
+        if (error) { alert(`Lỗi: ${error.message}`); return; }
+        logAction('disable_user', userId, `Vô hiệu hóa tài khoản ${name} (${email})`, { user_id: userId });
+        alert(`Đã vô hiệu hóa tài khoản "${name}". Người chơi sẽ không thể đăng nhập.`);
+        fetchAllData();
+      },
+      [
+        { label: 'Người chơi', value: name },
+        { label: 'Email', value: email },
+      ],
+      'Vô hiệu hóa',
+    );
+  };
+
+  const handleEnableUser = async (userId: string) => {
+    const targetUser = allProfiles.find(p => p.id === userId);
+    const name = targetUser?.oc_name || userId.slice(0, 8);
+    const { error } = await supabase.rpc('admin_enable_user', { p_user_id: userId });
+    if (error) { alert(`Lỗi: ${error.message}`); return; }
+    logAction('enable_user', userId, `Mở khóa tài khoản ${name}`, { user_id: userId });
+    fetchAllData();
+  };
+
   const fetchAllData = useCallback(async () => {
     const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData] = await Promise.all([
       supabase.from('profiles').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
@@ -544,6 +578,26 @@ export default function AdminDashboard() {
       [{ label: 'Trang', value: title }],
       'Xóa trang',
     );
+  };
+
+  const handleEditPage = (page: SitePage) => {
+    setEditingPageId(page.id);
+    setEditPage({ ...page });
+  };
+
+  const handleSaveEditPage = async (pageId: string) => {
+    const oldPage = sitePages.find(p => p.id === pageId);
+    const { error } = await supabase.from('site_pages').update({
+      page_number: editPage.page_number,
+      title: editPage.title,
+      category: editPage.category,
+      content: editPage.content,
+    }).eq('id', pageId);
+    if (error) { alert(`Lỗi: ${error.message}`); return; }
+    logAction('edit_page', undefined, `Sửa trang bách khoa "${editPage.title}"`, { page_id: pageId, changes: editPage, previous_values: oldPage });
+    setEditingPageId(null);
+    setEditPage({});
+    fetchAllData();
   };
 
   const handleApproveWanted = async (id: string) => {
@@ -1111,19 +1165,14 @@ export default function AdminDashboard() {
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: 'lookup', label: 'Tra Cứu', icon: UserSearch },
     { id: 'accounts', label: 'Phê Duyệt', icon: Users },
-    { id: 'currency', label: 'Tài Sản', icon: Coins },
-    { id: 'identities', label: 'Danh Tính', icon: Ghost },
     { id: 'shop', label: 'Thương Thành', icon: Store },
-    { id: 'inventories', label: 'Kho Vật Phẩm', icon: Package },
     { id: 'pages', label: 'Bách Khoa', icon: BookOpen },
-    { id: 'wheel', label: 'Vòng Quay', icon: Dices },
-    { id: 'status', label: 'Trạng Thái', icon: Heart },
     { id: 'wanted', label: 'Truy Nã', icon: FileWarning },
     { id: 'wills', label: 'Di Chúc', icon: FileSignature },
     { id: 'kimbang', label: 'Kim Bảng', icon: Crown },
+    { id: 'archive', label: 'Lưu Trữ Bản Cũ', icon: Archive },
     { id: 'audit', label: 'Nhật Ký', icon: ScrollText },
-    { id: 'settings', label: 'Cài Đặt', icon: Shield },
-    { id: 'backup', label: 'Sao Lưu', icon: Download },
+    { id: 'settings', label: 'Cài Đặt & Sao Lưu', icon: Settings },
   ];
 
   const inputCls = "w-full px-4 py-2.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#670201]/50 transition-all";
@@ -1358,8 +1407,24 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Currency Tab */}
-      {activeTab === 'currency' && (
+      {/* Archive Tab — Lưu Trữ Bản Cũ */}
+      {activeTab === 'archive' && (
+        <div className="flex items-center gap-2 flex-wrap mb-2">
+          {([
+            { id: 'currency' as const, label: 'Tài Sản', icon: Coins },
+            { id: 'identities' as const, label: 'Danh Tính', icon: Ghost },
+            { id: 'inventories' as const, label: 'Kho Vật Phẩm', icon: Package },
+            { id: 'wheel' as const, label: 'Vòng Quay', icon: Dices },
+            { id: 'status' as const, label: 'Trạng Thái', icon: Heart },
+          ]).map(({ id, label, icon: Icon }) => (
+            <button key={id} onClick={() => setArchiveSubTab(id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${archiveSubTab === id ? 'bg-[#670201]/30 text-amber-100' : 'bg-black/20 text-gray-400 hover:text-amber-100 hover:bg-white/5'}`}>
+              <Icon className="w-3.5 h-3.5" /> {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {activeTab === 'archive' && archiveSubTab === 'currency' && (
         <div className="space-y-6">
           <div className={cardCls}>
             <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80 mb-4">Điều Chỉnh Tài Sản</h3>
@@ -1577,8 +1642,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Identities Tab */}
-      {activeTab === 'identities' && (
+      {activeTab === 'archive' && archiveSubTab === 'identities' && (
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
             <p className="text-xs text-amber-300/80">
@@ -1708,7 +1772,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Inventories Tab */}
-      {activeTab === 'inventories' && (
+      {activeTab === 'archive' && archiveSubTab === 'inventories' && (
         <div className="space-y-6">
           <div className={cardCls}>
             <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80 mb-4">Bổ Sung Vật Phẩm Vào Kho Người Chơi</h3>
@@ -1773,8 +1837,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Wheel Tab */}
-      {activeTab === 'wheel' && (
+      {activeTab === 'archive' && archiveSubTab === 'wheel' && (
         <div className="space-y-6">
           <div className={cardCls}>
             <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80 mb-4">Quản Lý Lượt Quay Bách Pháp Mệnh</h3>
@@ -1937,8 +2000,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Status Tab */}
-      {activeTab === 'status' && (
+      {activeTab === 'archive' && archiveSubTab === 'status' && (
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
             <p className="text-xs text-amber-300/80">
@@ -2024,15 +2086,41 @@ export default function AdminDashboard() {
             <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80 mb-4">Danh Sách Trang ({sitePages.length})</h3>
             <div className="space-y-2">
               {sitePages.map(page => (
-                <div key={page.id} className="flex items-center justify-between gap-2 p-3 rounded-lg bg-black/20 border border-white/5">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-amber-100/90 truncate">Trang {page.page_number}: {page.title}</p>
-                    <p className="text-[10px] text-gray-600 font-mono hidden sm:block">ID: {page.id.slice(0, 8)}</p>
-                    <p className="text-xs text-gray-500 truncate">{page.category}</p>
-                  </div>
-                  <button onClick={() => handleDeletePage(page.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all flex-shrink-0">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                <div key={page.id} className="p-3 rounded-lg bg-black/20 border border-white/5">
+                  {editingPageId === page.id ? (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-3 gap-2">
+                        <input type="number" value={editPage.page_number ?? 1} onChange={e => setEditPage({ ...editPage, page_number: parseInt(e.target.value) || 1 })} className="px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                        <input type="text" value={editPage.category ?? ''} onChange={e => setEditPage({ ...editPage, category: e.target.value })} placeholder="Thể loại" className="col-span-2 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                      </div>
+                      <input type="text" value={editPage.title ?? ''} onChange={e => setEditPage({ ...editPage, title: e.target.value })} placeholder="Tiêu đề" className="w-full px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                      <textarea value={editPage.content ?? ''} onChange={e => setEditPage({ ...editPage, content: e.target.value })} placeholder="Nội dung..." rows={4} className="w-full px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-amber-500/40 resize-none" />
+                      <div className="flex gap-2">
+                        <button onClick={() => handleSaveEditPage(page.id)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold">
+                          <Save className="w-3.5 h-3.5" /> Lưu
+                        </button>
+                        <button onClick={() => { setEditingPageId(null); setEditPage({}); }} className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold">
+                          Hủy
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-amber-100/90 truncate">Trang {page.page_number}: {page.title}</p>
+                        <p className="text-[10px] text-gray-600 font-mono hidden sm:block">ID: {page.id.slice(0, 8)}</p>
+                        <p className="text-xs text-gray-500 truncate">{page.category}</p>
+                      </div>
+                      <div className="flex gap-1 flex-shrink-0">
+                        <button onClick={() => handleEditPage(page)} className="p-2 text-gray-500 hover:text-amber-300 hover:bg-amber-500/10 rounded-lg transition-all">
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDeletePage(page.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -2385,6 +2473,7 @@ export default function AdminDashboard() {
               onStatusUpdate={handleStatusUpdate}
               onRefresh={fetchAllData}
               onLogAction={logAction}
+              onDisableUser={handleDisableUser}
             />
           ) : (
             <div className="space-y-4">
@@ -2440,6 +2529,17 @@ export default function AdminDashboard() {
                         <span className="text-cyan-300">✨ {p.cong_duc}</span>
                         <span className="text-amber-300">🌑 {p.am_duc}</span>
                       </div>
+                      {p.is_disabled && (
+                        <div className="mt-2 flex items-center justify-between gap-2">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold border border-red-500/30">Vô hiệu hóa</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleEnableUser(p.id); }}
+                            className="text-[10px] px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/20 transition-all"
+                          >
+                            Mở khóa
+                          </button>
+                        </div>
+                      )}
                     </button>
                   ))}
                 {approvedProfiles.filter(p => {
@@ -2508,8 +2608,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Settings Tab */}
-      {activeTab === 'backup' && (
+      {activeTab === 'settings' && (
         <div className="space-y-6">
           {exportMsg && (
             <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${exportMsg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
@@ -2598,11 +2697,7 @@ export default function AdminDashboard() {
               Tải mỗi trang bách khoa 1 file
             </button>
           </div>
-        </div>
-      )}
 
-      {activeTab === 'settings' && (
-        <div className="space-y-6">
           <div className={cardCls}>
             <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80 mb-4">Cổng Đăng Ký</h3>
             <div className="flex items-center justify-between gap-3 p-4 rounded-lg bg-black/20 border border-white/5">

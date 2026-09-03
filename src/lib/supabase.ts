@@ -58,6 +58,7 @@ export interface Profile {
   approved_by: string | null;
   approved_at: string | null;
   password: string | null;
+  is_disabled: boolean;
 }
 
 export interface AuditLog {

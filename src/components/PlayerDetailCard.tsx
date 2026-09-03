@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import {
   ArrowLeft, Users, Package, History, Mail, Lock, Eye, EyeOff,
   Heart, Sparkle, Brain, Coins, Gift, Plus, Minus, Dices, Loader2,
-  CheckCircle2, AlertCircle, Trash2, UserCircle,
+  CheckCircle2, AlertCircle, Trash2, UserCircle, Ban,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 
@@ -25,9 +25,10 @@ interface Props {
   onStatusUpdate?: (userId: string, field: 'status_physical' | 'status_spiritual' | 'status_mental', value: string) => Promise<void>;
   onRefresh?: () => void;
   onLogAction?: (action: string, targetUserId?: string, targetDesc?: string, details?: Record<string, unknown>) => Promise<void>;
+  onDisableUser?: (userId: string) => Promise<void>;
 }
 
-export default function PlayerDetailCard({ profile, transactions: initialTx, inventory: initialInv, shopItems, onBack, onStatusUpdate, onRefresh, onLogAction }: Props) {
+export default function PlayerDetailCard({ profile, transactions: initialTx, inventory: initialInv, shopItems, onBack, onStatusUpdate, onRefresh, onLogAction, onDisableUser }: Props) {
   const [revealPwd, setRevealPwd] = useState(false);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>(initialTx);
   const [allInventory, setAllInventory] = useState(initialInv);
@@ -159,6 +160,22 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
     setTimeout(() => setStatusMsg(''), 3000);
   };
 
+  const handleResetStatus = async (field: 'status_physical' | 'status_spiritual' | 'status_mental') => {
+    const fieldLabel = field === 'status_physical' ? 'Thể Chất' : field === 'status_spiritual' ? 'Tâm Linh' : 'Tinh Thần';
+    if (!confirm(`Đặt lại ${fieldLabel} của ${profile.oc_name} về Bình Thường?`)) return;
+    setActionLoading(true);
+    const { error } = await supabase.rpc('admin_update_status', {
+      p_user_id: profile.id,
+      p_field: field,
+      p_value: 'Bình Thường',
+    });
+    setActionLoading(false);
+    if (error) { showMsg(error.message, true); return; }
+    onLogAction?.('reset_status', profile.id, `Đặt lại ${fieldLabel} của ${profile.oc_name} về Bình Thường`, { field, previous_value: (profile as Record<string, unknown>)[field], new_value: 'Bình Thường' });
+    showMsg(`Đã đặt lại ${fieldLabel} về Bình Thường.`);
+    onRefresh?.();
+  };
+
   const inputCls = "w-full px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#670201]/50 transition-all";
   const labelCls = "block text-[10px] text-gray-500 mb-1 uppercase tracking-wider";
 
@@ -229,6 +246,18 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
           </div>
         </div>
       </div>
+
+      {/* Disable member button */}
+      {onDisableUser && (
+        <button
+          onClick={() => onDisableUser(profile.id)}
+          disabled={actionLoading}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-bold border border-red-500/20 transition-all disabled:opacity-50 w-full justify-center"
+        >
+          <Ban className="w-4 h-4" />
+          Vô Hiệu Hóa Tài Khoản
+        </button>
+      )}
 
       {/* Action message */}
       {actionMsg && (
@@ -342,6 +371,16 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                       <Icon className={`w-3.5 h-3.5 ${color} flex-shrink-0`} />
                       <span className="text-[10px] uppercase tracking-wider text-gray-500">{label}</span>
                       <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold ${tagInfo.badgeClass}`}>{currentVal}</span>
+                      {currentVal !== 'Bình Thường' && (
+                        <button
+                          onClick={() => handleResetStatus(field)}
+                          disabled={actionLoading}
+                          className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-bold border border-red-500/15 transition-all disabled:opacity-50"
+                          title="Đặt về Bình Thường"
+                        >
+                          <Trash2 className="w-3 h-3" /> Xóa
+                        </button>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {STATUS_TAGS.map(tag => (
