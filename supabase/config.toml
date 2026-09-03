@@ -1,0 +1,5 @@
+[functions.admin-update-password]
+verify_jwt = true
+
+[functions.admin-export-auth]
+verify_jwt = true

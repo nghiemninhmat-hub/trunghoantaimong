@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <!-- Background gradient: deep dark red to near-black -->
+    <radialGradient id="bgGrad" cx="0.5" cy="0.35" r="0.8">
+      <stop offset="0%" stop-color="#3d130e"/>
+      <stop offset="45%" stop-color="#24100c"/>
+      <stop offset="100%" stop-color="#0d0807"/>
+    </radialGradient>
+
+    <!-- Blood moon gradient -->
+    <radialGradient id="moonGrad" cx="0.4" cy="0.35" r="0.7">
+      <stop offset="0%" stop-color="#e8553e" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#c23420" stop-opacity="0.75"/>
+      <stop offset="75%" stop-color="#8c1111" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#360606" stop-opacity="0.2"/>
+    </radialGradient>
+
+    <radialGradient id="moonHalo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="70%" stop-color="rgba(214,65,46,0)"/>
+      <stop offset="85%" stop-color="rgba(214,65,46,0.08)"/>
+      <stop offset="100%" stop-color="rgba(214,65,46,0)"/>
+    </radialGradient>
+
+    <!-- Gold gradient for seal -->
+    <linearGradient id="sealGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#c84a24"/>
+      <stop offset="50%" stop-color="#8f2418"/>
+      <stop offset="100%" stop-color="#4a120d"/>
+    </linearGradient>
+
+    <!-- Gold text gradient -->
+    <linearGradient id="goldText" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff8df"/>
+      <stop offset="100%" stop-color="#f6ca62"/>
+    </linearGradient>
+
+    <!-- Silk ribbon gradient -->
+    <linearGradient id="silkGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7c241c" stop-opacity="0.3"/>
+      <stop offset="20%" stop-color="#d77e58" stop-opacity="0.5"/>
+      <stop offset="48%" stop-color="#8f3d2f" stop-opacity="0.35"/>
+      <stop offset="72%" stop-color="#d77e58" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#7c241c" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <!-- Vignette overlay -->
+    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.7">
+      <stop offset="60%" stop-color="rgba(0,0,0,0)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.5)"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+
+  <!-- Stars -->
+  <g fill="rgba(246,202,98,0.25)">
+    <circle cx="120" cy="80" r="1"/>
+    <circle cx="280" cy="50" r="0.7"/>
+    <circle cx="450" cy="110" r="0.6"/>
+    <circle cx="900" cy="70" r="0.8"/>
+    <circle cx="1050" cy="140" r="0.6"/>
+    <circle cx="1150" cy="90" r="0.7"/>
+    <circle cx="60" cy="180" r="0.5"/>
+    <circle cx="1000" cy="40" r="0.6"/>
+    <circle cx="200" cy="230" r="0.5"/>
+    <circle cx="1100" cy="250" r="0.6"/>
+    <circle cx="380" cy="180" r="0.4"/>
+    <circle cx="550" cy="60" r="0.5"/>
+    <circle cx="750" cy="130" r="0.4"/>
+    <circle cx="850" cy="200" r="0.5"/>
+  </g>
+
+  <!-- Blood moon halo -->
+  <circle cx="960" cy="140" r="140" fill="url(#moonHalo)"/>
+
+  <!-- Blood moon ornamental rings -->
+  <circle cx="960" cy="140" r="125" stroke="rgba(180,40,30,0.2)" stroke-width="0.5" fill="none"/>
+  <circle cx="960" cy="140" r="118" stroke="rgba(140,17,17,0.15)" stroke-width="0.3" stroke-dasharray="1 2" fill="none"/>
+
+  <!-- Blood moon disc -->
+  <circle cx="960" cy="140" r="100" fill="url(#moonGrad)"/>
+  <!-- Moon craters -->
+  <circle cx="935" cy="115" r="10" fill="rgba(92,22,15,0.2)"/>
+  <circle cx="985" cy="125" r="6" fill="rgba(92,22,15,0.15)"/>
+  <circle cx="950" cy="165" r="12" fill="rgba(92,22,15,0.18)"/>
+  <circle cx="995" cy="170" r="7" fill="rgba(92,22,15,0.12)"/>
+  <circle cx="920" cy="150" r="5" fill="rgba(92,22,15,0.1)"/>
+  <!-- Moon rim highlight -->
+  <circle cx="960" cy="140" r="100" stroke="rgba(232,85,62,0.3)" stroke-width="1" fill="none"/>
+  <circle cx="960" cy="140" r="96" stroke="rgba(255,200,180,0.12)" stroke-width="0.4" fill="none"/>
+
+  <!-- Ink mountains — layered silhouettes -->
+  <path d="M0 630V440c40-15 60-30 93-26 28 4 38-27 65-31 30-5 39 28 65 23 30-6 44-49 74-49 35 0 38 40 65 40 28 0 38-30 66-33 34-3 48 36 76 35 30-1 38-48 69-49 32-1 43 37 74 38 28 1 40-24 70-26 36-2 47 29 76 28 34-1 44-42 76-43 35-1 47 33 77 32 29-1 44-28 71-29 33-1 51 28 81 27 32-2 41-35 73-39 37-4 49 26 84 24 29-2 47-22 75-29v130Z" fill="#5c2820" opacity="0.55"/>
+  <path d="M0 630V490c45-15 70-10 99-21 32-12 40-40 69-42 32-2 44 26 72 24 32-3 40-39 71-41 35-3 44 29 74 30 31 1 41-27 70-29 34-3 48 28 78 29 30 1 43-35 72-38 36-3 47 33 79 34 30 1 42-22 69-26 34-4 52 25 81 24 32-1 43-31 71-34 36-3 48 28 79 29 31 2 44-22 71-26 37-6 53 19 83 20 33 2 48-18 81-28v131Z" fill="#2e1410" opacity="0.85"/>
+  <path d="M0 630V600c134-11 198-4 295-13 112-11 188-4 296-12 115-8 196-2 302-9 115-8 210-2 446-13v77Z" fill="#0d0807" opacity="0.65"/>
+
+  <!-- Silk ribbon band -->
+  <path d="M-30 540C100 470 198 565 320 510S520 475 640 518S810 530 900 490S1020 520 1140 470L1230 430V530C1100 580 1020 510 910 545S740 570 620 535S420 520 290 565S100 535 -30 560Z" fill="url(#silkGrad)" opacity="0.7"/>
+
+  <!-- Vignette -->
+  <rect width="1200" height="630" fill="url(#vignette)"/>
+
+  <!-- Center seal circle -->
+  <circle cx="600" cy="220" r="75" fill="url(#sealGrad)" stroke="rgba(246,202,98,0.6)" stroke-width="2"/>
+  <circle cx="600" cy="220" r="68" fill="none" stroke="rgba(246,202,98,0.25)" stroke-width="1"/>
+  <!-- Dashed outer ring -->
+  <circle cx="600" cy="220" r="82" fill="none" stroke="rgba(246,202,98,0.35)" stroke-width="1" stroke-dasharray="3 4"/>
+
+  <!-- Kanji "重" in the seal -->
+  <text x="600" y="245" text-anchor="middle" font-family="Noto Serif SC, serif" font-size="72" font-weight="700" fill="#fff8df" style="filter: drop-shadow(0 2px 8px rgba(246,202,98,0.55));">重</text>
+
+  <!-- Small label under seal -->
+  <text x="600" y="318" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="600" letter-spacing="3" fill="#f6ca62" opacity="0.8">TRÙNG HOAN</text>
+
+  <!-- Main title -->
+  <text x="600" y="380" text-anchor="middle" font-family="sans-serif" font-size="52" font-weight="800" letter-spacing="4" fill="url(#goldText)" style="filter: drop-shadow(0 3px 20px rgba(238,179,55,0.2));">TRÙNG HOAN TÁI</text>
+
+  <!-- Decorative divider lines -->
+  <line x1="420" y1="405" x2="520" y2="405" stroke="rgba(238,179,55,0.5)" stroke-width="1"/>
+  <line x1="680" y1="405" x2="780" y2="405" stroke="rgba(238,179,55,0.5)" stroke-width="1"/>
+  <circle cx="600" cy="405" r="3" fill="rgba(238,179,55,0.6)"/>
+
+  <!-- Tagline -->
+  <text x="600" y="445" text-anchor="middle" font-family="serif" font-size="22" font-style="italic" fill="#f3dca8" opacity="0.85">Nơi linh hồn bị giam giữ, sinh tử song hành.</text>
+
+  <!-- Subtitle -->
+  <text x="600" y="480" text-anchor="middle" font-family="serif" font-size="18" fill="#f6ca62" opacity="0.9">Mười lăm dị sự — một con đường trở về.</text>
+
+  <!-- Bottom decorative bar -->
+  <rect x="0" y="620" width="1200" height="10" fill="#170b09"/>
+  <rect x="450" y="624" width="300" height="2" fill="rgba(238,179,55,0.3)"/>
+</svg>
