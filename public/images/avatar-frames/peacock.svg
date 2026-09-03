@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="peacockSilver" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#808080"/>
+      <stop offset="30%" stop-color="#c0c0c0"/>
+      <stop offset="50%" stop-color="#e8e8e8"/>
+      <stop offset="70%" stop-color="#c0c0c0"/>
+      <stop offset="100%" stop-color="#606060"/>
+    </linearGradient>
+    <radialGradient id="peacockEye" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a4a8a"/>
+      <stop offset="40%" stop-color="#2a6abf"/>
+      <stop offset="70%" stop-color="#1a4a8a"/>
+      <stop offset="100%" stop-color="#0a2a5a"/>
+    </radialGradient>
+  </defs>
+  <!-- Outer silver ring -->
+  <circle cx="100" cy="100" r="92" fill="none" stroke="url(#peacockSilver)" stroke-width="14"/>
+  <!-- Inner ring -->
+  <circle cx="100" cy="100" r="78" fill="none" stroke="url(#peacockSilver)" stroke-width="1" opacity="0.5"/>
+  <!-- Peacock feather eye at top -->
+  <g transform="translate(100,16)">
+    <!-- Outer feather -->
+    <ellipse cx="0" cy="-2" rx="8" ry="12" fill="url(#peacockSilver)" opacity="0.3" stroke="#808080" stroke-width="0.3"/>
+    <!-- Eye of feather -->
+    <ellipse cx="0" cy="-4" rx="5" ry="7" fill="url(#peacockEye)" stroke="#1a4a8a" stroke-width="0.5"/>
+    <ellipse cx="0" cy="-4" rx="3" ry="5" fill="#0a2a5a" opacity="0.6"/>
+    <ellipse cx="0" cy="-4" rx="1.5" ry="2.5" fill="#1a4a8a"/>
+    <!-- Feather fronds -->
+    <g stroke="#808080" stroke-width="0.5" opacity="0.6">
+      <path d="M-7,-2 Q-9,-5 -8,-8"/>
+      <path d="M-5,0 Q-7,-3 -6,-6"/>
+      <path d="M7,-2 Q9,-5 8,-8"/>
+      <path d="M5,0 Q7,-3 6,-6"/>
+    </g>
+  </g>
+  <!-- Peacock feather patterns left -->
+  <g transform="translate(35,100) rotate(-90)" opacity="0.7">
+    <!-- Feather 1 -->
+    <ellipse cx="0" cy="-15" rx="4" ry="8" fill="url(#peacockSilver)" opacity="0.3"/>
+    <ellipse cx="0" cy="-16" rx="2.5" ry="4" fill="url(#peacockEye)" opacity="0.7"/>
+    <!-- Feather 2 -->
+    <ellipse cx="-4" cy="-5" rx="3" ry="6" fill="url(#peacockSilver)" opacity="0.3"/>
+    <ellipse cx="-4" cy="-6" rx="1.5" ry="3" fill="url(#peacockEye)" opacity="0.5"/>
+    <!-- Feather 3 -->
+    <ellipse cx="4" cy="5" rx="3" ry="6" fill="url(#peacockSilver)" opacity="0.3"/>
+    <ellipse cx="4" cy="4" rx="1.5" ry="3" fill="url(#peacockEye)" opacity="0.5"/>
+  </g>
+  <!-- Peacock feather patterns right -->
+  <g transform="translate(165,100) rotate(90)" opacity="0.7">
+    <ellipse cx="0" cy="-15" rx="4" ry="8" fill="url(#peacockSilver)" opacity="0.3"/>
+    <ellipse cx="0" cy="-16" rx="2.5" ry="4" fill="url(#peacockEye)" opacity="0.7"/>
+    <ellipse cx="-4" cy="-5" rx="3" ry="6" fill="url(#peacockSilver)" opacity="0.3"/>
+    <ellipse cx="-4" cy="-6" rx="1.5" ry="3" fill="url(#peacockEye)" opacity="0.5"/>
+    <ellipse cx="4" cy="5" rx="3" ry="6" fill="url(#peacockSilver)" opacity="0.3"/>
+    <ellipse cx="4" cy="4" rx="1.5" ry="3" fill="url(#peacockEye)" opacity="0.5"/>
+  </g>
+  <!-- Gemstones at bottom -->
+  <g transform="translate(100,184)">
+    <!-- Sapphire -->
+    <ellipse cx="-8" cy="0" rx="3" ry="2.5" fill="#2a6abf" stroke="#1a4a8a" stroke-width="0.3"/>
+    <!-- Amethyst -->
+    <ellipse cx="0" cy="0" rx="3" ry="2.5" fill="#8a4abf" stroke="#5a2a8a" stroke-width="0.3"/>
+    <!-- Topaz -->
+    <ellipse cx="8" cy="0" rx="3" ry="2.5" fill="#e8a830" stroke="#b87820" stroke-width="0.3"/>
+  </g>
+  <!-- Cloisonne enamel effect lines -->
+  <g fill="none" stroke="#808080" stroke-width="0.4" opacity="0.4">
+    <path d="M40,60 Q45,55 50,60 Q55,65 60,60"/>
+    <path d="M140,60 Q145,55 150,60 Q155,65 160,60"/>
+    <path d="M40,140 Q45,145 50,140 Q55,135 60,140"/>
+    <path d="M140,140 Q145,145 150,140 Q155,135 160,140"/>
+  </g>
+  <!-- Silver sparkles -->
+  <g fill="#e8e8e8" opacity="0.5">
+    <circle cx="50" cy="50" r="1"/>
+    <circle cx="150" cy="50" r="1"/>
+    <circle cx="50" cy="150" r="1"/>
+    <circle cx="150" cy="150" r="1"/>
+  </g>
+</svg>

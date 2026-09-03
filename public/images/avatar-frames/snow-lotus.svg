@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="snowJade" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e8f0f0"/>
+      <stop offset="30%" stop-color="#d0e0e8"/>
+      <stop offset="50%" stop-color="#e8f4f8"/>
+      <stop offset="70%" stop-color="#c8d8e8"/>
+      <stop offset="100%" stop-color="#b8c8d8"/>
+    </linearGradient>
+    <linearGradient id="snowGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c8a030"/>
+      <stop offset="50%" stop-color="#f0d060"/>
+      <stop offset="100%" stop-color="#c8a030"/>
+    </linearGradient>
+    <filter id="snowGlow">
+      <feGaussianBlur stdDeviation="1" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Outer white jade ring -->
+  <circle cx="100" cy="100" r="92" fill="none" stroke="url(#snowJade)" stroke-width="14"/>
+  <!-- Inner gold ring -->
+  <circle cx="100" cy="100" r="78" fill="none" stroke="url(#snowGold)" stroke-width="1" opacity="0.5"/>
+  <!-- Ice texture lines -->
+  <g fill="none" stroke="#b8c8d8" stroke-width="0.5" opacity="0.4">
+    <path d="M25,90 Q30,85 28,80"/>
+    <path d="M175,90 Q170,85 172,80"/>
+    <path d="M25,110 Q30,115 28,120"/>
+    <path d="M175,110 Q170,115 172,120"/>
+  </g>
+  <!-- Snow lotus at top -->
+  <g transform="translate(100,16)" filter="url(#snowGlow)">
+    <!-- Petals -->
+    <ellipse cx="0" cy="-5" rx="4" ry="8" fill="url(#snowJade)" stroke="#b8c8d8" stroke-width="0.3"/>
+    <ellipse cx="-4" cy="-3" rx="3.5" ry="7" fill="url(#snowJade)" stroke="#b8c8d8" stroke-width="0.3" transform="rotate(-30)"/>
+    <ellipse cx="4" cy="-3" rx="3.5" ry="7" fill="url(#snowJade)" stroke="#b8c8d8" stroke-width="0.3" transform="rotate(30)"/>
+    <!-- Center -->
+    <circle cx="0" cy="-2" r="2" fill="url(#snowGold)"/>
+  </g>
+  <!-- Gold butterfly at bottom-left -->
+  <g transform="translate(35,165)" filter="url(#snowGlow)">
+    <!-- Wings -->
+    <ellipse cx="-4" cy="-2" rx="4" ry="3" fill="url(#snowGold)" opacity="0.7" stroke="#c8a030" stroke-width="0.3"/>
+    <ellipse cx="4" cy="-2" rx="4" ry="3" fill="url(#snowGold)" opacity="0.7" stroke="#c8a030" stroke-width="0.3"/>
+    <ellipse cx="-3" cy="2" rx="3" ry="2.5" fill="url(#snowGold)" opacity="0.5"/>
+    <ellipse cx="3" cy="2" rx="3" ry="2.5" fill="url(#snowGold)" opacity="0.5"/>
+    <!-- Body -->
+    <ellipse cx="0" cy="0" rx="0.8" ry="4" fill="#c8a030"/>
+    <!-- Antennae -->
+    <path d="M0,-4 L-1,-6" fill="none" stroke="#c8a030" stroke-width="0.5"/>
+    <path d="M0,-4 L1,-6" fill="none" stroke="#c8a030" stroke-width="0.5"/>
+  </g>
+  <!-- Gold butterfly at bottom-right -->
+  <g transform="translate(165,165) scale(-1,1)" filter="url(#snowGlow)">
+    <ellipse cx="-4" cy="-2" rx="4" ry="3" fill="url(#snowGold)" opacity="0.7" stroke="#c8a030" stroke-width="0.3"/>
+    <ellipse cx="4" cy="-2" rx="4" ry="3" fill="url(#snowGold)" opacity="0.7" stroke="#c8a030" stroke-width="0.3"/>
+    <ellipse cx="-3" cy="2" rx="3" ry="2.5" fill="url(#snowGold)" opacity="0.5"/>
+    <ellipse cx="3" cy="2" rx="3" ry="2.5" fill="url(#snowGold)" opacity="0.5"/>
+    <ellipse cx="0" cy="0" rx="0.8" ry="4" fill="#c8a030"/>
+    <path d="M0,-4 L-1,-6" fill="none" stroke="#c8a030" stroke-width="0.5"/>
+    <path d="M0,-4 L1,-6" fill="none" stroke="#c8a030" stroke-width="0.5"/>
+  </g>
+  <!-- Silk ribbon left -->
+  <g transform="translate(28,100)" opacity="0.5">
+    <path d="M0,-15 C-2,-5 2,5 0,15" fill="none" stroke="url(#snowGold)" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <!-- Silk ribbon right -->
+  <g transform="translate(172,100)" opacity="0.5">
+    <path d="M0,-15 C2,-5 -2,5 0,15" fill="none" stroke="url(#snowGold)" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <!-- Emerald accents -->
+  <g fill="#50c878" opacity="0.6" stroke="#3a8a5a" stroke-width="0.3">
+    <circle cx="50" cy="50" r="2"/>
+    <circle cx="150" cy="50" r="2"/>
+  </g>
+  <!-- Pearl accents -->
+  <g fill="#f0f0f0" opacity="0.7" stroke="#d0d0d0" stroke-width="0.3">
+    <circle cx="100" cy="185" r="2"/>
+  </g>
+</svg>

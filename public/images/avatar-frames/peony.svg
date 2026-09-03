@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="peonyJade" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f6b4e"/>
+      <stop offset="50%" stop-color="#1a8a63"/>
+      <stop offset="100%" stop-color="#0a5c40"/>
+    </linearGradient>
+    <linearGradient id="peonyGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d4a017"/>
+      <stop offset="50%" stop-color="#f4d03f"/>
+      <stop offset="100%" stop-color="#b8860b"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer jade ring -->
+  <circle cx="100" cy="100" r="92" fill="none" stroke="url(#peonyJade)" stroke-width="14"/>
+  <!-- Inner gold ring -->
+  <circle cx="100" cy="100" r="78" fill="none" stroke="url(#peonyGold)" stroke-width="1.5" opacity="0.7"/>
+  <!-- Peony at top -->
+  <g transform="translate(100,16)">
+    <!-- Outer petals -->
+    <ellipse cx="0" cy="-4" rx="5" ry="8" fill="url(#peonyGold)" opacity="0.8" stroke="#b8860b" stroke-width="0.3"/>
+    <ellipse cx="-5" cy="-1" rx="5" ry="7" fill="url(#peonyGold)" opacity="0.7" transform="rotate(-35)" stroke="#b8860b" stroke-width="0.3"/>
+    <ellipse cx="5" cy="-1" rx="5" ry="7" fill="url(#peonyGold)" opacity="0.7" transform="rotate(35)" stroke="#b8860b" stroke-width="0.3"/>
+    <!-- Inner petals -->
+    <ellipse cx="0" cy="-2" rx="3" ry="5" fill="#f4d03f" opacity="0.9"/>
+    <circle cx="0" cy="0" r="2" fill="#d4a017"/>
+  </g>
+  <!-- Peony at bottom -->
+  <g transform="translate(100,184) rotate(180)">
+    <ellipse cx="0" cy="-4" rx="5" ry="8" fill="url(#peonyGold)" opacity="0.8" stroke="#b8860b" stroke-width="0.3"/>
+    <ellipse cx="-5" cy="-1" rx="5" ry="7" fill="url(#peonyGold)" opacity="0.7" transform="rotate(-35)" stroke="#b8860b" stroke-width="0.3"/>
+    <ellipse cx="5" cy="-1" rx="5" ry="7" fill="url(#peonyGold)" opacity="0.7" transform="rotate(35)" stroke="#b8860b" stroke-width="0.3"/>
+    <ellipse cx="0" cy="-2" rx="3" ry="5" fill="#f4d03f" opacity="0.9"/>
+    <circle cx="0" cy="0" r="2" fill="#d4a017"/>
+  </g>
+  <!-- Silk ribbon left -->
+  <g transform="translate(28,100)" opacity="0.6">
+    <path d="M0,-20 C-3,-10 3,0 0,10 C-3,15 3,20 0,25" fill="none" stroke="url(#peonyGold)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M2,-18 C-1,-8 5,2 2,12" fill="none" stroke="url(#peonyJade)" stroke-width="1" opacity="0.5"/>
+  </g>
+  <!-- Silk ribbon right -->
+  <g transform="translate(172,100)" opacity="0.6">
+    <path d="M0,-20 C3,-10 -3,0 0,10 C3,15 -3,20 0,25" fill="none" stroke="url(#peonyGold)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M-2,-18 C1,-8 -5,2 -2,12" fill="none" stroke="url(#peonyJade)" stroke-width="1" opacity="0.5"/>
+  </g>
+  <!-- Emerald beads -->
+  <g fill="#1a8a63" opacity="0.8" stroke="#0a5c40" stroke-width="0.3">
+    <circle cx="45" cy="45" r="2.5"/>
+    <circle cx="155" cy="45" r="2.5"/>
+    <circle cx="45" cy="155" r="2.5"/>
+    <circle cx="155" cy="155" r="2.5"/>
+  </g>
+  <!-- Jade texture lines -->
+  <g fill="none" stroke="#0a5c40" stroke-width="0.5" opacity="0.3">
+    <path d="M20,100 Q25,95 20,90"/>
+    <path d="M180,100 Q175,95 180,90"/>
+  </g>
+</svg>

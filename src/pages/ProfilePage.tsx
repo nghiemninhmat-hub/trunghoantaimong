@@ -2,11 +2,13 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Transaction, InventoryItem, CURRENCY_LABELS } from '@/lib/supabase';
 import { StatCard, StatGrid } from '@/components/StatCard';
+import FramedAvatar from '@/components/FramedAvatar';
+import AvatarFrameShop from '@/components/AvatarFrameShop';
 import {
   UserCircle, Coins, Sparkles, Skull, Package, History, Edit3,
   CheckCircle2, Clock, AlertCircle, Ghost, Plus, Minus, Send,
   Heart, Sparkle, Brain, ShieldCheck, Camera, X, Loader2, Upload, Link,
-  ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronRight
+  ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronRight, Frame
 } from 'lucide-react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import VisitorProfileCard from '@/components/VisitorProfileCard';
@@ -61,6 +63,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [emailVisible, setEmailVisible] = useState(false);
   const [statusDescOpen, setStatusDescOpen] = useState(false);
+  const [frameShopOpen, setFrameShopOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -302,39 +305,45 @@ export default function ProfilePage() {
           {/* Avatar — larger on mobile, centered; side-by-side on desktop */}
           <div className="flex-shrink-0 flex flex-col items-center gap-3">
             <div className="relative group">
-              {/* Outer ornamental glow ring */}
-              <div className="absolute -inset-2 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(214,65,46,0.25),rgba(140,17,17,0.1)_50%,transparent_75%)] blur-md" />
-              {/* Thin decorative ring */}
-              <div className="absolute -inset-1.5 rounded-full border border-[#670201]/30" />
-              {/* Avatar frame — circular, blood-moon style */}
-              <div className="relative w-28 h-28 sm:w-40 sm:h-40 lg:w-44 lg:h-44 rounded-full overflow-hidden border-[3px] border-[#670201]/50 shadow-xl shadow-black/50 bg-gradient-to-br from-[#670201] to-[#a00404]">
-                {/* Inner rim highlight */}
-                <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-amber-200/10 pointer-events-none z-10" />
-                {avatarEditing ? (
-                  avatarMode === 'url' && avatarInput ? (
+              {avatarEditing ? (
+                <div className="relative w-28 h-28 sm:w-40 sm:h-40 lg:w-44 lg:h-44 rounded-full overflow-hidden border-[3px] border-[#670201]/50 shadow-xl shadow-black/50 bg-gradient-to-br from-[#670201] to-[#a00404]">
+                  <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-amber-200/10 pointer-events-none z-10" />
+                  {avatarMode === 'url' && avatarInput ? (
                     <img src={avatarInput} alt="preview" className="w-full h-full object-cover" onError={() => setAvatarPreviewOk(false)} onLoad={() => setAvatarPreviewOk(true)} />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <Camera className="w-10 h-10 sm:w-12 sm:h-12 text-amber-100/80" />
                     </div>
-                  )
-                ) : profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt={profile.oc_name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <UserCircle className="w-16 h-16 sm:w-20 sm:h-20 text-amber-100/80" />
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              ) : (
+                <FramedAvatar
+                  avatarUrl={profile.avatar_url}
+                  ocName={profile.oc_name}
+                  frameId={profile.active_frame_id}
+                  size="md"
+                />
+              )}
               {/* Change avatar button — overlay on image */}
               {!avatarEditing && (
                 <button
                   onClick={() => { setAvatarEditing(true); setAvatarInput(profile.avatar_url || ''); setAvatarError(''); setAvatarPreviewOk(true); setAvatarMode('upload'); }}
-                  className="absolute bottom-0 right-0 m-1 sm:m-2 p-2 sm:p-2.5 rounded-full bg-[#670201]/90 hover:bg-[#a00404] text-amber-100 shadow-lg transition-all backdrop-blur-sm border border-amber-300/20"
+                  className="absolute bottom-0 right-0 m-1 sm:m-2 p-2 sm:p-2.5 rounded-full bg-[#670201]/90 hover:bg-[#a00404] text-amber-100 shadow-lg transition-all backdrop-blur-sm border border-amber-300/20 z-30"
                   title="Đổi ảnh đại diện"
                   aria-label="Đổi ảnh đại diện"
                 >
                   <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              )}
+              {/* Frame shop button */}
+              {!avatarEditing && (
+                <button
+                  onClick={() => setFrameShopOpen(true)}
+                  className="absolute top-0 right-0 m-1 sm:m-2 p-2 sm:p-2.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 shadow-lg transition-all backdrop-blur-sm border border-amber-400/30 z-30"
+                  title="Cửa hàng khung viền"
+                  aria-label="Cửa hàng khung viền"
+                >
+                  <Frame className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               )}
             </div>
@@ -913,6 +922,13 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Avatar Frame Shop */}
+      <AvatarFrameShop
+        open={frameShopOpen}
+        onClose={() => setFrameShopOpen(false)}
+        onProfileUpdate={refreshProfile}
+      />
     </div>
   );
 }

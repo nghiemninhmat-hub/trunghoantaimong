@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="dragonGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b8860b"/>
+      <stop offset="30%" stop-color="#ffd700"/>
+      <stop offset="50%" stop-color="#ffed4e"/>
+      <stop offset="70%" stop-color="#ffd700"/>
+      <stop offset="100%" stop-color="#b8860b"/>
+    </linearGradient>
+    <filter id="dragonGlow">
+      <feGaussianBlur stdDeviation="1" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Outer thick ring -->
+  <circle cx="100" cy="100" r="93" fill="none" stroke="url(#dragonGold)" stroke-width="16"/>
+  <!-- Inner ring -->
+  <circle cx="100" cy="100" r="77" fill="none" stroke="#b8860b" stroke-width="1.5" opacity="0.5"/>
+  <!-- Dragon coiling left side -->
+  <g filter="url(#dragonGlow)" opacity="0.9">
+    <path d="M100,8 C80,12 65,25 60,45 C58,55 62,60 68,58 C74,56 76,50 72,46 C68,42 70,38 76,40 C82,42 84,48 80,54 C76,60 70,62 66,58" fill="none" stroke="url(#dragonGold)" stroke-width="3" stroke-linecap="round"/>
+    <!-- Dragon head at top left -->
+    <g transform="translate(72,30)">
+      <ellipse cx="0" cy="0" rx="5" ry="3.5" fill="url(#dragonGold)" stroke="#b8860b" stroke-width="0.5"/>
+      <circle cx="-2" cy="-1" r="1" fill="#c0392b"/>
+      <path d="M-4,1 L-7,3 L-5,1" fill="url(#dragonGold)"/>
+      <!-- Horns -->
+      <path d="M2,-3 L4,-7 L3,-3" fill="url(#dragonGold)" stroke="#b8860b" stroke-width="0.3"/>
+    </g>
+    <!-- Dragon scales detail -->
+    <g fill="none" stroke="#b8860b" stroke-width="0.5" opacity="0.5">
+      <path d="M70,38 Q72,36 74,38"/>
+      <path d="M68,44 Q70,42 72,44"/>
+      <path d="M66,50 Q68,48 70,50"/>
+    </g>
+  </g>
+  <!-- Dragon coiling right side -->
+  <g filter="url(#dragonGlow)" opacity="0.9">
+    <path d="M100,8 C120,12 135,25 140,45 C142,55 138,60 132,58 C126,56 124,50 128,46 C132,42 130,38 124,40 C118,42 116,48 120,54 C124,60 130,62 134,58" fill="none" stroke="url(#dragonGold)" stroke-width="3" stroke-linecap="round"/>
+    <!-- Dragon head at top right -->
+    <g transform="translate(128,30)">
+      <ellipse cx="0" cy="0" rx="5" ry="3.5" fill="url(#dragonGold)" stroke="#b8860b" stroke-width="0.5"/>
+      <circle cx="2" cy="-1" r="1" fill="#c0392b"/>
+      <path d="M4,1 L7,3 L5,1" fill="url(#dragonGold)"/>
+      <!-- Horns -->
+      <path d="M-2,-3 L-4,-7 L-3,-3" fill="url(#dragonGold)" stroke="#b8860b" stroke-width="0.3"/>
+    </g>
+    <!-- Dragon scales -->
+    <g fill="none" stroke="#b8860b" stroke-width="0.5" opacity="0.5">
+      <path d="M130,38 Q128,36 126,38"/>
+      <path d="M132,44 Q130,42 128,44"/>
+      <path d="M134,50 Q132,48 130,50"/>
+    </g>
+  </g>
+  <!-- Flaming pearl at top center -->
+  <g transform="translate(100,14)" filter="url(#dragonGlow)">
+    <circle cx="0" cy="0" r="4" fill="url(#dragonGold)" opacity="0.9"/>
+    <circle cx="0" cy="0" r="2.5" fill="#fff" opacity="0.6"/>
+    <!-- Flames -->
+    <path d="M0,-4 C-2,-7 -1,-9 0,-11 C1,-9 2,-7 0,-4" fill="url(#dragonGold)" opacity="0.7"/>
+  </g>
+  <!-- Cloud patterns at bottom -->
+  <g transform="translate(100,185)" opacity="0.6">
+    <path d="M-15,0 Q-10,-4 -5,0 Q0,-4 5,0 Q10,-4 15,0" fill="none" stroke="url(#dragonGold)" stroke-width="2"/>
+  </g>
+  <!-- Gold dots -->
+  <g fill="#ffd700" opacity="0.7">
+    <circle cx="40" cy="100" r="2"/>
+    <circle cx="160" cy="100" r="2"/>
+  </g>
+</svg>

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Friendship } from '@/lib/supabase';
+import FramedAvatar from '@/components/FramedAvatar';
 import {
   UserCircle, Crown, Ghost, Mail, Eye, EyeOff, UserPlus, Check, Loader2,
   MessageCircle, ArrowLeft, AlertCircle,
@@ -21,6 +22,7 @@ export default function VisitorProfileCard() {
   const [bio, setBio] = useState('');
   const [danhVong, setDanhVong] = useState('');
   const [createdAt, setCreatedAt] = useState('');
+  const [activeFrameId, setActiveFrameId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -33,7 +35,7 @@ export default function VisitorProfileCard() {
     setLoading(true);
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, oc_name, anonymous_name, avatar_url, gender, bio, danh_vong, is_approved, created_at')
+      .select('id, oc_name, anonymous_name, avatar_url, gender, bio, danh_vong, is_approved, created_at, active_frame_id')
       .eq('id', targetId)
       .eq('is_approved', true)
       .maybeSingle();
@@ -49,6 +51,7 @@ export default function VisitorProfileCard() {
     setBio(data.bio || '');
     setDanhVong(data.danh_vong || '');
     setCreatedAt(data.created_at || '');
+    setActiveFrameId((data as any).active_frame_id || null);
     setLoading(false);
   }, [targetId]);
 
@@ -233,20 +236,12 @@ export default function VisitorProfileCard() {
       <div className="p-5 sm:p-6 lg:p-8 rounded-2xl bg-black/30 border border-white/10 backdrop-blur-sm">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
           <div className="flex-shrink-0">
-            <div className="relative group">
-              <div className="absolute -inset-2 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(214,65,46,0.25),rgba(140,17,17,0.1)_50%,transparent_75%)] blur-md" />
-              <div className="absolute -inset-1.5 rounded-full border border-[#670201]/30" />
-              <div className="relative w-28 h-28 sm:w-40 sm:h-40 rounded-full overflow-hidden border-[3px] border-[#670201]/50 shadow-xl shadow-black/50 bg-gradient-to-br from-[#670201] to-[#a00404]">
-                <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-amber-200/10 pointer-events-none z-10" />
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt={name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <UserCircle className="w-16 h-16 sm:w-20 sm:h-20 text-amber-100/80" />
-                  </div>
-                )}
-              </div>
-            </div>
+            <FramedAvatar
+              avatarUrl={avatarUrl || null}
+              ocName={name}
+              frameId={activeFrameId}
+              size="md"
+            />
           </div>
 
           <div className="flex-1 min-w-0 w-full space-y-3 text-center sm:text-left">

@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="beastBronze" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a3a2a"/>
+      <stop offset="30%" stop-color="#3a5a3a"/>
+      <stop offset="50%" stop-color="#4a6a4a"/>
+      <stop offset="70%" stop-color="#3a5a3a"/>
+      <stop offset="100%" stop-color="#1a2a1a"/>
+    </linearGradient>
+    <linearGradient id="beastObsidian" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="50%" stop-color="#2a2a3e"/>
+      <stop offset="100%" stop-color="#0a0a1e"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer bronze ring with patina -->
+  <circle cx="100" cy="100" r="92" fill="none" stroke="url(#beastBronze)" stroke-width="14"/>
+  <!-- Inner ring -->
+  <circle cx="100" cy="100" r="78" fill="none" stroke="#2a3a2a" stroke-width="1" opacity="0.5"/>
+  <!-- Qilin (mythical beast) at top -->
+  <g transform="translate(100,18)">
+    <!-- Body silhouette -->
+    <path d="M-8,4 C-10,0 -8,-4 -4,-5 C-2,-6 0,-7 2,-6 C6,-5 8,-2 8,2 C8,4 6,5 4,4" fill="url(#beastBronze)" stroke="#1a2a1a" stroke-width="0.3"/>
+    <!-- Head -->
+    <ellipse cx="-5" cy="-3" rx="3" ry="2.5" fill="url(#beastBronze)" stroke="#1a2a1a" stroke-width="0.3"/>
+    <!-- Horn -->
+    <path d="M-6,-5 L-7,-9 L-5,-6" fill="url(#beastBronze)" stroke="#1a2a1a" stroke-width="0.3"/>
+    <!-- Eye -->
+    <circle cx="-5" cy="-3" r="0.8" fill="#1a1a2e"/>
+    <!-- Legs -->
+    <path d="M-4,4 L-5,8" fill="none" stroke="#1a2a1a" stroke-width="1"/>
+    <path d="M2,4 L3,8" fill="none" stroke="#1a2a1a" stroke-width="1"/>
+    <!-- Tail -->
+    <path d="M8,2 C12,0 14,-2 12,-4" fill="none" stroke="url(#beastBronze)" stroke-width="1.5"/>
+  </g>
+  <!-- Pixiu at bottom -->
+  <g transform="translate(100,182) rotate(180)">
+    <path d="M-8,4 C-10,0 -8,-4 -4,-5 C-2,-6 0,-7 2,-6 C6,-5 8,-2 8,2 C8,4 6,5 4,4" fill="url(#beastBronze)" stroke="#1a2a1a" stroke-width="0.3"/>
+    <ellipse cx="5" cy="-3" rx="3" ry="2.5" fill="url(#beastBronze)" stroke="#1a2a1a" stroke-width="0.3"/>
+    <path d="M6,-5 L7,-9 L5,-6" fill="url(#beastBronze)" stroke="#1a2a1a" stroke-width="0.3"/>
+    <circle cx="5" cy="-3" r="0.8" fill="#1a1a2e"/>
+    <path d="M-4,4 L-5,8" fill="none" stroke="#1a2a1a" stroke-width="1"/>
+    <path d="M2,4 L3,8" fill="none" stroke="#1a2a1a" stroke-width="1"/>
+    <path d="M-8,2 C-12,0 -14,-2 -12,-4" fill="none" stroke="url(#beastBronze)" stroke-width="1.5"/>
+  </g>
+  <!-- Obsidian stones -->
+  <g fill="url(#beastObsidian)" stroke="#0a0a1e" stroke-width="0.3">
+    <circle cx="30" cy="100" r="3.5"/>
+    <circle cx="170" cy="100" r="3.5"/>
+  </g>
+  <!-- Turquoise stones -->
+  <g fill="#1a8a8a" stroke="#0a5a5a" stroke-width="0.3" opacity="0.7">
+    <circle cx="50" cy="50" r="2.5"/>
+    <circle cx="150" cy="50" r="2.5"/>
+    <circle cx="50" cy="150" r="2.5"/>
+    <circle cx="150" cy="150" r="2.5"/>
+  </g>
+  <!-- Ancient runes -->
+  <g fill="none" stroke="#3a5a3a" stroke-width="0.5" opacity="0.5">
+    <path d="M40,80 L44,76 L40,72 L36,76 Z"/>
+    <path d="M160,80 L164,76 L160,72 L156,76 Z"/>
+    <path d="M40,120 L44,124 L40,128 L36,124 Z"/>
+    <path d="M160,120 L164,124 L160,128 L156,124 Z"/>
+  </g>
+  <!-- Patina spots -->
+  <g fill="#3a5a3a" opacity="0.3">
+    <circle cx="35" cy="65" r="1.5"/>
+    <circle cx="165" cy="65" r="1.5"/>
+    <circle cx="35" cy="135" r="1.5"/>
+    <circle cx="165" cy="135" r="1.5"/>
+  </g>
+  <!-- Mystical border lines -->
+  <g fill="none" stroke="#2a3a2a" stroke-width="0.5" opacity="0.4">
+    <path d="M25,100 Q28,95 25,90"/>
+    <path d="M175,100 Q172,95 175,90"/>
+    <path d="M25,100 Q28,105 25,110"/>
+    <path d="M175,100 Q172,105 175,110"/>
+  </g>
+</svg>

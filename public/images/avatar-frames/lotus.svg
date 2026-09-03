@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="lotusBronze" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5c4a2e"/>
+      <stop offset="30%" stop-color="#8b7333"/>
+      <stop offset="50%" stop-color="#a0823e"/>
+      <stop offset="70%" stop-color="#8b7333"/>
+      <stop offset="100%" stop-color="#4a3a20"/>
+    </linearGradient>
+    <linearGradient id="lotusGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#b8860b"/>
+      <stop offset="50%" stop-color="#e8c840"/>
+      <stop offset="100%" stop-color="#b8860b"/>
+    </linearGradient>
+  </defs>
+  <!-- Outer bronze ring -->
+  <circle cx="100" cy="100" r="92" fill="none" stroke="url(#lotusBronze)" stroke-width="14"/>
+  <!-- Inner gold wire ring -->
+  <circle cx="100" cy="100" r="78" fill="none" stroke="url(#lotusGold)" stroke-width="1" opacity="0.6"/>
+  <!-- Lotus at top -->
+  <g transform="translate(100,16)">
+    <!-- Lotus petals -->
+    <path d="M0,0 C-6,-4 -8,-10 -4,-14 C-2,-12 0,-14 0,-16 C0,-14 2,-12 4,-14 C8,-10 6,-4 0,0" fill="url(#lotusBronze)" stroke="url(#lotusGold)" stroke-width="0.5"/>
+    <!-- Inner petal -->
+    <path d="M0,-2 C-3,-5 -4,-9 -2,-11 C-1,-10 0,-11 0,-12 C0,-11 1,-10 2,-11 C4,-9 3,-5 0,-2" fill="url(#lotusGold)" opacity="0.7"/>
+    <!-- Center -->
+    <circle cx="0" cy="-6" r="1.5" fill="#e8c840"/>
+  </g>
+  <!-- Lotus at bottom -->
+  <g transform="translate(100,184) rotate(180)">
+    <path d="M0,0 C-6,-4 -8,-10 -4,-14 C-2,-12 0,-14 0,-16 C0,-14 2,-12 4,-14 C8,-10 6,-4 0,0" fill="url(#lotusBronze)" stroke="url(#lotusGold)" stroke-width="0.5"/>
+    <path d="M0,-2 C-3,-5 -4,-9 -2,-11 C-1,-10 0,-11 0,-12 C0,-11 1,-10 2,-11 C4,-9 3,-5 0,-2" fill="url(#lotusGold)" opacity="0.7"/>
+    <circle cx="0" cy="-6" r="1.5" fill="#e8c840"/>
+  </g>
+  <!-- Lapis lazuli stones -->
+  <g fill="#1e3a5f" stroke="#0a1a2e" stroke-width="0.3">
+    <circle cx="30" cy="100" r="3.5"/>
+    <circle cx="170" cy="100" r="3.5"/>
+  </g>
+  <!-- Carnelian stones -->
+  <g fill="#b5651d" stroke="#8b4513" stroke-width="0.3">
+    <circle cx="50" cy="50" r="2.5"/>
+    <circle cx="150" cy="50" r="2.5"/>
+    <circle cx="50" cy="150" r="2.5"/>
+    <circle cx="150" cy="150" r="2.5"/>
+  </g>
+  <!-- Antique patina effect -->
+  <g fill="none" stroke="#3a5f3a" stroke-width="0.5" opacity="0.3">
+    <path d="M25,80 Q30,75 35,80"/>
+    <path d="M175,80 Q170,75 165,80"/>
+    <path d="M25,120 Q30,125 35,120"/>
+    <path d="M175,120 Q170,125 165,120"/>
+  </g>
+  <!-- Gold filigree details -->
+  <g fill="none" stroke="url(#lotusGold)" stroke-width="0.8" opacity="0.5">
+    <path d="M40,100 Q45,95 50,100 Q55,105 60,100"/>
+    <path d="M140,100 Q145,95 150,100 Q155,105 160,100"/>
+  </g>
+</svg>
