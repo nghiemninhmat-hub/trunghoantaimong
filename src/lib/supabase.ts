@@ -280,6 +280,16 @@ export interface BachQuyAm {
   di_van: string;
 }
 
+export interface BachHoaEntry {
+  id: string;
+  identity_name: string;
+  quote: string;
+  avatar_url: string;
+  vote_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export type WillStatus = 'pending' | 'approved' | 'revision_requested' | 'rejected';
 
 export interface Will {

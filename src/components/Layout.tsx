@@ -9,7 +9,7 @@ import MusicPlayer from '@/components/MusicPlayer';
 import PageTransition from '@/components/PageTransition';
 import {
   Home, Store, MessageSquare, Users, Shield, Moon, Sun, LogOut, LogIn,
-  BookOpen, Scroll, Menu, X, UserCircle, MapPinned, Dices, ShieldAlert, Ghost, Crown, ScrollText
+  BookOpen, Scroll, Menu, X, UserCircle, MapPinned, Dices, ShieldAlert, Ghost, Crown, ScrollText, Flower2
 } from 'lucide-react';
 
 const navItems = [
@@ -24,6 +24,7 @@ const navItems = [
   { path: '/kim-bang', label: 'Kim Bảng', icon: Crown },
   { path: '/bach-quy-am', label: 'Bách Quỷ Âm', icon: Ghost },
   { path: '/di-chuc', label: 'Di Chúc', icon: ScrollText },
+  { path: '/bach-hoa-trieu-phung', label: 'Bách Hoa', icon: Flower2 },
   { path: '/profile', label: 'Hồ Sơ', icon: UserCircle },
 ];
 

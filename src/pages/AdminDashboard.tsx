@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus } from '@/lib/supabase';
+import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry } from '@/lib/supabase';
 import {
   Shield, Users, Coins, Store, BookOpen, Ghost, Check, X, Plus, Trash2,
   AlertCircle, CheckCircle2, History, Edit3, Eye, EyeOff, Dices, Package,
   Heart, Sparkle, Brain, Lock, Unlock, FileWarning, Crown, Save, ScrollText,
   Undo2, RotateCcw, Search, UserSearch, ArrowLeft, ChevronDown, ChevronUp, FileSignature, Info,
-  Download, FileDown, Loader2, Archive, Settings
+  Download, FileDown, Loader2, Archive, Settings, Flower2
 } from 'lucide-react';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import PlayerDetailCard from '@/components/PlayerDetailCard';
@@ -20,7 +20,7 @@ const STATUS_TAGS = [
   { value: 'Ngưỡng sinh tử', label: 'Thẻ tím đậm', badgeClass: 'bg-purple-700/20 text-purple-400', activeClass: 'bg-purple-700/30 border-purple-700/50 text-purple-300', idleClass: 'bg-purple-700/5 border-purple-700/15 text-purple-500/70' },
 ];
 
-type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'audit' | 'lookup' | 'wills' | 'settings';
+type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wills' | 'settings';
 
 export default function AdminDashboard() {
   const { profile, isAdmin } = useAuth();
@@ -121,6 +121,12 @@ export default function AdminDashboard() {
   const [expandedWillIds, setExpandedWillIds] = useState<Set<string>>(new Set());
   const [willNoteDraft, setWillNoteDraft] = useState<Record<string, string>>({});
   const [willMsg, setWillMsg] = useState('');
+
+  // Bach Hoa Trieu Phung
+  const [bachHoaEntries, setBachHoaEntries] = useState<BachHoaEntry[]>([]);
+  const [bachHoaMsg, setBachHoaMsg] = useState('');
+  const [showAddBachHoa, setShowAddBachHoa] = useState(false);
+  const [newBachHoa, setNewBachHoa] = useState({ identity_name: '', quote: '', avatar_url: '' });
 
   // Backup / export
   const [exporting, setExporting] = useState(false);
@@ -340,7 +346,7 @@ export default function AdminDashboard() {
   };
 
   const fetchAllData = useCallback(async () => {
-    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData] = await Promise.all([
+    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData] = await Promise.all([
       supabase.from('profiles').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').eq('is_approved', true).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
@@ -355,8 +361,10 @@ export default function AdminDashboard() {
       supabase.from('admin_audit_log').select('*').order('created_at', { ascending: false }).limit(200),
       supabase.from('wheel_spin_log').select('id, user_id, oc_name, reward_key, reward_label, reward_group, is_special, created_at').order('created_at', { ascending: false }).limit(500),
       supabase.from('wills').select('*').order('created_at', { ascending: false }),
+      supabase.from('bach_hoa_entries').select('*').order('vote_count', { ascending: false }),
     ]);
     if (willData?.data) setWills(willData.data as Will[]);
+    if (bachHoaData?.data) setBachHoaEntries(bachHoaData.data as BachHoaEntry[]);
     if (kimBang?.data) setKimBangEntries(kimBang.data as KimBangEntry[]);
     if (pending.data) setPendingProfiles(pending.data as Profile[]);
     if (approved.data) setApprovedProfiles(approved.data as Profile[]);
@@ -700,6 +708,60 @@ export default function AdminDashboard() {
         { label: 'Danh tính', value: name || '—' },
       ],
       'Xóa hạng mục',
+    );
+  };
+
+  const handleAddBachHoa = async () => {
+    setBachHoaMsg('');
+    if (!newBachHoa.identity_name.trim()) {
+      setBachHoaMsg('Lỗi: Vui lòng nhập danh tính.');
+      return;
+    }
+    const { error } = await supabase.rpc('admin_create_bach_hoa_entry', {
+      p_identity_name: newBachHoa.identity_name.trim(),
+      p_quote: newBachHoa.quote.trim(),
+      p_avatar_url: newBachHoa.avatar_url.trim(),
+    });
+    if (error) { setBachHoaMsg(`Lỗi: ${error.message}`); return; }
+    logAction('add_bach_hoa_entry', undefined, `Thêm ứng viên Bách Hoa "${newBachHoa.identity_name.trim()}"`, { identity_name: newBachHoa.identity_name.trim() });
+    setNewBachHoa({ identity_name: '', quote: '', avatar_url: '' });
+    setShowAddBachHoa(false);
+    setBachHoaMsg('Đã thêm ứng viên thành công.');
+    setTimeout(() => setBachHoaMsg(''), 4000);
+    fetchAllData();
+  };
+
+  const handleUpdateBachHoa = async (id: string, field: keyof BachHoaEntry, value: string) => {
+    setBachHoaMsg('');
+    const oldEntry = bachHoaEntries.find(e => e.id === id);
+    const oldValue = oldEntry ? String((oldEntry as Record<string, unknown>)[field] ?? '') : '';
+    const { error } = await supabase.rpc('admin_update_bach_hoa_entry', {
+      p_entry_id: id,
+      p_identity_name: field === 'identity_name' ? value : null,
+      p_quote: field === 'quote' ? value : null,
+      p_avatar_url: field === 'avatar_url' ? value : null,
+    });
+    if (error) { setBachHoaMsg(`Lỗi: ${error.message}`); return; }
+    logAction('update_bach_hoa_entry', undefined, `Sửa Bách Hoa "${oldEntry?.identity_name || id.slice(0, 8)}" — ${field}`, { entry_id: id, field, value, previous_values: { value: oldValue } });
+    fetchAllData();
+  };
+
+  const handleDeleteBachHoa = (id: string) => {
+    const entry = bachHoaEntries.find(e => e.id === id);
+    const name = entry?.identity_name || '';
+    requireConfirm(
+      'Xóa Ứng Viên Bách Hoa',
+      `Bạn sắp xóa ứng viên "${name}" khỏi Bách Hoa Triều Phụng. Tất cả phiếu bình chọn sẽ bị xóa. Hành động này không thể hoàn tác.`,
+      async () => {
+        const { error } = await supabase.rpc('admin_delete_bach_hoa_entry', { p_entry_id: id });
+        if (error) { setBachHoaMsg(`Lỗi: ${error.message}`); return; }
+        logAction('delete_bach_hoa_entry', undefined, `Xóa ứng viên Bách Hoa "${name}"`, { entry_id: id, identity_name: name });
+        setBachHoaMsg('Đã xóa ứng viên.');
+        setTimeout(() => setBachHoaMsg(''), 4000);
+        fetchAllData();
+      },
+      [{ label: 'Ứng viên', value: name || '—' }],
+      'Xóa ứng viên',
     );
   };
 
@@ -1170,6 +1232,7 @@ export default function AdminDashboard() {
     { id: 'wanted', label: 'Truy Nã', icon: FileWarning },
     { id: 'wills', label: 'Di Chúc', icon: FileSignature },
     { id: 'kimbang', label: 'Kim Bảng', icon: Crown },
+    { id: 'bachhoa', label: 'Bách Hoa', icon: Flower2 },
     { id: 'archive', label: 'Lưu Trữ Bản Cũ', icon: Archive },
     { id: 'audit', label: 'Nhật Ký', icon: ScrollText },
     { id: 'settings', label: 'Cài Đặt & Sao Lưu', icon: Settings },
@@ -2450,6 +2513,177 @@ export default function AdminDashboard() {
                       defaultValue={entry.epithet}
                       placeholder="vd: Một kiếm trấn tà, danh vang đất Trùng Hoan."
                       onBlur={e => { if (e.target.value !== entry.epithet) handleUpdateKimBang(entry.id, 'epithet', e.target.value); }}
+                      className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Bach Hoa Tab */}
+      {activeTab === 'bachhoa' && (
+        <div className="space-y-6">
+          <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
+            <p className="text-xs text-amber-300/80">
+              <Flower2 className="w-4 h-4 inline mr-1" />
+              Quản lý ứng viên Bách Hoa Triều Phụng: thêm, chỉnh sửa, cập nhật hoặc xóa các ứng viên. Thay đổi sẽ hiển thị ngay trên trang Bách Hoa công khai.
+            </p>
+          </div>
+          {bachHoaMsg && (
+            <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${bachHoaMsg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
+              {bachHoaMsg.startsWith('Lỗi') ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+              {bachHoaMsg}
+            </div>
+          )}
+
+          {showAddBachHoa && (
+            <div className="p-4 rounded-xl bg-black/30 border border-amber-500/25">
+              <div className="flex items-center gap-2 mb-4">
+                <Plus className="w-4 h-4 text-amber-300/70" />
+                <h4 className="font-serif font-bold text-amber-100/90 text-sm sm:text-base">Thêm Ứng Viên Bách Hoa</h4>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Danh tính</label>
+                  <input
+                    type="text"
+                    value={newBachHoa.identity_name}
+                    onChange={e => setNewBachHoa(prev => ({ ...prev, identity_name: e.target.value }))}
+                    placeholder="Tên nhân vật..."
+                    className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Trích dẫn</label>
+                  <input
+                    type="text"
+                    value={newBachHoa.quote}
+                    onChange={e => setNewBachHoa(prev => ({ ...prev, quote: e.target.value }))}
+                    placeholder="Lời thoại / trích dẫn..."
+                    className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Link ảnh đại diện</label>
+                  <input
+                    type="text"
+                    value={newBachHoa.avatar_url}
+                    onChange={e => setNewBachHoa(prev => ({ ...prev, avatar_url: e.target.value }))}
+                    placeholder="/images/bach-hoa-trieu-phung/..."
+                    className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
+                  />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={handleAddBachHoa}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-xs font-bold border border-amber-500/25 transition-all"
+                  >
+                    <Save className="w-3.5 h-3.5" /> Lưu ứng viên
+                  </button>
+                  <button
+                    onClick={() => { setShowAddBachHoa(false); setNewBachHoa({ identity_name: '', quote: '', avatar_url: '' }); }}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-black/20 hover:bg-black/30 text-gray-400 text-xs font-bold border border-white/10 transition-all"
+                  >
+                    <X className="w-3.5 h-3.5" /> Hủy
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!showAddBachHoa && (
+            <button
+              onClick={() => setShowAddBachHoa(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-sm font-bold border border-amber-500/20 transition-all"
+            >
+              <Plus className="w-4 h-4" /> Thêm ứng viên
+            </button>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {bachHoaEntries.map((entry, idx) => (
+              <div key={entry.id} className="p-4 rounded-xl bg-black/30 border border-amber-500/15">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#670201]/20 border border-[#670201]/30 text-amber-300 font-bold text-sm flex-shrink-0">
+                      {idx + 1}
+                    </div>
+                    <span className="text-xs text-amber-300/70 font-semibold flex-shrink-0">{entry.vote_count} phiếu</span>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteBachHoa(entry.id)}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/15 transition-all flex-shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Xóa
+                  </button>
+                </div>
+
+                {/* Avatar preview */}
+                <div className="mb-3 flex items-center gap-3">
+                  <div className="h-16 w-16 overflow-hidden rounded-lg border border-amber-500/20 bg-black/30 flex-shrink-0">
+                    {entry.avatar_url ? (
+                      <img
+                        src={entry.avatar_url.trim()}
+                        alt={entry.identity_name}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = 'none';
+                          const parent = img.parentElement;
+                          if (parent) parent.classList.add('flex', 'items-center', 'justify-center');
+                          if (parent && !parent.querySelector('span')) {
+                            const span = document.createElement('span');
+                            span.textContent = 'Lỗi';
+                            span.className = 'text-red-500 text-xs';
+                            parent.appendChild(span);
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-gray-600 text-xs">Chưa có</div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <input
+                      type="text"
+                      defaultValue={entry.avatar_url}
+                      placeholder="Dán link ảnh đại diện..."
+                      onBlur={e => { if (e.target.value !== entry.avatar_url) handleUpdateBachHoa(entry.id, 'avatar_url', e.target.value); }}
+                      className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
+                    />
+                    {entry.avatar_url && (
+                      <button
+                        onClick={() => handleUpdateBachHoa(entry.id, 'avatar_url', '')}
+                        className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300"
+                      >
+                        <Trash2 className="w-3 h-3" /> Xóa ảnh
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Fields */}
+                <div className="space-y-2">
+                  <div>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Danh tính</label>
+                    <input
+                      type="text"
+                      defaultValue={entry.identity_name}
+                      placeholder="Tên nhân vật..."
+                      onBlur={e => { if (e.target.value !== entry.identity_name) handleUpdateBachHoa(entry.id, 'identity_name', e.target.value); }}
+                      className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Trích dẫn</label>
+                    <input
+                      type="text"
+                      defaultValue={entry.quote}
+                      placeholder="Lời thoại / trích dẫn..."
+                      onBlur={e => { if (e.target.value !== entry.quote) handleUpdateBachHoa(entry.id, 'quote', e.target.value); }}
                       className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
                     />
                   </div>
