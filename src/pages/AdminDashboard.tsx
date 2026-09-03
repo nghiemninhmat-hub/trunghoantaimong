@@ -127,10 +127,12 @@ export default function AdminDashboard() {
   const [bachHoaEntries, setBachHoaEntries] = useState<BachHoaEntry[]>([]);
   const [bachHoaMsg, setBachHoaMsg] = useState('');
   const [showAddBachHoa, setShowAddBachHoa] = useState(false);
-  const [newBachHoa, setNewBachHoa] = useState({ identity_name: '', quote: '', avatar_url: '' });
+  const [newBachHoa, setNewBachHoa] = useState({ identity_name: '', quote: '', avatar_url: '', title: '' });
   const [bachHoaVotes, setBachHoaVotes] = useState<Record<string, BachHoaVote[]>>({});
   const [expandedBachHoaVoters, setExpandedBachHoaVoters] = useState<Set<string>>(new Set());
   const [bachHoaVoterLoading, setBachHoaVoterLoading] = useState(false);
+  const [bachHoaEditing, setBachHoaEditing] = useState<Record<string, { identity_name: string; quote: string; avatar_url: string; title: string }>>({});
+  const [bachHoaSaving, setBachHoaSaving] = useState<string | null>(null);
 
   // Backup / export
   const [exporting, setExporting] = useState(false);
@@ -725,47 +727,89 @@ export default function AdminDashboard() {
       p_identity_name: newBachHoa.identity_name.trim(),
       p_quote: newBachHoa.quote.trim(),
       p_avatar_url: newBachHoa.avatar_url.trim(),
+      p_title: newBachHoa.title.trim(),
     });
     if (error) { setBachHoaMsg(`Lỗi: ${error.message}`); return; }
     logAction('add_bach_hoa_entry', undefined, `Thêm ứng viên Bách Hoa "${newBachHoa.identity_name.trim()}"`, { identity_name: newBachHoa.identity_name.trim() });
-    setNewBachHoa({ identity_name: '', quote: '', avatar_url: '' });
+    setNewBachHoa({ identity_name: '', quote: '', avatar_url: '', title: '' });
     setShowAddBachHoa(false);
     setBachHoaMsg('Đã thêm ứng viên thành công.');
     setTimeout(() => setBachHoaMsg(''), 4000);
     fetchAllData();
   };
 
-  const handleUpdateBachHoa = async (id: string, field: keyof BachHoaEntry, value: string) => {
+  const handleSaveBachHoa = async (id: string) => {
     setBachHoaMsg('');
+    setBachHoaSaving(id);
+    const draft = bachHoaEditing[id];
+    if (!draft) { setBachHoaSaving(null); return; }
+    if (!draft.identity_name.trim()) {
+      setBachHoaMsg('Lỗi: Danh tính không được để trống.');
+      setBachHoaSaving(null);
+      return;
+    }
     const oldEntry = bachHoaEntries.find(e => e.id === id);
-    const oldValue = oldEntry ? String((oldEntry as Record<string, unknown>)[field] ?? '') : '';
     const { error } = await supabase.rpc('admin_update_bach_hoa_entry', {
       p_entry_id: id,
-      p_identity_name: field === 'identity_name' ? value : null,
-      p_quote: field === 'quote' ? value : null,
-      p_avatar_url: field === 'avatar_url' ? value : null,
+      p_identity_name: draft.identity_name.trim(),
+      p_quote: draft.quote.trim(),
+      p_avatar_url: draft.avatar_url.trim(),
+      p_title: draft.title.trim(),
     });
-    if (error) { setBachHoaMsg(`Lỗi: ${error.message}`); return; }
-    logAction('update_bach_hoa_entry', undefined, `Sửa Bách Hoa "${oldEntry?.identity_name || id.slice(0, 8)}" — ${field}`, { entry_id: id, field, value, previous_values: { value: oldValue } });
+    if (error) { setBachHoaMsg(`Lỗi: ${error.message}`); setBachHoaSaving(null); return; }
+    logAction('update_bach_hoa_entry', undefined, `Sửa Bách Hoa "${oldEntry?.identity_name || id.slice(0, 8)}"`, {
+      entry_id: id,
+      previous_values: { identity_name: oldEntry?.identity_name, quote: oldEntry?.quote, avatar_url: oldEntry?.avatar_url, title: oldEntry?.title },
+      new_values: { identity_name: draft.identity_name.trim(), quote: draft.quote.trim(), avatar_url: draft.avatar_url.trim(), title: draft.title.trim() },
+    });
+    setBachHoaEditing(prev => { const n = { ...prev }; delete n[id]; return n; });
+    setBachHoaMsg('Đã lưu thay đổi thành công.');
+    setTimeout(() => setBachHoaMsg(''), 3000);
+    setBachHoaSaving(null);
     fetchAllData();
+  };
+
+  const handleCancelEditBachHoa = (id: string) => {
+    setBachHoaEditing(prev => { const n = { ...prev }; delete n[id]; return n; });
+  };
+
+  const handleStartEditBachHoa = (entry: BachHoaEntry) => {
+    setBachHoaEditing(prev => ({
+      ...prev,
+      [entry.id]: { identity_name: entry.identity_name, quote: entry.quote, avatar_url: entry.avatar_url, title: entry.title || '' },
+    }));
   };
 
   const handleDeleteBachHoa = (id: string) => {
     const entry = bachHoaEntries.find(e => e.id === id);
     const name = entry?.identity_name || '';
+    const voteCount = entry?.vote_count || 0;
+    // First confirmation
     requireConfirm(
-      'Xóa Ứng Viên Bách Hoa',
-      `Bạn sắp xóa ứng viên "${name}" khỏi Bách Hoa Triều Phụng. Tất cả phiếu bình chọn sẽ bị xóa. Hành động này không thể hoàn tác.`,
-      async () => {
-        const { error } = await supabase.rpc('admin_delete_bach_hoa_entry', { p_entry_id: id });
-        if (error) { setBachHoaMsg(`Lỗi: ${error.message}`); return; }
-        logAction('delete_bach_hoa_entry', undefined, `Xóa ứng viên Bách Hoa "${name}"`, { entry_id: id, identity_name: name });
-        setBachHoaMsg('Đã xóa ứng viên.');
-        setTimeout(() => setBachHoaMsg(''), 4000);
-        fetchAllData();
+      'Xác Nhận Xóa Ứng Viên (Bước 1/2)',
+      `Bạn đang yêu cầu xóa ứng viên "${name}" khỏi Bách Hoa Triều Phụng. Tất cả ${voteCount} phiếu bình chọn sẽ bị xóa vĩnh viễn. Đây là bước xác nhận đầu tiên.`,
+      () => {
+        // Second confirmation
+        requireConfirm(
+          'Xác Nhận Lại (Bước 2/2) — Không Thể Hoàn Tác',
+          `BẠN CÓ CHẮC CHẮN muốn xóa "${name}"? Hành động này KHÔNG THỂ HOÀN TÁC. Mọi dữ liệu bình chọn sẽ mất vĩnh viễn.`,
+          async () => {
+            const { error } = await supabase.rpc('admin_delete_bach_hoa_entry', { p_entry_id: id });
+            if (error) { setBachHoaMsg(`Lỗi: ${error.message}`); return; }
+            logAction('delete_bach_hoa_entry', undefined, `Xóa ứng viên Bách Hoa "${name}"`, { entry_id: id, identity_name: name, deleted_vote_count: voteCount });
+            setBachHoaMsg('Đã xóa ứng viên thành công.');
+            setTimeout(() => setBachHoaMsg(''), 4000);
+            fetchAllData();
+          },
+          [
+            { label: 'Ứng viên', value: name || '—' },
+            { label: 'Số phiếu sẽ xóa', value: String(voteCount) },
+          ],
+          'Xóa vĩnh viễn',
+        );
       },
       [{ label: 'Ứng viên', value: name || '—' }],
-      'Xóa ứng viên',
+      'Tiếp tục xóa',
     );
   };
 
@@ -2599,7 +2643,7 @@ export default function AdminDashboard() {
           <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
             <p className="text-xs text-amber-300/80">
               <LotusIcon className="w-4 h-4 inline mr-1" />
-              Quản lý ứng viên Bách Hoa Triều Phụng: thêm, chỉnh sửa, cập nhật hoặc xóa các ứng viên. Nhấn vào một ứng viên để xem danh sách người đã bình chọn (cập nhật theo thời gian thực).
+              Quản lý ứng viên Bách Hoa Triều Phụng: thêm, chỉnh sửa (nhấn nút Lưu để áp dụng) hoặc xóa (cần xác nhận 2 lần). Nhấn vào một ứng viên để xem danh sách người đã bình chọn (cập nhật theo thời gian thực, chỉ quản trị viên xem được).
             </p>
           </div>
           {bachHoaMsg && (
@@ -2623,6 +2667,16 @@ export default function AdminDashboard() {
                     value={newBachHoa.identity_name}
                     onChange={e => setNewBachHoa(prev => ({ ...prev, identity_name: e.target.value }))}
                     placeholder="Tên nhân vật..."
+                    className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Danh hiệu</label>
+                  <input
+                    type="text"
+                    value={newBachHoa.title}
+                    onChange={e => setNewBachHoa(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Danh hiệu tùy chỉnh (vd: Khuynh Quốc Khuynh Thành)..."
                     className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
                   />
                 </div>
@@ -2654,7 +2708,7 @@ export default function AdminDashboard() {
                     <Save className="w-3.5 h-3.5" /> Lưu ứng viên
                   </button>
                   <button
-                    onClick={() => { setShowAddBachHoa(false); setNewBachHoa({ identity_name: '', quote: '', avatar_url: '' }); }}
+                    onClick={() => { setShowAddBachHoa(false); setNewBachHoa({ identity_name: '', quote: '', avatar_url: '', title: '' }); }}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-black/20 hover:bg-black/30 text-gray-400 text-xs font-bold border border-white/10 transition-all"
                   >
                     <X className="w-3.5 h-3.5" /> Hủy
@@ -2677,6 +2731,8 @@ export default function AdminDashboard() {
             {bachHoaEntries.map((entry, idx) => {
               const voters = bachHoaVotes[entry.id] || [];
               const isExpanded = expandedBachHoaVoters.has(entry.id);
+              const isEditing = !!bachHoaEditing[entry.id];
+              const draft = bachHoaEditing[entry.id];
               return (
               <div key={entry.id} className="p-4 rounded-xl bg-black/30 border border-amber-500/15">
                 <div className="flex items-center justify-between gap-2 mb-3">
@@ -2686,12 +2742,22 @@ export default function AdminDashboard() {
                     </div>
                     <span className="text-xs text-amber-300/70 font-semibold flex-shrink-0">{entry.vote_count} phiếu</span>
                   </div>
-                  <button
-                    onClick={() => handleDeleteBachHoa(entry.id)}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/15 transition-all flex-shrink-0"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Xóa
-                  </button>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {!isEditing && (
+                      <button
+                        onClick={() => handleStartEditBachHoa(entry)}
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/15 transition-all"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" /> Sửa
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDeleteBachHoa(entry.id)}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/15 transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Xóa
+                    </button>
+                  </div>
                 </div>
 
                 {/* Avatar preview */}
@@ -2719,21 +2785,17 @@ export default function AdminDashboard() {
                       <div className="flex h-full w-full items-center justify-center text-gray-600 text-xs">Chưa có</div>
                     )}
                   </div>
-                  <div className="flex-1 min-w-0 space-y-1.5">
-                    <input
-                      type="text"
-                      defaultValue={entry.avatar_url}
-                      placeholder="Dán link ảnh đại diện..."
-                      onBlur={e => { if (e.target.value !== entry.avatar_url) handleUpdateBachHoa(entry.id, 'avatar_url', e.target.value); }}
-                      className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
-                    />
-                    {entry.avatar_url && (
-                      <button
-                        onClick={() => handleUpdateBachHoa(entry.id, 'avatar_url', '')}
-                        className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 className="w-3 h-3" /> Xóa ảnh
-                      </button>
+                  <div className="flex-1 min-w-0">
+                    {isEditing && draft ? (
+                      <input
+                        type="text"
+                        value={draft.avatar_url}
+                        onChange={e => setBachHoaEditing(prev => ({ ...prev, [entry.id]: { ...draft, avatar_url: e.target.value } }))}
+                        placeholder="Dán link ảnh đại diện..."
+                        className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
+                      />
+                    ) : (
+                      <p className="text-xs text-gray-500 truncate">{entry.avatar_url || 'Chưa có ảnh'}</p>
                     )}
                   </div>
                 </div>
@@ -2742,27 +2804,69 @@ export default function AdminDashboard() {
                 <div className="space-y-2">
                   <div>
                     <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Danh tính</label>
-                    <input
-                      type="text"
-                      defaultValue={entry.identity_name}
-                      placeholder="Tên nhân vật..."
-                      onBlur={e => { if (e.target.value !== entry.identity_name) handleUpdateBachHoa(entry.id, 'identity_name', e.target.value); }}
-                      className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
-                    />
+                    {isEditing && draft ? (
+                      <input
+                        type="text"
+                        value={draft.identity_name}
+                        onChange={e => setBachHoaEditing(prev => ({ ...prev, [entry.id]: { ...draft, identity_name: e.target.value } }))}
+                        placeholder="Tên nhân vật..."
+                        className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
+                      />
+                    ) : (
+                      <p className="text-sm text-amber-100/90 font-serif font-bold">{entry.identity_name}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Danh hiệu</label>
+                    {isEditing && draft ? (
+                      <input
+                        type="text"
+                        value={draft.title}
+                        onChange={e => setBachHoaEditing(prev => ({ ...prev, [entry.id]: { ...draft, title: e.target.value } }))}
+                        placeholder="Danh hiệu tùy chỉnh..."
+                        className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
+                      />
+                    ) : (
+                      <p className="text-xs text-amber-300/80 italic font-serif">{entry.title || '—'}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Trích dẫn</label>
-                    <input
-                      type="text"
-                      defaultValue={entry.quote}
-                      placeholder="Lời thoại / trích dẫn..."
-                      onBlur={e => { if (e.target.value !== entry.quote) handleUpdateBachHoa(entry.id, 'quote', e.target.value); }}
-                      className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
-                    />
+                    {isEditing && draft ? (
+                      <input
+                        type="text"
+                        value={draft.quote}
+                        onChange={e => setBachHoaEditing(prev => ({ ...prev, [entry.id]: { ...draft, quote: e.target.value } }))}
+                        placeholder="Lời thoại / trích dẫn..."
+                        className="w-full px-3 py-1.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40 transition-all"
+                      />
+                    ) : (
+                      <p className="text-xs text-amber-100/60 italic">"{entry.quote || '—'}"</p>
+                    )}
                   </div>
                 </div>
 
-                {/* Voter list — clickable to expand */}
+                {/* Save / Cancel buttons when editing */}
+                {isEditing && draft && (
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => handleSaveBachHoa(entry.id)}
+                      disabled={bachHoaSaving === entry.id}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-xs font-bold border border-amber-500/25 transition-all disabled:opacity-50"
+                    >
+                      {bachHoaSaving === entry.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                      Lưu thay đổi
+                    </button>
+                    <button
+                      onClick={() => handleCancelEditBachHoa(entry.id)}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-black/20 hover:bg-black/30 text-gray-400 text-xs font-bold border border-white/10 transition-all"
+                    >
+                      <X className="w-3.5 h-3.5" /> Hủy
+                    </button>
+                  </div>
+                )}
+
+                {/* Voter list — clickable to expand, admin-only */}
                 <button
                   onClick={() => toggleBachHoaVoters(entry.id)}
                   className="w-full mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-[#670201]/10 hover:bg-[#670201]/20 border border-[#670201]/20 transition-all"

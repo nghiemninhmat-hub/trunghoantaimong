@@ -286,6 +286,7 @@ export interface BachHoaEntry {
   quote: string;
   avatar_url: string;
   vote_count: number;
+  title: string;
   created_at: string;
   updated_at: string;
 }
