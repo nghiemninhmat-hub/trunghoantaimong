@@ -129,6 +129,7 @@ export interface InventoryItem {
   user_id: string;
   item_id: string;
   acquired_at: string;
+  quantity: number;
   shop_items?: ShopItem;
 }
 

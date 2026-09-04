@@ -612,7 +612,7 @@ export default function ProfilePage() {
         <StatCard label="Hoa Tiền" value={profile.hua_tien} icon={Coins} accent="gold" />
         <StatCard label="Công Đức" value={profile.cong_duc} icon={Sparkles} accent="gold" />
         <StatCard label="Âm Đức" value={profile.am_duc} icon={Skull} accent="gold" />
-        <StatCard label="Vật Phẩm" value={inventory.length} icon={Package} accent="gold" hint="Trong kho" />
+        <StatCard label="Vật Phẩm" value={inventory.reduce((sum, i) => sum + (i.quantity || 1), 0)} icon={Package} accent="gold" hint="Trong kho" />
       </StatGrid>
 
       {/* Kỹ năng nhân vật (chỉ xem) */}
@@ -966,6 +966,11 @@ export default function ProfilePage() {
                   <p className="text-sm font-semibold text-amber-100/90 truncate">{item.shop_items?.name}</p>
                   <p className="text-xs text-gray-500">{item.shop_items?.category}</p>
                 </div>
+                {item.quantity > 1 && (
+                  <span className="flex items-center justify-center min-w-[28px] h-7 px-1.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-xs font-bold text-amber-200">
+                    x{item.quantity}
+                  </span>
+                )}
               </div>
             ))}
           </div>

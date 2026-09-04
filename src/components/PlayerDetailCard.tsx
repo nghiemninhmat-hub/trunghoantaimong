@@ -141,9 +141,9 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
   };
 
   const handleRemoveItem = async (invId: string, itemName: string) => {
-    if (!confirm(`Thu hồi "${itemName}" khỏi kho của ${profile.oc_name}? Vật phẩm sẽ bị xóa vĩnh viễn.`)) return;
+    if (!confirm(`Thu hồi "${itemName}" khỏi kho của ${profile.oc_name}? Số lượng sẽ giảm đi 1.`)) return;
     setActionLoading(true);
-    const { error } = await supabase.from('inventories').delete().eq('id', invId);
+    const { error } = await supabase.rpc('admin_revoke_inventory_item', { p_inv_id: invId });
     setActionLoading(false);
     if (error) { showMsg(error.message, true); return; }
     onLogAction?.('revoke_inventory_item', profile.id, `Thu hồi "${itemName}" khỏi kho ${profile.oc_name}`, { inv_id: invId, item_name: itemName });
@@ -587,7 +587,7 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
         <div className="flex items-center gap-2 mb-4">
           <Package className="w-5 h-5 text-amber-300/70" />
-          <h4 className="text-base font-serif font-bold text-amber-100/80">Vật Phẩm Trong Kho ({allInventory.length})</h4>
+          <h4 className="text-base font-serif font-bold text-amber-100/80">Vật Phẩm Trong Kho ({allInventory.reduce((s, i) => s + (i.quantity || 1), 0)})</h4>
         </div>
         {allInventory.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-4">Chưa có vật phẩm nào.</p>
@@ -599,6 +599,11 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                   <p className="text-sm font-semibold text-amber-100/90 truncate">{inv.shop_items?.name || 'Vật phẩm đã xóa'}</p>
                   <p className="text-[11px] sm:text-xs text-gray-500">{inv.shop_items?.category || '—'} · {new Date(inv.acquired_at).toLocaleDateString('vi-VN')}</p>
                 </div>
+                {inv.quantity > 1 && (
+                  <span className="flex items-center justify-center min-w-[28px] h-7 px-1.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-xs font-bold text-amber-200 flex-shrink-0">
+                    x{inv.quantity}
+                  </span>
+                )}
                 <button onClick={() => handleRemoveItem(inv.id, inv.shop_items?.name || 'Vật phẩm')} disabled={actionLoading}
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold transition-all flex-shrink-0 disabled:opacity-50">
                   <Trash2 className="w-3.5 h-3.5" /> Thu hồi

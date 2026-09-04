@@ -2514,6 +2514,11 @@ export default function AdminDashboard() {
                           <span> · {inv.shop_items?.category || '—'} · {new Date(inv.acquired_at).toLocaleDateString('vi-VN')}</span>
                         </p>
                       </div>
+                      {inv.quantity > 1 && (
+                        <span className="flex items-center justify-center min-w-[28px] h-7 px-1.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-xs font-bold text-amber-200 flex-shrink-0">
+                          x{inv.quantity}
+                        </span>
+                      )}
                       <button
                         onClick={() => handleRemoveInventoryItem(inv.id, inv.shop_items?.name || 'vật phẩm này')}
                         className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all flex-shrink-0"
