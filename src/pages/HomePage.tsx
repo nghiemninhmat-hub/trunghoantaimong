@@ -230,7 +230,8 @@ export default function HomePage() {
           {[
             { name: 'Vịnh Quyển Trà', url: 'https://www.facebook.com/profile.php?id=61592344791540' },
             { name: 'Biện Thừa Chí', url: 'https://www.facebook.com/profile.php?id=61590919357024' },
-            { name: 'Ngôn Cảnh Tắc', url: 'https://www.facebook.com/ngon.canhtac' },
+            { name: 'Truy Yên', url: 'https://www.facebook.com/neko.chan.1510' },
+            { name: 'Nghiêm Hoằng Chương', url: 'https://www.facebook.com/profile.php?id=61590563944526' },
             { name: 'Kinh Trung', url: 'https://www.facebook.com/k.nihtrung' },
             { name: 'Đức Diểu Quỳnh', url: 'https://www.facebook.com/profile.php?id=61590717492629' },
           ].map(({ name, url }) => (
