@@ -91,6 +91,10 @@ export default function AdminDashboard() {
   const [editingDanhVongId, setEditingDanhVongId] = useState<string | null>(null);
   const [danhVongValue, setDanhVongValue] = useState('');
 
+  // Chức nghiệp level editing
+  const [editingLevelId, setEditingLevelId] = useState<string | null>(null);
+  const [levelValue, setLevelValue] = useState(1);
+
   // Password editing
   const [editingPwdId, setEditingPwdId] = useState<string | null>(null);
   const [pwdValue, setPwdValue] = useState('');
@@ -1362,6 +1366,17 @@ export default function AdminDashboard() {
     fetchAllData();
   };
 
+  const handleSaveLevel = async (userId: string) => {
+    const targetUser = allProfiles.find(p => p.id === userId);
+    const oldLevel = targetUser?.chuc_nghiep_level ?? 1;
+    const newLevel = Math.max(1, Math.floor(levelValue));
+    const { error } = await supabase.from('profiles').update({ chuc_nghiep_level: newLevel }).eq('id', userId);
+    if (error) { alert(`Lỗi: ${error.message}`); return; }
+    logAction('set_chuc_nghiep_level', userId, `Sửa chức nghiệp level ${targetUser?.oc_name || userId.slice(0, 8)}: ${oldLevel} → ${newLevel}`, { chuc_nghiep_level: newLevel, previous_values: { chuc_nghiep_level: oldLevel } });
+    setEditingLevelId(null);
+    fetchAllData();
+  };
+
   const handleEditTransaction = (tx: Transaction) => {
     setEditingTxId(tx.id);
     setEditTx({ reason: tx.reason, amount: tx.amount, currency_type: tx.currency_type, related_user_name: tx.related_user_name });
@@ -1983,6 +1998,32 @@ export default function AdminDashboard() {
                         className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-amber-300 transition-all"
                       >
                         <Edit3 className="w-3 h-3" /> Sửa danh vọng
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-white/5">
+                    {editingLevelId === p.id ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={1}
+                          value={levelValue}
+                          onChange={e => setLevelValue(Math.max(1, parseInt(e.target.value) || 1))}
+                          className="flex-1 min-w-0 px-2.5 py-1.5 bg-black/30 border border-white/10 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-amber-500/40"
+                        />
+                        <button onClick={() => handleSaveLevel(p.id)} className="p-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 flex-shrink-0">
+                          <Save className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => setEditingLevelId(null)} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 flex-shrink-0">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setEditingLevelId(p.id); setLevelValue(p.chuc_nghiep_level ?? 1); }}
+                        className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-amber-300 transition-all"
+                      >
+                        <Edit3 className="w-3 h-3" /> Chức nghiệp: Lv.{p.chuc_nghiep_level ?? 1}
                       </button>
                     )}
                   </div>

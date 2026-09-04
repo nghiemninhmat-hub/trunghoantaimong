@@ -59,6 +59,7 @@ export interface Profile {
   approved_at: string | null;
   password: string | null;
   is_disabled: boolean;
+  chuc_nghiep_level: number;
 }
 
 export interface AuditLog {

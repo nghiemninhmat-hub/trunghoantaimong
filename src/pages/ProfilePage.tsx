@@ -396,6 +396,10 @@ export default function ProfilePage() {
                       {profile.danh_vong}
                     </span>
                   )}
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-bold text-cyan-300 tracking-wider">
+                    <Zap className="w-3 h-3" />
+                    Chức Nghiệp: Lv.{profile.chuc_nghiep_level ?? 1}
+                  </span>
                   {userTitles.filter(ut => ut.is_displayed).map(ut => {
                     const t = ut.titles;
                     const colorCfg = t ? (TITLE_COLORS[t.color] || TITLE_COLORS.amber) : TITLE_COLORS.amber;

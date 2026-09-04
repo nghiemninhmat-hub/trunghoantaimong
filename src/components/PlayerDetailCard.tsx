@@ -55,6 +55,9 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
   const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
   const [editSkillDraft, setEditSkillDraft] = useState<Record<string, unknown>>({});
 
+  // Chức nghiệp level state
+  const [levelInput, setLevelInput] = useState(1);
+
   const refreshData = useCallback(async () => {
     if (!profile) return;
     setTxLoading(true);
@@ -206,6 +209,17 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
     refreshData();
   };
 
+  const handleSaveLevel = async () => {
+    if (!profile) return;
+    const newLevel = Math.max(1, Math.floor(levelInput));
+    setActionLoading(true);
+    const { error } = await supabase.from('profiles').update({ chuc_nghiep_level: newLevel }).eq('id', profile.id);
+    setActionLoading(false);
+    if (error) { showMsg(error.message, true); return; }
+    showMsg(`Đã cập nhật chức nghiệp level thành Lv.${newLevel}.`);
+    refreshData();
+  };
+
   const handleResetStatus = async (field: 'status_physical' | 'status_spiritual' | 'status_mental') => {
     const fieldLabel = field === 'status_physical' ? 'Thể Chất' : field === 'status_spiritual' ? 'Tâm Linh' : 'Tinh Thần';
     if (!confirm(`Đặt lại ${fieldLabel} của ${profile.oc_name} về Bình Thường?`)) return;
@@ -246,6 +260,9 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
             {profile.danh_vong && profile.danh_vong !== 'Vô Danh' && (
               <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold mt-1">{profile.danh_vong}</span>
             )}
+            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 font-bold mt-1">
+              <Zap className="w-2.5 h-2.5" /> Chức Nghiệp: Lv.{profile.chuc_nghiep_level ?? 1}
+            </span>
             {playerTitles.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2 justify-center sm:justify-start">
                 {playerTitles.map(ut => {
@@ -457,6 +474,33 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
             </div>
           </div>
         )}
+      </div>
+
+      {/* Chức nghiệp level */}
+      <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
+        <div className="flex items-center gap-2 mb-4">
+          <Zap className="w-5 h-5 text-cyan-300/70" />
+          <h4 className="text-base sm:text-lg font-serif font-bold text-amber-100/80">Chức Nghiệp Level</h4>
+        </div>
+        <p className="text-xs text-gray-500 mb-3">Hiện tại: <span className="font-bold text-cyan-300">Lv.{profile.chuc_nghiep_level ?? 1}</span></p>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min={1}
+            value={levelInput}
+            onChange={e => setLevelInput(Math.max(1, parseInt(e.target.value) || 1))}
+            className={inputCls}
+            placeholder="Level mới"
+          />
+          <button
+            onClick={handleSaveLevel}
+            disabled={actionLoading}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-sm font-bold border border-cyan-500/20 transition-all disabled:opacity-50 flex-shrink-0"
+          >
+            {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Lưu
+          </button>
+        </div>
       </div>
 
       {/* Kỹ năng nhân vật */}
