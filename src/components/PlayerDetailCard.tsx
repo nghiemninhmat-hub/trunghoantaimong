@@ -1,9 +1,9 @@
-import { Profile, Transaction, InventoryItem, ShopItem, CURRENCY_LABELS } from '@/lib/supabase';
+import { Profile, Transaction, InventoryItem, ShopItem, CURRENCY_LABELS, UserTitle, TITLE_COLORS } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 import {
   ArrowLeft, Users, Package, History, Mail, Lock, Eye, EyeOff,
   Heart, Sparkle, Brain, Coins, Gift, Plus, Minus, Dices, Loader2,
-  CheckCircle2, AlertCircle, Trash2, UserCircle, Ban,
+  CheckCircle2, AlertCircle, Trash2, UserCircle, Ban, Award,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 
@@ -47,16 +47,19 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
 
   // Wheel spins state
   const [spinAmount, setSpinAmount] = useState(1);
+  const [playerTitles, setPlayerTitles] = useState<UserTitle[]>([]);
 
   const refreshData = useCallback(async () => {
     if (!profile) return;
     setTxLoading(true);
-    const [txRes, invRes] = await Promise.all([
+    const [txRes, invRes, titleRes] = await Promise.all([
       supabase.from('transactions').select('*, profiles(oc_name, email)').eq('user_id', profile.id).order('created_at', { ascending: false }),
       supabase.from('inventories').select('*, shop_items(name, category), profiles(oc_name)').eq('user_id', profile.id).order('acquired_at', { ascending: false }),
+      supabase.from('user_titles').select('*, titles(*)').eq('user_id', profile.id).order('granted_at', { ascending: false }),
     ]);
     if (txRes.data) setAllTransactions(txRes.data as Transaction[]);
     if (invRes.data) setAllInventory(invRes.data as (InventoryItem & { shop_items?: ShopItem | null; profiles?: { oc_name: string } | null })[]);
+    if (titleRes.data) setPlayerTitles(titleRes.data as UserTitle[]);
     setTxLoading(false);
   }, [profile]);
 
@@ -199,6 +202,21 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
             <h3 className="text-lg sm:text-xl font-serif font-bold text-amber-100/90 truncate">{profile.oc_name}</h3>
             {profile.danh_vong && profile.danh_vong !== 'Vô Danh' && (
               <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold mt-1">{profile.danh_vong}</span>
+            )}
+            {playerTitles.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2 justify-center sm:justify-start">
+                {playerTitles.map(ut => {
+                  const t = ut.titles;
+                  const colorCfg = t ? (TITLE_COLORS[t.color] || TITLE_COLORS.amber) : TITLE_COLORS.amber;
+                  return (
+                    <span key={ut.id} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold whitespace-nowrap ${ut.is_displayed ? colorCfg.activeClass : colorCfg.badgeClass}`}>
+                      <Award className="w-2.5 h-2.5" />
+                      {t?.name || '(?)'}
+                      {!ut.is_displayed && <span className="text-[8px] opacity-60">(ẩn)</span>}
+                    </span>
+                  );
+                })}
+              </div>
             )}
             <div className="mt-2 space-y-1.5">
               <p className="text-xs text-gray-400 flex items-center justify-center sm:justify-start gap-1.5">

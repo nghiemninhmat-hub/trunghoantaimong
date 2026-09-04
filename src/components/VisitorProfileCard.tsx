@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Friendship, Organization } from '@/lib/supabase';
+import { supabase, Friendship, Organization, UserTitle, TITLE_COLORS } from '@/lib/supabase';
 import {
   UserCircle, Crown, Ghost, Mail, Eye, EyeOff, UserPlus, Check, Loader2,
-  MessageCircle, ArrowLeft, AlertCircle, Building2,
+  MessageCircle, ArrowLeft, AlertCircle, Building2, Award,
 } from 'lucide-react';
 
 type RelationState = 'none' | 'outgoing' | 'incoming' | 'friends';
@@ -21,6 +21,7 @@ export default function VisitorProfileCard() {
   const [bio, setBio] = useState('');
   const [danhVong, setDanhVong] = useState('');
   const [orgs, setOrgs] = useState<(Organization & { role?: string })[]>([]);
+  const [visitorTitles, setVisitorTitles] = useState<UserTitle[]>([]);
   const [createdAt, setCreatedAt] = useState('');
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -61,6 +62,16 @@ export default function VisitorProfileCard() {
         role: m.role,
       })).filter(o => o?.id);
       setOrgs(orgList);
+    }
+    // Fetch displayed titles
+    const { data: titleData } = await supabase
+      .from('user_titles')
+      .select('*, titles(*)')
+      .eq('user_id', targetId)
+      .eq('is_displayed', true)
+      .order('granted_at', { ascending: false });
+    if (titleData) {
+      setVisitorTitles(titleData as UserTitle[]);
     }
     setLoading(false);
   }, [targetId]);
@@ -273,6 +284,16 @@ export default function VisitorProfileCard() {
                       {danhVong}
                     </span>
                   )}
+                  {visitorTitles.map(ut => {
+                    const t = ut.titles;
+                    const colorCfg = t ? (TITLE_COLORS[t.color] || TITLE_COLORS.amber) : TITLE_COLORS.amber;
+                    return (
+                      <span key={ut.id} className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-xs font-bold whitespace-nowrap ${colorCfg.activeClass}`}>
+                        <Award className="w-3 h-3" />
+                        {t?.name || '(?)'}
+                      </span>
+                    );
+                  })}
                   {orgs.map(o => (
                     <span key={o.id} className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/30 border border-white/10 text-xs text-gray-300">
                       <Building2 className="w-3 h-3 text-amber-300/70" />

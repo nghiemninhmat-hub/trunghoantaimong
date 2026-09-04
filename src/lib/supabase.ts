@@ -319,6 +319,33 @@ export interface OrganizationMember {
   profiles?: { oc_name: string } | null;
 }
 
+export interface Title {
+  id: string;
+  name: string;
+  description: string | null;
+  color: string;
+  created_at: string;
+}
+
+export interface UserTitle {
+  id: string;
+  user_id: string;
+  title_id: string;
+  is_displayed: boolean;
+  granted_by: string | null;
+  granted_at: string;
+  titles?: Title | null;
+}
+
+export const TITLE_COLORS: Record<string, { label: string; badgeClass: string; activeClass: string }> = {
+  amber: { label: 'Hổ Phách', badgeClass: 'bg-amber-500/15 border-amber-500/30 text-amber-200', activeClass: 'bg-amber-500/25 border-amber-500/50 text-amber-100' },
+  red: { label: 'Huyết Nguyệt', badgeClass: 'bg-red-500/15 border-red-500/30 text-red-300', activeClass: 'bg-red-500/25 border-red-500/50 text-red-200' },
+  emerald: { label: 'Ngọc Lục', badgeClass: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300', activeClass: 'bg-emerald-500/25 border-emerald-500/50 text-emerald-200' },
+  blue: { label: 'Bích Lam', badgeClass: 'bg-blue-500/15 border-blue-500/30 text-blue-300', activeClass: 'bg-blue-500/25 border-blue-500/50 text-blue-200' },
+  purple: { label: 'Tử Uyên', badgeClass: 'bg-purple-500/15 border-purple-500/30 text-purple-300', activeClass: 'bg-purple-500/25 border-purple-500/50 text-purple-200' },
+  gray: { label: 'Hư Vô', badgeClass: 'bg-gray-500/15 border-gray-500/30 text-gray-300', activeClass: 'bg-gray-500/25 border-gray-500/50 text-gray-100' },
+};
+
 export type WillStatus = 'pending' | 'approved' | 'revision_requested' | 'rejected';
 
 export interface Will {

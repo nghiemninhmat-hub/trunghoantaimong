@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote, Organization, OrganizationMember } from '@/lib/supabase';
+import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote, Organization, OrganizationMember, Title, UserTitle, TITLE_COLORS } from '@/lib/supabase';
 import {
   Shield, Users, Coins, Store, BookOpen, Ghost, Check, X, Plus, Trash2,
   AlertCircle, CheckCircle2, History, Edit3, Eye, EyeOff, Dices, Package,
   Heart, Sparkle, Brain, Lock, Unlock, FileWarning, Crown, Save, ScrollText,
   Undo2, RotateCcw, Search, UserSearch, ArrowLeft, ChevronDown, ChevronUp, FileSignature, Info,
-  Download, FileDown, Loader2, Archive, Settings, Clock, Building2, UserCog, Megaphone, Send
+  Download, FileDown, Loader2, Archive, Settings, Clock, Building2, UserCog, Megaphone, Send, Award, Tag
 } from 'lucide-react';
 import { LotusIcon } from '@/components/LotusIcon';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -21,7 +21,7 @@ const STATUS_TAGS = [
   { value: 'Ngưỡng sinh tử', label: 'Thẻ tím đậm', badgeClass: 'bg-purple-700/20 text-purple-400', activeClass: 'bg-purple-700/30 border-purple-700/50 text-purple-300', idleClass: 'bg-purple-700/5 border-purple-700/15 text-purple-500/70' },
 ];
 
-type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wills' | 'settings' | 'organizations' | 'broadcast';
+type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wills' | 'settings' | 'organizations' | 'broadcast' | 'titles';
 
 export default function AdminDashboard() {
   const { profile, isAdmin } = useAuth();
@@ -157,6 +157,18 @@ export default function AdminDashboard() {
   const [bulkAmount, setBulkAmount] = useState(0);
   const [bulkReason, setBulkReason] = useState('');
   const [bulkMsg, setBulkMsg] = useState('');
+
+  // Titles (Bộ Sưu Tầm)
+  const [titles, setTitles] = useState<Title[]>([]);
+  const [showAddTitle, setShowAddTitle] = useState(false);
+  const [newTitle, setNewTitle] = useState({ name: '', description: '', color: 'amber' });
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState<Partial<Title>>({});
+  const [titleMsg, setTitleMsg] = useState('');
+  const [expandedTitleUserIds, setExpandedTitleUserIds] = useState<Set<string>>(new Set());
+  const [userTitlesMap, setUserTitlesMap] = useState<Record<string, UserTitle[]>>({});
+  const [assignTitleUserId, setAssignTitleUserId] = useState<string | null>(null);
+  const [assignTitleId, setAssignTitleId] = useState('');
 
   // Backup / export
   const [exporting, setExporting] = useState(false);
@@ -376,7 +388,7 @@ export default function AdminDashboard() {
   };
 
   const fetchAllData = useCallback(async () => {
-    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData] = await Promise.all([
+    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData, titlesData] = await Promise.all([
       supabase.from('profiles').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').eq('is_approved', true).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
@@ -394,7 +406,9 @@ export default function AdminDashboard() {
       supabase.from('bach_hoa_entries').select('*').order('vote_count', { ascending: false }),
       supabase.from('organizations').select('*, leader:profiles!organizations_leader_id_fkey(oc_name)').order('created_at', { ascending: false }),
       supabase.from('organization_members').select('*, profiles(oc_name)').order('created_at', { ascending: true }),
+      supabase.from('titles').select('*').order('created_at', { ascending: false }),
     ]);
+    if (titlesData?.data) setTitles(titlesData.data as Title[]);
     if (willData?.data) setWills(willData.data as Will[]);
     if (bachHoaData?.data) setBachHoaEntries(bachHoaData.data as BachHoaEntry[]);
     if (orgData?.data) setOrganizations(orgData.data as (Organization & { leader?: { oc_name: string } | null })[]);
@@ -1385,6 +1399,7 @@ export default function AdminDashboard() {
     { id: 'archive', label: 'Lưu Trữ Bản Cũ', icon: Archive },
     { id: 'organizations', label: 'Tổ Chức', icon: Building2 },
     { id: 'broadcast', label: 'Phát Thông Báo', icon: Megaphone },
+    { id: 'titles', label: 'Danh Hiệu', icon: Award },
     { id: 'audit', label: 'Nhật Ký', icon: ScrollText },
     { id: 'settings', label: 'Cài Đặt & Sao Lưu', icon: Settings },
   ];
@@ -1490,6 +1505,120 @@ export default function AdminDashboard() {
 
   const toggleExpandOrg = (orgId: string) => {
     setExpandedOrgIds(prev => { const n = new Set(prev); if (n.has(orgId)) n.delete(orgId); else n.add(orgId); return n; });
+  };
+
+  // === Titles handlers ===
+  const handleAddTitle = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.name.trim()) { setTitleMsg('Lỗi: Tên danh hiệu không được để trống.'); return; }
+    const { data, error } = await supabase.rpc('admin_add_title', {
+      p_name: newTitle.name.trim(),
+      p_description: newTitle.description.trim() || null,
+      p_color: newTitle.color,
+    });
+    if (error) { setTitleMsg(`Lỗi: ${error.message}`); return; }
+    if (data && !data.success) { setTitleMsg(`Lỗi: ${data.error}`); return; }
+    logAction('add_title', undefined, `Thêm danh hiệu "${newTitle.name.trim()}"`, { name: newTitle.name });
+    setTitleMsg(`Đã thêm danh hiệu "${newTitle.name.trim()}" thành công.`);
+    setNewTitle({ name: '', description: '', color: 'amber' });
+    setShowAddTitle(false);
+    setTimeout(() => setTitleMsg(''), 3000);
+    fetchAllData();
+  };
+
+  const handleSaveEditTitle = async (titleId: string) => {
+    const { data, error } = await supabase.rpc('admin_update_title', {
+      p_title_id: titleId,
+      p_name: editTitle.name || null,
+      p_description: editTitle.description || null,
+      p_color: editTitle.color || null,
+    });
+    if (error) { setTitleMsg(`Lỗi: ${error.message}`); return; }
+    if (data && !data.success) { setTitleMsg(`Lỗi: ${data.error}`); return; }
+    logAction('edit_title', undefined, `Sửa danh hiệu "${editTitle.name}"`, { title_id: titleId });
+    setTitleMsg('Đã cập nhật danh hiệu thành công.');
+    setEditingTitleId(null);
+    setEditTitle({});
+    setTimeout(() => setTitleMsg(''), 3000);
+    fetchAllData();
+  };
+
+  const handleDeleteTitle = (titleId: string, titleName: string) => {
+    requireConfirm(
+      'Xóa Danh Hiệu',
+      `Bạn sắp xóa danh hiệu "${titleName}" khỏi hệ thống. Tất cả người chơi đang sở hữu danh hiệu này cũng sẽ bị thu hồi. Hành động không thể hoàn tác.`,
+      async () => {
+        const { data, error } = await supabase.rpc('admin_delete_title', { p_title_id: titleId });
+        if (error) { setTitleMsg(`Lỗi: ${error.message}`); return; }
+        if (data && !data.success) { setTitleMsg(`Lỗi: ${data.error}`); return; }
+        logAction('delete_title', undefined, `Xóa danh hiệu "${titleName}"`, { title_id: titleId });
+        setTitleMsg(`Đã xóa danh hiệu "${titleName}".`);
+        setTimeout(() => setTitleMsg(''), 3000);
+        fetchAllData();
+      },
+      [{ label: 'Danh hiệu', value: titleName }],
+      'Xóa danh hiệu',
+    );
+  };
+
+  const toggleExpandTitleUser = async (userId: string) => {
+    setExpandedTitleUserIds(prev => {
+      const n = new Set(prev);
+      if (n.has(userId)) { n.delete(userId); }
+      else {
+        n.add(userId);
+        if (!userTitlesMap[userId]) {
+          supabase
+            .from('user_titles')
+            .select('*, titles(*)')
+            .eq('user_id', userId)
+            .order('granted_at', { ascending: false })
+            .then(({ data }) => {
+              if (data) setUserTitlesMap(m => ({ ...m, [userId]: data as UserTitle[] }));
+            });
+        }
+      }
+      return n;
+    });
+  };
+
+  const handleAssignTitle = async (userId: string) => {
+    if (!assignTitleId) { setTitleMsg('Lỗi: Vui lòng chọn danh hiệu để cấp.'); return; }
+    const { data, error } = await supabase.rpc('admin_assign_title', {
+      p_user_id: userId,
+      p_title_id: assignTitleId,
+    });
+    if (error) { setTitleMsg(`Lỗi: ${error.message}`); return; }
+    if (data && !data.success) { setTitleMsg(`Lỗi: ${data.error}`); return; }
+    const title = titles.find(t => t.id === assignTitleId);
+    const user = allProfiles.find(p => p.id === userId);
+    logAction('assign_title', userId, `Cấp danh hiệu "${title?.name}" cho ${user?.oc_name || userId.slice(0, 8)}`, { title_id: assignTitleId });
+    setTitleMsg(`Đã cấp danh hiệu "${title?.name}" thành công.`);
+    setAssignTitleId('');
+    setAssignTitleUserId(null);
+    // refresh this user's titles
+    const { data: fresh } = await supabase.from('user_titles').select('*, titles(*)').eq('user_id', userId).order('granted_at', { ascending: false });
+    if (fresh) setUserTitlesMap(m => ({ ...m, [userId]: fresh as UserTitle[] }));
+    setTimeout(() => setTitleMsg(''), 3000);
+  };
+
+  const handleRevokeTitle = (userTitleId: string, userId: string, titleName: string) => {
+    requireConfirm(
+      'Thu Hồi Danh Hiệu',
+      `Bạn sắp thu hồi danh hiệu "${titleName}" khỏi người chơi này.`,
+      async () => {
+        const { data, error } = await supabase.rpc('admin_revoke_title', { p_user_title_id: userTitleId });
+        if (error) { setTitleMsg(`Lỗi: ${error.message}`); return; }
+        if (data && !data.success) { setTitleMsg(`Lỗi: ${data.error}`); return; }
+        logAction('revoke_title', userId, `Thu hồi danh hiệu "${titleName}"`, { user_title_id: userTitleId });
+        setTitleMsg(`Đã thu hồi danh hiệu "${titleName}".`);
+        const { data: fresh } = await supabase.from('user_titles').select('*, titles(*)').eq('user_id', userId).order('granted_at', { ascending: false });
+        if (fresh) setUserTitlesMap(m => ({ ...m, [userId]: fresh as UserTitle[] }));
+        setTimeout(() => setTitleMsg(''), 3000);
+      },
+      [{ label: 'Danh hiệu', value: titleName }],
+      'Thu hồi',
+    );
   };
 
   return (
@@ -3524,6 +3653,189 @@ export default function AdminDashboard() {
                 <Coins className="w-4 h-4" />
                 Cấp Cho Toàn Bộ
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Titles Tab */}
+      {activeTab === 'titles' && (
+        <div className="space-y-6">
+          {titleMsg && (
+            <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${titleMsg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
+              {titleMsg.startsWith('Lỗi') ? <AlertCircle className="w-4 h-4 flex-shrink-0" /> : <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
+              {titleMsg}
+            </div>
+          )}
+
+          {/* Titles catalog management */}
+          <div className={cardCls}>
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+                  <Award className="w-5 h-5 text-amber-300" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80">Bộ Sưu Tầm Danh Hiệu</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Tạo, sửa, xóa danh hiệu và cấp cho người chơi.</p>
+                </div>
+              </div>
+              <button onClick={() => setShowAddTitle(!showAddTitle)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#670201] hover:bg-[#a00404] text-amber-100 text-xs font-bold transition-all flex-shrink-0">
+                {showAddTitle ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {showAddTitle ? 'Hủy' : 'Thêm Danh Hiệu'}
+              </button>
+            </div>
+
+            {showAddTitle && (
+              <form onSubmit={handleAddTitle} className="space-y-3 border border-white/5 rounded-lg p-4 bg-black/20 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelCls}>Tên danh hiệu</label>
+                    <input type="text" value={newTitle.name} onChange={e => setNewTitle({ ...newTitle, name: e.target.value })} required placeholder="vd: Tuyệt Đỉnh Cao Thủ" className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Màu sắc</label>
+                    <select value={newTitle.color} onChange={e => setNewTitle({ ...newTitle, color: e.target.value })} className={inputCls}>
+                      {Object.entries(TITLE_COLORS).map(([key, cfg]) => (
+                        <option key={key} value={key}>{cfg.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className={labelCls}>Mô tả (tùy chọn)</label>
+                  <input type="text" value={newTitle.description} onChange={e => setNewTitle({ ...newTitle, description: e.target.value })} placeholder="Mô tả ngắn về danh hiệu..." className={inputCls} />
+                </div>
+                <button type="submit" className="px-5 py-2.5 bg-[#670201] hover:bg-[#a00404] text-amber-100 text-sm font-bold rounded-lg transition-all">Tạo Mới</button>
+              </form>
+            )}
+
+            {titles.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">Chưa có danh hiệu nào. Bấm "Thêm Danh Hiệu" để tạo.</p>
+            ) : (
+              <div className="space-y-2">
+                {titles.map(title => {
+                  const colorCfg = TITLE_COLORS[title.color] || TITLE_COLORS.amber;
+                  const isEditing = editingTitleId === title.id;
+                  return (
+                    <div key={title.id} className="rounded-lg border border-white/5 bg-black/20 p-3">
+                      {isEditing ? (
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className={labelCls}>Tên danh hiệu</label>
+                              <input type="text" value={editTitle.name || ''} onChange={e => setEditTitle({ ...editTitle, name: e.target.value })} className={inputCls} />
+                            </div>
+                            <div>
+                              <label className={labelCls}>Màu sắc</label>
+                              <select value={editTitle.color || 'amber'} onChange={e => setEditTitle({ ...editTitle, color: e.target.value })} className={inputCls}>
+                                {Object.entries(TITLE_COLORS).map(([key, cfg]) => (
+                                  <option key={key} value={key}>{cfg.label}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                          <div>
+                            <label className={labelCls}>Mô tả</label>
+                            <input type="text" value={editTitle.description || ''} onChange={e => setEditTitle({ ...editTitle, description: e.target.value })} className={inputCls} />
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => handleSaveEditTitle(title.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold transition-all"><Save className="w-3.5 h-3.5" /> Lưu</button>
+                            <button onClick={() => { setEditingTitleId(null); setEditTitle({}); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold transition-all"><X className="w-3.5 h-3.5" /> Hủy</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className={`px-2.5 py-1 rounded-full border text-xs font-bold whitespace-nowrap ${colorCfg.badgeClass}`}>{title.name}</span>
+                            {title.description && <span className="text-xs text-gray-500 truncate hidden sm:inline">{title.description}</span>}
+                          </div>
+                          <div className="flex gap-1.5 flex-shrink-0">
+                            <button onClick={() => { setEditingTitleId(title.id); setEditTitle({ ...title }); }} className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 transition-all"><Edit3 className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => handleDeleteTitle(title.id, title.name)} className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Assign titles to players */}
+          <div className={cardCls}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center flex-shrink-0">
+                <Tag className="w-5 h-5 text-blue-300" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80">Cấp Danh Hiệu Cho Người Chơi</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Mở rộng từng người để xem và cấp/thu hồi danh hiệu.</p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {approvedProfiles.length === 0 ? (
+                <p className="text-sm text-gray-500 text-center py-4">Chưa có người chơi nào.</p>
+              ) : approvedProfiles.map(p => {
+                const isExpanded = expandedTitleUserIds.has(p.id);
+                const userTitles = userTitlesMap[p.id] || [];
+                return (
+                  <div key={p.id} className="rounded-lg border border-white/5 bg-black/20 overflow-hidden">
+                    <button onClick={() => toggleExpandTitleUser(p.id)} className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-white/5">
+                      <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#670201]/30">
+                        <UserCog className="h-4 w-4 text-amber-300/70" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-amber-100/90">{p.oc_name}</p>
+                        <p className="text-xs text-gray-500">{userTitles.length} danh hiệu</p>
+                      </div>
+                      {userTitles.filter(ut => ut.is_displayed).length > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 whitespace-nowrap">{userTitles.filter(ut => ut.is_displayed).length} hiển thị</span>
+                      )}
+                      {isExpanded ? <ChevronUp className="h-4 w-4 flex-shrink-0 text-gray-500" /> : <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-500" />}
+                    </button>
+                    {isExpanded && (
+                      <div className="border-t border-white/5 p-4 space-y-3">
+                        {/* Existing titles */}
+                        {userTitles.length > 0 && (
+                          <div className="space-y-1.5">
+                            {userTitles.map(ut => {
+                              const t = ut.titles;
+                              const colorCfg = t ? (TITLE_COLORS[t.color] || TITLE_COLORS.amber) : TITLE_COLORS.amber;
+                              return (
+                                <div key={ut.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-black/30 border border-white/5">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold whitespace-nowrap ${ut.is_displayed ? colorCfg.activeClass : colorCfg.badgeClass}`}>{t?.name || '(?)'}</span>
+                                    {ut.is_displayed && <span className="text-[10px] text-emerald-400/70">Đang hiển thị</span>}
+                                  </div>
+                                  <button onClick={() => handleRevokeTitle(ut.id, p.id, t?.name || '')} className="p-1 rounded text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all flex-shrink-0"><X className="w-3.5 h-3.5" /></button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {/* Assign new title */}
+                        <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-white/5">
+                          <select value={assignTitleUserId === p.id ? assignTitleId : ''} onChange={e => { setAssignTitleUserId(p.id); setAssignTitleId(e.target.value); }} className={`${inputCls} flex-1`}>
+                            <option value="">Chọn danh hiệu để cấp...</option>
+                            {titles.filter(t => !userTitles.some(ut => ut.title_id === t.id)).map(t => (
+                              <option key={t.id} value={t.id}>{t.name}</option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => handleAssignTitle(p.id)}
+                            disabled={assignTitleUserId !== p.id || !assignTitleId}
+                            className="px-4 py-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold transition-all disabled:opacity-50 flex-shrink-0"
+                          >
+                            <Plus className="w-4 h-4 inline mr-1" /> Cấp
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

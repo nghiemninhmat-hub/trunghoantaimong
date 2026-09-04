@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Transaction, InventoryItem, CURRENCY_LABELS, Organization } from '@/lib/supabase';
+import { supabase, Transaction, InventoryItem, CURRENCY_LABELS, Organization, UserTitle, TITLE_COLORS } from '@/lib/supabase';
 import { StatCard, StatGrid } from '@/components/StatCard';
 import {
   UserCircle, Coins, Sparkles, Skull, Package, History, Edit3,
   CheckCircle2, Clock, AlertCircle, Ghost, Plus, Minus, Send,
   Heart, Sparkle, Brain, ShieldCheck, Camera, X, Loader2, Upload, Link,
-  ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronRight, Building2
+  ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronRight, Building2, Award, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import VisitorProfileCard from '@/components/VisitorProfileCard';
@@ -63,13 +63,18 @@ export default function ProfilePage() {
   const [emailVisible, setEmailVisible] = useState(false);
   const [statusDescOpen, setStatusDescOpen] = useState(false);
 
+  // Titles (Bộ Sưu Tầm)
+  const [userTitles, setUserTitles] = useState<UserTitle[]>([]);
+  const [titleMsg, setTitleMsg] = useState('');
+
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [txRes, invRes, orgRes] = await Promise.all([
+    const [txRes, invRes, orgRes, titlesRes] = await Promise.all([
       supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
       supabase.from('inventories').select('*, shop_items(*)').eq('user_id', user.id).order('acquired_at', { ascending: false }),
       supabase.from('organization_members').select('role, organization_id, organizations(id, name, category, leader_id)').eq('user_id', user.id),
+      supabase.from('user_titles').select('*, titles(*)').eq('user_id', user.id).order('granted_at', { ascending: false }),
     ]);
     if (txRes.error) {
       console.error('Lỗi tải giao dịch:', txRes.error.message);
@@ -87,6 +92,9 @@ export default function ProfilePage() {
         role: m.role,
       })).filter(o => o?.id);
       setMyOrgs(orgList);
+    }
+    if (titlesRes.data) {
+      setUserTitles(titlesRes.data as UserTitle[]);
     }
     setLoading(false);
   }, [user]);
@@ -282,6 +290,23 @@ export default function ProfilePage() {
     }
   };
 
+  const handleToggleTitle = async (userTitleId: string, currentDisplayed: boolean) => {
+    const { data, error } = await supabase.rpc('toggle_title_display', {
+      p_user_title_id: userTitleId,
+      p_display: !currentDisplayed,
+    });
+    if (error) {
+      setTitleMsg(`Lỗi: ${error.message}`);
+      return;
+    }
+    if (data && !data.success) {
+      setTitleMsg(`Lỗi: ${data.error}`);
+      return;
+    }
+    setUserTitles(prev => prev.map(ut => ut.id === userTitleId ? { ...ut, is_displayed: !currentDisplayed } : ut));
+    setTitleMsg('');
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
   };
@@ -363,6 +388,16 @@ export default function ProfilePage() {
                       {profile.danh_vong}
                     </span>
                   )}
+                  {userTitles.filter(ut => ut.is_displayed).map(ut => {
+                    const t = ut.titles;
+                    const colorCfg = t ? (TITLE_COLORS[t.color] || TITLE_COLORS.amber) : TITLE_COLORS.amber;
+                    return (
+                      <span key={ut.id} className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-xs font-bold whitespace-nowrap ${colorCfg.activeClass}`}>
+                        <Award className="w-3 h-3" />
+                        {t?.name || '(?)'}
+                      </span>
+                    );
+                  })}
                   {myOrgs.map(o => (
                     <span key={o.id} className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/30 border border-white/10 text-xs text-gray-300">
                       <Building2 className="w-3 h-3 text-amber-300/70" />
@@ -887,6 +922,49 @@ export default function ProfilePage() {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Titles (Bộ Sưu Tầm) */}
+      <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
+        <div className="flex items-center gap-2 mb-4">
+          <Award className="w-5 h-5 text-amber-300/70" />
+          <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Bộ Sưu Tầm Danh Hiệu</h3>
+          <span className="ml-auto text-[10px] text-gray-600 uppercase tracking-wider">Tối đa 3 hiển thị</span>
+        </div>
+        {titleMsg && (
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 mb-3">
+            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+            <p className="text-xs text-red-300">{titleMsg}</p>
+          </div>
+        )}
+        {userTitles.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-6">Chưa sở hữu danh hiệu nào. Danh hiệu do quản trị viên cấp.</p>
+        ) : (
+          <div className="space-y-2">
+            {userTitles.map(ut => {
+              const t = ut.titles;
+              const colorCfg = t ? (TITLE_COLORS[t.color] || TITLE_COLORS.amber) : TITLE_COLORS.amber;
+              return (
+                <div key={ut.id} className="flex items-center justify-between gap-2 p-3 rounded-lg bg-black/20 border border-white/5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className={`px-2.5 py-1 rounded-full border text-xs font-bold whitespace-nowrap ${ut.is_displayed ? colorCfg.activeClass : colorCfg.badgeClass}`}>{t?.name || '(?)'}</span>
+                    {t?.description && <span className="text-xs text-gray-500 truncate hidden sm:inline">{t.description}</span>}
+                  </div>
+                  <button
+                    onClick={() => handleToggleTitle(ut.id, ut.is_displayed)}
+                    className={`flex items-center gap-1.5 text-xs font-bold transition-all flex-shrink-0 ${ut.is_displayed ? 'text-emerald-400' : 'text-gray-500 hover:text-gray-300'}`}
+                  >
+                    {ut.is_displayed ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                    {ut.is_displayed ? 'Đang hiện' : 'Ẩn'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        {userTitles.length > 0 && (
+          <p className="text-xs text-gray-600 mt-3">Bấm nút để bật/tắt hiển thị. Chọn tối đa 3 danh hiệu để hiển thị trên hồ sơ, hoặc tắt tất cả nếu không muốn dùng.</p>
         )}
       </div>
 
