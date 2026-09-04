@@ -6,7 +6,7 @@ import {
   AlertCircle, CheckCircle2, History, Edit3, Eye, EyeOff, Dices, Package,
   Heart, Sparkle, Brain, Lock, Unlock, FileWarning, Crown, Save, ScrollText,
   Undo2, RotateCcw, Search, UserSearch, ArrowLeft, ChevronDown, ChevronUp, FileSignature, Info,
-  Download, FileDown, Loader2, Archive, Settings, Clock, Building2, UserCog
+  Download, FileDown, Loader2, Archive, Settings, Clock, Building2, UserCog, Megaphone, Send
 } from 'lucide-react';
 import { LotusIcon } from '@/components/LotusIcon';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -21,7 +21,7 @@ const STATUS_TAGS = [
   { value: 'Ngưỡng sinh tử', label: 'Thẻ tím đậm', badgeClass: 'bg-purple-700/20 text-purple-400', activeClass: 'bg-purple-700/30 border-purple-700/50 text-purple-300', idleClass: 'bg-purple-700/5 border-purple-700/15 text-purple-500/70' },
 ];
 
-type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wills' | 'settings' | 'organizations';
+type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wills' | 'settings' | 'organizations' | 'broadcast';
 
 export default function AdminDashboard() {
   const { profile, isAdmin } = useAuth();
@@ -147,6 +147,16 @@ export default function AdminDashboard() {
   const [newMemberUserId, setNewMemberUserId] = useState('');
   const [newMemberRole, setNewMemberRole] = useState('Thành viên');
   const [newOrgMembers, setNewOrgMembers] = useState<{ user_id: string; role: string; oc_name: string }[]>([]);
+
+  // Broadcast & bulk grant
+  const [broadcastTitle, setBroadcastTitle] = useState('');
+  const [broadcastBody, setBroadcastBody] = useState('');
+  const [broadcastLink, setBroadcastLink] = useState('');
+  const [broadcastMsg, setBroadcastMsg] = useState('');
+  const [bulkCurrencyType, setBulkCurrencyType] = useState('HUA_TIEN');
+  const [bulkAmount, setBulkAmount] = useState(0);
+  const [bulkReason, setBulkReason] = useState('');
+  const [bulkMsg, setBulkMsg] = useState('');
 
   // Backup / export
   const [exporting, setExporting] = useState(false);
@@ -1374,6 +1384,7 @@ export default function AdminDashboard() {
     { id: 'bachhoa', label: 'Bách Hoa', icon: LotusIcon },
     { id: 'archive', label: 'Lưu Trữ Bản Cũ', icon: Archive },
     { id: 'organizations', label: 'Tổ Chức', icon: Building2 },
+    { id: 'broadcast', label: 'Phát Thông Báo', icon: Megaphone },
     { id: 'audit', label: 'Nhật Ký', icon: ScrollText },
     { id: 'settings', label: 'Cài Đặt & Sao Lưu', icon: Settings },
   ];
@@ -3305,6 +3316,215 @@ export default function AdminDashboard() {
                 {regMsg}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Broadcast Tab */}
+      {activeTab === 'broadcast' && (
+        <div className="space-y-6">
+          {/* Broadcast notification card */}
+          <div className={cardCls}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center flex-shrink-0">
+                <Megaphone className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80">Phát Thông Báo Toàn Hệ Thống</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Gửi thông báo đẩy đến toàn bộ người chơi. Hiển thị 8 giây trên màn hình.</p>
+              </div>
+            </div>
+
+            {broadcastMsg && (
+              <div className={`flex items-center gap-2 p-3 rounded-lg text-sm mb-4 ${broadcastMsg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
+                {broadcastMsg.startsWith('Lỗi') ? <AlertCircle className="w-4 h-4 flex-shrink-0" /> : <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
+                {broadcastMsg}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <label className={labelCls}>Tiêu đề thông báo</label>
+                <input
+                  type="text"
+                  value={broadcastTitle}
+                  onChange={e => setBroadcastTitle(e.target.value)}
+                  placeholder="vd: Thông báo bảo trì hệ thống"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>Nội dung (tùy chọn)</label>
+                <textarea
+                  value={broadcastBody}
+                  onChange={e => setBroadcastBody(e.target.value)}
+                  rows={3}
+                  placeholder="Nội dung chi tiết của thông báo..."
+                  className={`${inputCls} resize-none`}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>Đường dẫn khi bấm vào (tùy chọn)</label>
+                <input
+                  type="text"
+                  value={broadcastLink}
+                  onChange={e => setBroadcastLink(e.target.value)}
+                  placeholder="vd: /forum hoặc /bach-phap"
+                  className={inputCls}
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (!broadcastTitle.trim()) {
+                    setBroadcastMsg('Lỗi: Vui lòng nhập tiêu đề thông báo.');
+                    return;
+                  }
+                  requireConfirm(
+                    'Xác Nhận Phát Thông Báo',
+                    `Bạn sắp phát thông báo đến TOÀN BỘ người chơi. Mọi tài khoản đang online sẽ thấy thông báopopup hiển thị 8 giây. Vui lòng kiểm tra kỹ nội dung trước khi xác nhận.`,
+                    async () => {
+                      const { data, error } = await supabase.rpc('admin_broadcast_notification', {
+                        p_title: broadcastTitle.trim(),
+                        p_body: broadcastBody.trim() || null,
+                        p_link: broadcastLink.trim() || null,
+                      });
+                      if (error) {
+                        setBroadcastMsg(`Lỗi: ${error.message}`);
+                        return;
+                      }
+                      const result = data as { success: boolean; notification_id: string };
+                      if (!result?.success) {
+                        setBroadcastMsg('Lỗi: Không thể phát thông báo.');
+                        return;
+                      }
+                      logAction('broadcast_notification', undefined, `Phát thông báo: ${broadcastTitle.trim()}`, { title: broadcastTitle.trim(), body: broadcastBody.trim() });
+                      setBroadcastMsg(`Đã phát thông báo thành công đến toàn bộ người chơi.`);
+                      setBroadcastTitle('');
+                      setBroadcastBody('');
+                      setBroadcastLink('');
+                      setTimeout(() => setBroadcastMsg(''), 4000);
+                    },
+                    [
+                      { label: 'Tiêu đề', value: broadcastTitle.trim() },
+                      { label: 'Nội dung', value: broadcastBody.trim() || '(không có)' },
+                      { label: 'Người nhận', value: 'TOÀN BỘ người chơi' },
+                    ],
+                    'Phát thông báo',
+                  );
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-300 text-sm font-bold border border-red-500/30 transition-all"
+              >
+                <Send className="w-4 h-4" />
+                Phát Thông Báo
+              </button>
+            </div>
+          </div>
+
+          {/* Bulk currency grant card */}
+          <div className={cardCls}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+                <Coins className="w-5 h-5 text-amber-300" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80">Cấp Tài Sản Hàng Loạt</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Cấp tiền cho toàn bộ người chơi đã duyệt cùng lúc. Mỗi người nhận một giao dịch ghi nhận.</p>
+              </div>
+            </div>
+
+            {bulkMsg && (
+              <div className={`flex items-center gap-2 p-3 rounded-lg text-sm mb-4 ${bulkMsg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
+                {bulkMsg.startsWith('Lỗi') ? <AlertCircle className="w-4 h-4 flex-shrink-0" /> : <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
+                {bulkMsg}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Loại tiền</label>
+                  <select
+                    value={bulkCurrencyType}
+                    onChange={e => setBulkCurrencyType(e.target.value)}
+                    className={inputCls}
+                  >
+                    <option value="HUA_TIEN">Hoa Tiền</option>
+                    <option value="CONG_DUC">Công Đức</option>
+                    <option value="AM_DUC">Âm Đức</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Số lượng (mỗi người)</label>
+                  <input
+                    type="number"
+                    value={bulkAmount}
+                    onChange={e => setBulkAmount(parseInt(e.target.value) || 0)}
+                    placeholder="vd: 100"
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Lý do</label>
+                <input
+                  type="text"
+                  value={bulkReason}
+                  onChange={e => setBulkReason(e.target.value)}
+                  placeholder="vd: Bồi thường sự cố hệ thống"
+                  className={inputCls}
+                />
+              </div>
+              <button
+                onClick={() => {
+                  if (bulkAmount === 0) {
+                    setBulkMsg('Lỗi: Số lượng phải khác 0.');
+                    return;
+                  }
+                  if (!bulkReason.trim()) {
+                    setBulkMsg('Lỗi: Vui lòng nhập lý do.');
+                    return;
+                  }
+                  const currencyLabel = bulkCurrencyType === 'HUA_TIEN' ? 'Hoa Tiền' : bulkCurrencyType === 'CONG_DUC' ? 'Công Đức' : 'Âm Đức';
+                  requireConfirm(
+                    'Xác Nhận Cấp Tài Sản Hàng Loạt',
+                    `Bạn sắp cấp ${currencyLabel} x${bulkAmount} cho TOÀN BỘ người chơi đã duyệt. Hành động này không thể hoàn tác và sẽ ghi giao dịch cho từng người.`,
+                    async () => {
+                      const { data, error } = await supabase.rpc('admin_bulk_grant_currency', {
+                        p_currency_type: bulkCurrencyType,
+                        p_amount: bulkAmount,
+                        p_reason: bulkReason.trim(),
+                      });
+                      if (error) {
+                        setBulkMsg(`Lỗi: ${error.message}`);
+                        return;
+                      }
+                      const result = data as { success: boolean; affected_count: number };
+                      if (!result?.success) {
+                        setBulkMsg('Lỗi: Không thể cấp tài sản.');
+                        return;
+                      }
+                      logAction('bulk_grant_currency', undefined, `Cấp ${currencyLabel} x${bulkAmount} cho ${result.affected_count} người chơi`, { currency_type: bulkCurrencyType, amount: bulkAmount, reason: bulkReason.trim(), affected: result.affected_count });
+                      setBulkMsg(`Đã cấp ${currencyLabel} x${bulkAmount} cho ${result.affected_count} người chơi thành công.`);
+                      setBulkAmount(0);
+                      setBulkReason('');
+                      setTimeout(() => setBulkMsg(''), 5000);
+                      fetchAllData();
+                    },
+                    [
+                      { label: 'Loại tiền', value: currencyLabel },
+                      { label: 'Số lượng/người', value: String(bulkAmount) },
+                      { label: 'Lý do', value: bulkReason.trim() },
+                      { label: 'Người nhận', value: 'TOÀN BỘ người chơi đã duyệt' },
+                    ],
+                    'Cấp tài sản',
+                  );
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-sm font-bold border border-amber-500/30 transition-all"
+              >
+                <Coins className="w-4 h-4" />
+                Cấp Cho Toàn Bộ
+              </button>
+            </div>
           </div>
         </div>
       )}

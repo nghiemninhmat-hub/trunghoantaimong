@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Notification } from '@/lib/supabase';
-import { Bell, CheckCheck, Trash2, UserPlus, UserCheck, Mail, UserCircle, FileText } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, UserPlus, UserCheck, Mail, UserCircle, FileText, Megaphone, X } from 'lucide-react';
 
 const iconForType = (type: string) => {
   switch (type) {
@@ -11,6 +11,7 @@ const iconForType = (type: string) => {
     case 'message': return Mail;
     case 'admin_registration': return UserCircle;
     case 'admin_post': return FileText;
+    case 'admin_broadcast': return Megaphone;
     default: return Bell;
   }
 };
@@ -26,6 +27,8 @@ const colorForType = (type: string) => {
       return 'text-amber-400';
     case 'admin_post':
       return 'text-purple-400';
+    case 'admin_broadcast':
+      return 'text-red-400';
     default:
       return 'text-gray-400';
   }
@@ -51,6 +54,9 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [broadcastToast, setBroadcastToast] = useState<Notification | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const seenBroadcastIds = useRef<Set<string>>(new Set());
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -65,7 +71,19 @@ export default function NotificationBell() {
       .order('created_at', { ascending: false })
       .limit(30);
     if (!error && data) {
-      setNotifications(data as Notification[]);
+      const typed = data as Notification[];
+      setNotifications(typed);
+      // Show toast for new broadcast notifications not yet seen
+      const broadcasts = typed.filter(n => n.type === 'admin_broadcast' && !n.is_read);
+      for (const b of broadcasts) {
+        if (!seenBroadcastIds.current.has(b.id)) {
+          seenBroadcastIds.current.add(b.id);
+          if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+          setBroadcastToast(b);
+          toastTimerRef.current = setTimeout(() => setBroadcastToast(null), 8000);
+          break; // show one at a time
+        }
+      }
     }
     setLoading(false);
   }, [user]);
@@ -133,6 +151,18 @@ export default function NotificationBell() {
       navigate(n.link);
       setOpen(false);
     }
+  };
+
+  const dismissToast = () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setBroadcastToast(null);
+  };
+
+  const handleToastClick = (n: Notification) => {
+    if (n.link) {
+      navigate(n.link);
+    }
+    dismissToast();
   };
 
   if (!user) return null;
@@ -240,6 +270,40 @@ export default function NotificationBell() {
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Broadcast toast popup — auto dismiss after 8s */}
+      {broadcastToast && (
+        <div
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-[calc(100vw-2rem)] max-w-md animate-[slideDown_0.3s_ease-out]"
+          onClick={() => handleToastClick(broadcastToast)}
+        >
+          <div className="flex items-start gap-3 p-4 rounded-xl border border-red-500/40 bg-[#120707]/95 shadow-2xl backdrop-blur-xl cursor-pointer hover:border-red-500/60 transition-all">
+            <div className="flex-shrink-0 mt-0.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/20">
+                <Megaphone className="w-4 h-4 text-red-400" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-amber-100/90">{broadcastToast.title}</p>
+              {broadcastToast.body && (
+                <p className="text-xs text-gray-400 mt-1 line-clamp-3">{broadcastToast.body}</p>
+              )}
+              <div className="flex items-center gap-1.5 mt-2">
+                <div className="h-1 flex-1 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full bg-red-500/50 animate-[shrink_8s_linear]" style={{ animationFillMode: 'forwards' }} />
+                </div>
+                <span className="text-[10px] text-gray-500">8s</span>
+              </div>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); dismissToast(); }}
+              className="flex-shrink-0 p-1 -mr-1 -mt-1 text-gray-500 hover:text-amber-100 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
     </div>
