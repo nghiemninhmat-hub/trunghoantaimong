@@ -59,7 +59,6 @@ export interface Profile {
   approved_at: string | null;
   password: string | null;
   is_disabled: boolean;
-  active_frame_id: string | null;
 }
 
 export interface AuditLog {
@@ -298,27 +297,6 @@ export interface BachHoaVote {
   user_id: string;
   created_at: string;
   profiles?: { oc_name: string | null; anonymous_name: string | null } | null;
-}
-
-export type FrameCurrencyType = 'hua_tien' | 'cong_duc' | 'am_duc';
-
-export interface AvatarFrame {
-  id: string;
-  frame_key: string;
-  name: string;
-  description: string;
-  image_path: string;
-  currency_type: FrameCurrencyType;
-  price: number;
-  display_order: number;
-  created_at: string;
-}
-
-export interface UserAvatarFrame {
-  id: string;
-  user_id: string;
-  frame_id: string;
-  purchased_at: string;
 }
 
 export type WillStatus = 'pending' | 'approved' | 'revision_requested' | 'rejected';
