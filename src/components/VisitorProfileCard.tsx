@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Friendship } from '@/lib/supabase';
+import { supabase, Friendship, Organization } from '@/lib/supabase';
 import {
   UserCircle, Crown, Ghost, Mail, Eye, EyeOff, UserPlus, Check, Loader2,
-  MessageCircle, ArrowLeft, AlertCircle,
+  MessageCircle, ArrowLeft, AlertCircle, Building2,
 } from 'lucide-react';
 
 type RelationState = 'none' | 'outgoing' | 'incoming' | 'friends';
@@ -20,6 +20,7 @@ export default function VisitorProfileCard() {
   const [gender, setGender] = useState('');
   const [bio, setBio] = useState('');
   const [danhVong, setDanhVong] = useState('');
+  const [orgs, setOrgs] = useState<(Organization & { role?: string })[]>([]);
   const [createdAt, setCreatedAt] = useState('');
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -49,6 +50,18 @@ export default function VisitorProfileCard() {
     setBio(data.bio || '');
     setDanhVong(data.danh_vong || '');
     setCreatedAt(data.created_at || '');
+    // Fetch organizations this user belongs to
+    const { data: memData } = await supabase
+      .from('organization_members')
+      .select('role, organization_id, organizations(id, name, category, leader_id)')
+      .eq('user_id', targetId);
+    if (memData) {
+      const orgList = (memData as any[]).map(m => ({
+        ...m.organizations,
+        role: m.role,
+      })).filter(o => o?.id);
+      setOrgs(orgList);
+    }
     setLoading(false);
   }, [targetId]);
 
@@ -260,6 +273,15 @@ export default function VisitorProfileCard() {
                       {danhVong}
                     </span>
                   )}
+                  {orgs.map(o => (
+                    <span key={o.id} className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/30 border border-white/10 text-xs text-gray-300">
+                      <Building2 className="w-3 h-3 text-amber-300/70" />
+                      {o.name}
+                      {o.role && o.role !== 'Thành viên' && (
+                        <span className="text-[10px] text-amber-300/70">· {o.role}</span>
+                      )}
+                    </span>
+                  ))}
                 </div>
               </div>
             </div>

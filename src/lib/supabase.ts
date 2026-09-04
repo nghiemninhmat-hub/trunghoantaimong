@@ -299,6 +299,26 @@ export interface BachHoaVote {
   profiles?: { oc_name: string | null; anonymous_name: string | null } | null;
 }
 
+export interface Organization {
+  id: string;
+  name: string;
+  category: string;
+  leader_id: string | null;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  leader?: { oc_name: string } | null;
+}
+
+export interface OrganizationMember {
+  id: string;
+  organization_id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+  profiles?: { oc_name: string } | null;
+}
+
 export type WillStatus = 'pending' | 'approved' | 'revision_requested' | 'rejected';
 
 export interface Will {

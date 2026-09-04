@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Transaction, InventoryItem, CURRENCY_LABELS } from '@/lib/supabase';
+import { supabase, Transaction, InventoryItem, CURRENCY_LABELS, Organization } from '@/lib/supabase';
 import { StatCard, StatGrid } from '@/components/StatCard';
 import {
   UserCircle, Coins, Sparkles, Skull, Package, History, Edit3,
   CheckCircle2, Clock, AlertCircle, Ghost, Plus, Minus, Send,
   Heart, Sparkle, Brain, ShieldCheck, Camera, X, Loader2, Upload, Link,
-  ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronRight
+  ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronRight, Building2
 } from 'lucide-react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import VisitorProfileCard from '@/components/VisitorProfileCard';
@@ -25,6 +25,7 @@ export default function ProfilePage() {
   const { user, profile, refreshProfile, isAdmin } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [myOrgs, setMyOrgs] = useState<(Organization & { role?: string })[]>([]);
   const [editing, setEditing] = useState(false);
   const [ocName, setOcName] = useState('');
   const [bio, setBio] = useState('');
@@ -65,9 +66,10 @@ export default function ProfilePage() {
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [txRes, invRes] = await Promise.all([
+    const [txRes, invRes, orgRes] = await Promise.all([
       supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
       supabase.from('inventories').select('*, shop_items(*)').eq('user_id', user.id).order('acquired_at', { ascending: false }),
+      supabase.from('organization_members').select('role, organization_id, organizations(id, name, category, leader_id)').eq('user_id', user.id),
     ]);
     if (txRes.error) {
       console.error('Lỗi tải giao dịch:', txRes.error.message);
@@ -78,6 +80,13 @@ export default function ProfilePage() {
       console.error('Lỗi tải kho vật phẩm:', invRes.error.message);
     } else {
       setInventory(invRes.data as InventoryItem[]);
+    }
+    if (orgRes.data) {
+      const orgList = (orgRes.data as any[]).map(m => ({
+        ...m.organizations,
+        role: m.role,
+      })).filter(o => o?.id);
+      setMyOrgs(orgList);
     }
     setLoading(false);
   }, [user]);
@@ -354,6 +363,15 @@ export default function ProfilePage() {
                       {profile.danh_vong}
                     </span>
                   )}
+                  {myOrgs.map(o => (
+                    <span key={o.id} className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/30 border border-white/10 text-xs text-gray-300">
+                      <Building2 className="w-3 h-3 text-amber-300/70" />
+                      {o.name}
+                      {o.role && o.role !== 'Thành viên' && (
+                        <span className="text-[10px] text-amber-300/70">· {o.role}</span>
+                      )}
+                    </span>
+                  ))}
                   <button
                     type="button"
                     onClick={() => setEmailVisible(v => !v)}

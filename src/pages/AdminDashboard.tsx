@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote } from '@/lib/supabase';
+import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote, Organization, OrganizationMember } from '@/lib/supabase';
 import {
   Shield, Users, Coins, Store, BookOpen, Ghost, Check, X, Plus, Trash2,
   AlertCircle, CheckCircle2, History, Edit3, Eye, EyeOff, Dices, Package,
   Heart, Sparkle, Brain, Lock, Unlock, FileWarning, Crown, Save, ScrollText,
   Undo2, RotateCcw, Search, UserSearch, ArrowLeft, ChevronDown, ChevronUp, FileSignature, Info,
-  Download, FileDown, Loader2, Archive, Settings, Clock
+  Download, FileDown, Loader2, Archive, Settings, Clock, Building2, UserCog
 } from 'lucide-react';
 import { LotusIcon } from '@/components/LotusIcon';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -21,7 +21,7 @@ const STATUS_TAGS = [
   { value: 'Ngưỡng sinh tử', label: 'Thẻ tím đậm', badgeClass: 'bg-purple-700/20 text-purple-400', activeClass: 'bg-purple-700/30 border-purple-700/50 text-purple-300', idleClass: 'bg-purple-700/5 border-purple-700/15 text-purple-500/70' },
 ];
 
-type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wills' | 'settings';
+type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wills' | 'settings' | 'organizations';
 
 export default function AdminDashboard() {
   const { profile, isAdmin } = useAuth();
@@ -133,6 +133,19 @@ export default function AdminDashboard() {
   const [bachHoaVoterLoading, setBachHoaVoterLoading] = useState(false);
   const [bachHoaEditing, setBachHoaEditing] = useState<Record<string, { identity_name: string; quote: string; avatar_url: string; title: string }>>({});
   const [bachHoaSaving, setBachHoaSaving] = useState<string | null>(null);
+
+  // Organizations
+  const [organizations, setOrganizations] = useState<(Organization & { leader?: { oc_name: string } | null })[]>([]);
+  const [orgMembers, setOrgMembers] = useState<Record<string, OrganizationMember[]>>({});
+  const [showAddOrg, setShowAddOrg] = useState(false);
+  const [newOrg, setNewOrg] = useState({ name: '', category: 'Tổ Chức', description: '' });
+  const [editingOrgId, setEditingOrgId] = useState<string | null>(null);
+  const [editOrg, setEditOrg] = useState<Partial<Organization>>({});
+  const [orgMsg, setOrgMsg] = useState('');
+  const [expandedOrgIds, setExpandedOrgIds] = useState<Set<string>>(new Set());
+  const [addMemberOrgId, setAddMemberOrgId] = useState<string | null>(null);
+  const [newMemberUserId, setNewMemberUserId] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState('Thành viên');
 
   // Backup / export
   const [exporting, setExporting] = useState(false);
@@ -352,7 +365,7 @@ export default function AdminDashboard() {
   };
 
   const fetchAllData = useCallback(async () => {
-    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData] = await Promise.all([
+    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData] = await Promise.all([
       supabase.from('profiles').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').eq('is_approved', true).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
@@ -368,9 +381,20 @@ export default function AdminDashboard() {
       supabase.from('wheel_spin_log').select('id, user_id, oc_name, reward_key, reward_label, reward_group, is_special, created_at').order('created_at', { ascending: false }).limit(500),
       supabase.from('wills').select('*').order('created_at', { ascending: false }),
       supabase.from('bach_hoa_entries').select('*').order('vote_count', { ascending: false }),
+      supabase.from('organizations').select('*, leader:profiles!organizations_leader_id_fkey(oc_name)').order('created_at', { ascending: false }),
+      supabase.from('organization_members').select('*, profiles(oc_name)').order('created_at', { ascending: true }),
     ]);
     if (willData?.data) setWills(willData.data as Will[]);
     if (bachHoaData?.data) setBachHoaEntries(bachHoaData.data as BachHoaEntry[]);
+    if (orgData?.data) setOrganizations(orgData.data as (Organization & { leader?: { oc_name: string } | null })[]);
+    if (orgMemData?.data) {
+      const memMap: Record<string, OrganizationMember[]> = {};
+      (orgMemData.data as OrganizationMember[]).forEach(m => {
+        if (!memMap[m.organization_id]) memMap[m.organization_id] = [];
+        memMap[m.organization_id].push(m);
+      });
+      setOrgMembers(memMap);
+    }
     if (kimBang?.data) setKimBangEntries(kimBang.data as KimBangEntry[]);
     if (pending.data) setPendingProfiles(pending.data as Profile[]);
     if (approved.data) setApprovedProfiles(approved.data as Profile[]);
@@ -1348,6 +1372,7 @@ export default function AdminDashboard() {
     { id: 'kimbang', label: 'Kim Bảng', icon: Crown },
     { id: 'bachhoa', label: 'Bách Hoa', icon: LotusIcon },
     { id: 'archive', label: 'Lưu Trữ Bản Cũ', icon: Archive },
+    { id: 'organizations', label: 'Tổ Chức', icon: Building2 },
     { id: 'audit', label: 'Nhật Ký', icon: ScrollText },
     { id: 'settings', label: 'Cài Đặt & Sao Lưu', icon: Settings },
   ];
@@ -1358,6 +1383,90 @@ export default function AdminDashboard() {
 
   // Helper: find admin name by id
   const adminName = (id: string | null) => allProfiles.find(p => p.id === id)?.oc_name || (id ? id.slice(0, 8) : '—');
+
+  // ===== Organization handlers =====
+  const handleAddOrg = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newOrg.name.trim()) return;
+    const { error } = await supabase.from('organizations').insert([{
+      name: newOrg.name.trim(),
+      category: newOrg.category,
+      description: newOrg.description || null,
+    }]);
+    if (error) { setOrgMsg(`Lỗi: ${error.message}`); return; }
+    logAction('add_organization', undefined, `Tạo tổ chức "${newOrg.name}"`, { category: newOrg.category });
+    setNewOrg({ name: '', category: 'Tổ Chức', description: '' });
+    setShowAddOrg(false);
+    setOrgMsg(`Đã tạo tổ chức "${newOrg.name}".`);
+    setTimeout(() => setOrgMsg(''), 3000);
+    fetchAllData();
+  };
+
+  const handleDeleteOrg = (orgId: string, orgName: string) => {
+    requireConfirm(
+      'Xóa Tổ Chức',
+      `Bạn sắp xóa tổ chức "${orgName}" và toàn bộ thành viên. Hành động này không thể hoàn tác.`,
+      async () => {
+        const { error } = await supabase.from('organizations').delete().eq('id', orgId);
+        if (error) { setOrgMsg(`Lỗi: ${error.message}`); return; }
+        logAction('delete_organization', undefined, `Xóa tổ chức "${orgName}"`, { org_id: orgId });
+        setOrgMsg(`Đã xóa tổ chức "${orgName}".`);
+        setTimeout(() => setOrgMsg(''), 3000);
+        fetchAllData();
+      },
+      [{ label: 'Tổ chức', value: orgName }],
+      'Xóa tổ chức',
+    );
+  };
+
+  const handleSaveEditOrg = async (orgId: string) => {
+    const { error } = await supabase.from('organizations').update({
+      name: editOrg.name,
+      category: editOrg.category,
+      description: editOrg.description,
+      leader_id: editOrg.leader_id || null,
+    }).eq('id', orgId);
+    if (error) { setOrgMsg(`Lỗi: ${error.message}`); return; }
+    logAction('edit_organization', undefined, `Sửa tổ chức "${editOrg.name}"`, { org_id: orgId, changes: editOrg });
+    setEditingOrgId(null);
+    setEditOrg({});
+    setOrgMsg('Đã cập nhật tổ chức.');
+    setTimeout(() => setOrgMsg(''), 3000);
+    fetchAllData();
+  };
+
+  const handleAddMember = async (orgId: string) => {
+    if (!newMemberUserId) return;
+    const { error } = await supabase.from('organization_members').insert([{
+      organization_id: orgId,
+      user_id: newMemberUserId,
+      role: newMemberRole || 'Thành viên',
+    }]);
+    if (error) { setOrgMsg(`Lỗi: ${error.message}`); return; }
+    const targetUser = allProfiles.find(p => p.id === newMemberUserId);
+    logAction('add_org_member', newMemberUserId, `Thêm ${targetUser?.oc_name || ''} vào tổ chức`, { org_id: orgId, role: newMemberRole });
+    setAddMemberOrgId(null);
+    setNewMemberUserId('');
+    setNewMemberRole('Thành viên');
+    fetchAllData();
+  };
+
+  const handleRemoveMember = async (memberId: string, orgId: string, memberName: string) => {
+    const { error } = await supabase.from('organization_members').delete().eq('id', memberId);
+    if (error) { setOrgMsg(`Lỗi: ${error.message}`); return; }
+    logAction('remove_org_member', undefined, `Xóa ${memberName} khỏi tổ chức`, { org_id: orgId, member_id: memberId });
+    fetchAllData();
+  };
+
+  const handleUpdateMemberRole = async (memberId: string, role: string) => {
+    const { error } = await supabase.from('organization_members').update({ role }).eq('id', memberId);
+    if (error) { setOrgMsg(`Lỗi: ${error.message}`); return; }
+    fetchAllData();
+  };
+
+  const toggleExpandOrg = (orgId: string) => {
+    setExpandedOrgIds(prev => { const n = new Set(prev); if (n.has(orgId)) n.delete(orgId); else n.add(orgId); return n; });
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -3265,6 +3374,202 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Organizations Tab */}
+      {activeTab === 'organizations' && (
+        <div className="space-y-6">
+          {orgMsg && (
+            <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${orgMsg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
+              {orgMsg.startsWith('Lỗi') ? <AlertCircle className="w-4 h-4 flex-shrink-0" /> : <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
+              {orgMsg}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80">Danh Sách Tổ Chức ({organizations.length})</h3>
+            <button onClick={() => setShowAddOrg(!showAddOrg)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#670201] hover:bg-[#a00404] text-amber-100 text-xs font-bold transition-all flex-shrink-0">
+              {showAddOrg ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {showAddOrg ? 'Hủy' : 'Tạo Tổ Chức'}
+            </button>
+          </div>
+
+          {showAddOrg && (
+            <form onSubmit={handleAddOrg} className={`${cardCls} space-y-4`}>
+              <h4 className="text-sm font-bold text-amber-100/80">Tổ Chức Mới</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Tên tổ chức</label>
+                  <input type="text" value={newOrg.name} onChange={e => setNewOrg({ ...newOrg, name: e.target.value })} required placeholder="vd: Thiện Nan Giáo" className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Thể loại</label>
+                  <select value={newOrg.category} onChange={e => setNewOrg({ ...newOrg, category: e.target.value })} className={inputCls}>
+                    <option value="Tổ Chức">Tổ Chức</option>
+                    <option value="Môn Phái">Môn Phái</option>
+                    <option value="Bang Hội">Bang Hội</option>
+                    <option value="Giáo Phái">Giáo Phái</option>
+                    <option value="Triều Đình">Triều Đình</option>
+                    <option value="Khác">Khác</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Mô tả (tùy chọn)</label>
+                <textarea value={newOrg.description} onChange={e => setNewOrg({ ...newOrg, description: e.target.value })} rows={2} placeholder="Mô tả ngắn về tổ chức..." className={`${inputCls} resize-none`} />
+              </div>
+              <button type="submit" className="px-5 py-2.5 bg-[#670201] hover:bg-[#a00404] text-amber-100 text-sm font-bold rounded-lg transition-all">
+                Tạo Mới
+              </button>
+            </form>
+          )}
+
+          {organizations.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-8">Chưa có tổ chức nào. Bấm "Tạo Tổ Chức" để thêm.</p>
+          ) : (
+            <div className="space-y-3">
+              {organizations.map(org => {
+                const isExpanded = expandedOrgIds.has(org.id);
+                const members = orgMembers[org.id] || [];
+                const isEditing = editingOrgId === org.id;
+                return (
+                  <div key={org.id} className="rounded-xl border border-white/5 bg-black/20 overflow-hidden">
+                    <button
+                      onClick={() => toggleExpandOrg(org.id)}
+                      className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-white/5"
+                    >
+                      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#670201]/30">
+                        <Building2 className="h-5 w-5 text-amber-300/70" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-amber-100/90">{org.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {org.category} · Thủ lĩnh: {org.leader?.oc_name || '—'} · {members.length} thành viên
+                        </p>
+                      </div>
+                      {isExpanded ? <ChevronUp className="h-4 w-4 flex-shrink-0 text-gray-500" /> : <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-500" />}
+                    </button>
+                    {isExpanded && (
+                      <div className="border-t border-white/5 p-4 space-y-4">
+                        {isEditing ? (
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className={labelCls}>Tên tổ chức</label>
+                                <input type="text" value={editOrg.name || ''} onChange={e => setEditOrg({ ...editOrg, name: e.target.value })} className={inputCls} />
+                              </div>
+                              <div>
+                                <label className={labelCls}>Thể loại</label>
+                                <select value={editOrg.category || ''} onChange={e => setEditOrg({ ...editOrg, category: e.target.value })} className={inputCls}>
+                                  <option value="Tổ Chức">Tổ Chức</option>
+                                  <option value="Môn Phái">Môn Phái</option>
+                                  <option value="Bang Hội">Bang Hội</option>
+                                  <option value="Giáo Phái">Giáo Phái</option>
+                                  <option value="Triều Đình">Triều Đình</option>
+                                  <option value="Khác">Khác</option>
+                                </select>
+                              </div>
+                            </div>
+                            <div>
+                              <label className={labelCls}>Thủ lĩnh</label>
+                              <select value={editOrg.leader_id || ''} onChange={e => setEditOrg({ ...editOrg, leader_id: e.target.value })} className={inputCls}>
+                                <option value="">— Chưa chọn —</option>
+                                {allProfiles.map(p => (
+                                  <option key={p.id} value={p.id}>{p.oc_name} · {p.email}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className={labelCls}>Mô tả</label>
+                              <textarea value={editOrg.description || ''} onChange={e => setEditOrg({ ...editOrg, description: e.target.value })} rows={2} className={`${inputCls} resize-none`} />
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={() => handleSaveEditOrg(org.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold transition-all">
+                                <Save className="w-3.5 h-3.5" /> Lưu
+                              </button>
+                              <button onClick={() => { setEditingOrgId(null); setEditOrg({}); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold transition-all">
+                                <X className="w-3.5 h-3.5" /> Hủy
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            {org.description && (
+                              <p className="text-sm text-gray-400 italic">"{org.description}"</p>
+                            )}
+                            <div className="flex gap-2 flex-wrap">
+                              <button onClick={() => { setEditingOrgId(org.id); setEditOrg({ ...org }); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-bold transition-all">
+                                <Edit3 className="w-3.5 h-3.5" /> Sửa
+                              </button>
+                              <button onClick={() => handleDeleteOrg(org.id, org.name)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold transition-all">
+                                <Trash2 className="w-3.5 h-3.5" /> Xóa
+                              </button>
+                            </div>
+                          </>
+                        )}
+
+                        {/* Members section */}
+                        <div className="border-t border-white/5 pt-3">
+                          <div className="flex items-center justify-between gap-2 mb-3">
+                            <p className="text-[10px] uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                              <Users className="w-3 h-3" /> Thành viên ({members.length})
+                            </p>
+                            <button
+                              onClick={() => setAddMemberOrgId(addMemberOrgId === org.id ? null : org.id)}
+                              className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-amber-300 transition-all"
+                            >
+                              {addMemberOrgId === org.id ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />} {addMemberOrgId === org.id ? 'Hủy' : 'Thêm thành viên'}
+                            </button>
+                          </div>
+
+                          {addMemberOrgId === org.id && (
+                            <div className="flex flex-col sm:flex-row gap-2 mb-3 p-3 rounded-lg bg-black/30 border border-white/5">
+                              <select value={newMemberUserId} onChange={e => setNewMemberUserId(e.target.value)} className={`${inputCls} flex-1`}>
+                                <option value="">Chọn người chơi...</option>
+                                {allProfiles.filter(p => !members.some(m => m.user_id === p.id)).map(p => (
+                                  <option key={p.id} value={p.id}>{p.oc_name} · {p.email}</option>
+                                ))}
+                              </select>
+                              <input type="text" value={newMemberRole} onChange={e => setNewMemberRole(e.target.value)} placeholder="Vai trò" className={`${inputCls} sm:w-32`} />
+                              <button onClick={() => handleAddMember(org.id)} disabled={!newMemberUserId} className="px-3 py-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold transition-all disabled:opacity-50 flex-shrink-0">
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+
+                          {members.length === 0 ? (
+                            <p className="text-xs text-gray-600 italic">Chưa có thành viên.</p>
+                          ) : (
+                            <div className="space-y-1.5">
+                              {members.map(m => (
+                                <div key={m.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-black/20 border border-white/5">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {org.leader_id === m.user_id && <Crown className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
+                                    <span className="text-sm text-gray-200 truncate">{m.profiles?.oc_name || m.user_id.slice(0, 8)}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                                    <input
+                                      type="text"
+                                      value={m.role}
+                                      onChange={e => handleUpdateMemberRole(m.id, e.target.value)}
+                                      className="w-24 px-2 py-1 bg-black/30 border border-white/10 rounded text-[10px] text-gray-300 focus:outline-none focus:border-amber-500/40"
+                                    />
+                                    <button onClick={() => handleRemoveMember(m.id, org.id, m.profiles?.oc_name || m.user_id.slice(0, 8))} className="p-1 rounded text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
