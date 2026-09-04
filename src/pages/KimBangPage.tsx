@@ -2,16 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase, KimBangEntry } from '@/lib/supabase';
 import { Crown, ScrollText, Sparkles, Coins, Trophy, Ghost } from 'lucide-react';
 
-import avatarRank1 from '@/assets/images/kim-bang/tai_xuong_(25).jpg';
-import avatarRank2 from '@/assets/images/kim-bang/tai_xuong_(26).jpg';
-import avatarRank3 from '@/assets/images/kim-bang/934708097666581116.jpg';
-import avatarRank4 from '@/assets/images/kim-bang/585538389087460272.jpg';
-
 const defaultAvatars: Record<number, string> = {
-  1: avatarRank1,
-  2: avatarRank2,
-  3: avatarRank3,
-  4: avatarRank4,
+  1: 'https://images.pexels.com/photos/28173991/pexels-photo-28173991.jpeg?auto=compress&cs=tinysrgb&h=400&w=400',
+  2: 'https://images.pexels.com/photos/34440536/pexels-photo-34440536.jpeg?auto=compress&cs=tinysrgb&h=400&w=400',
+  3: 'https://images.pexels.com/photos/16010575/pexels-photo-16010575.jpeg?auto=compress&cs=tinysrgb&h=400&w=400',
+  4: 'https://images.pexels.com/photos/749091/pexels-photo-749091.jpeg?auto=compress&cs=tinysrgb&h=400&w=400',
 };
 
 const rankLabels: Record<number, string> = {
