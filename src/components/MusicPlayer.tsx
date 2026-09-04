@@ -11,35 +11,13 @@ export default function MusicPlayer() {
   useEffect(() => {
     const audio = new Audio(AUDIO_SRC);
     audio.loop = true;
-    audio.volume = 0.7;
+    audio.volume = 0.3;
     audio.preload = 'auto';
     audioRef.current = audio;
-
-    let interactionStarted = false;
-
-    const startOnInteraction = () => {
-      if (interactionStarted) return;
-      interactionStarted = true;
-      audio.play().then(() => {
-        setPlaying(true);
-      }).catch(() => {
-        setErrored(true);
-      });
-      document.removeEventListener('click', startOnInteraction);
-      document.removeEventListener('keydown', startOnInteraction);
-      document.removeEventListener('touchstart', startOnInteraction);
-    };
 
     const onReady = () => {
       setReady(true);
       setErrored(false);
-      audio.play().then(() => {
-        setPlaying(true);
-      }).catch(() => {
-        document.addEventListener('click', startOnInteraction);
-        document.addEventListener('keydown', startOnInteraction);
-        document.addEventListener('touchstart', startOnInteraction);
-      });
     };
 
     const onError = () => {
@@ -55,9 +33,6 @@ export default function MusicPlayer() {
       audio.removeEventListener('canplay', onReady);
       audio.removeEventListener('canplaythrough', onReady);
       audio.removeEventListener('error', onError);
-      document.removeEventListener('click', startOnInteraction);
-      document.removeEventListener('keydown', startOnInteraction);
-      document.removeEventListener('touchstart', startOnInteraction);
       audio.pause();
       audioRef.current = null;
     };
