@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Anchor, Castle, ChevronDown, Compass, Crown, Flame, MapPinned,
+  Anchor, ChevronDown, Compass, Crown, Flame, MapPinned,
   Mountain, ScrollText, Shield, Sparkles, Waves
 } from 'lucide-react';
 
@@ -8,7 +8,7 @@ type Place = {
   name: string;
   region: string;
   description: string;
-  icon: typeof Castle;
+  icon: typeof Crown;
   position: string;
   tone: string;
 };
@@ -128,44 +128,56 @@ export default function MapPage() {
       </header>
 
       <section className="grid gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-[#670201]/25 bg-[#0a0505] p-1.5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] sm:p-3 lg:p-4">
-          <div className="relative aspect-[179/100] overflow-hidden rounded-xl sm:rounded-2xl border border-[#c68b62]/20 bg-[#1a0c0a]">
-            <img src="/trung-hoan-map.svg" alt="Địa đồ minh họa các vùng đất Trùng Hoan" className="absolute inset-0 h-full w-full object-contain object-center opacity-100" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_52%,rgba(8,3,4,0.38)_100%)] pointer-events-none" />
-
+        {/* Map container */}
+        <div className="relative overflow-hidden rounded-2xl border border-[#8b6a43]/45 bg-[#18130c] p-1.5 shadow-[0_24px_90px_rgba(0,0,0,0.45)] sm:rounded-3xl sm:p-3 lg:p-4">
+          <div className="relative aspect-[179/100] overflow-hidden rounded-xl border border-[#c68b62]/35 bg-[#1a0c0a] shadow-inner sm:rounded-2xl">
+            <img
+              src="/trung-hoan-map.webp"
+              alt="Địa đồ minh họa địa hình, sông núi và hải vực Trùng Hoan"
+              className="absolute inset-0 h-full w-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,10,4,0.08),transparent_28%,transparent_72%,rgba(8,3,4,0.28))] pointer-events-none" />
+            {/* Location markers */}
             {places.map(place => {
               const active = selectedPlace.name === place.name;
               const Icon = place.icon;
               return (
-                <button key={place.name} aria-label={`Chọn ${place.name}`} onClick={() => setSelectedPlace(place)} className={`group absolute z-30 -translate-x-1/2 -translate-y-1/2 transition-transform duration-200 ${place.position} ${active ? 'scale-105' : 'hover:scale-105'}`}>
-                  <span className={`flex items-center gap-0.5 rounded-full border px-1 py-0.5 text-[5px] font-semibold whitespace-nowrap shadow-md backdrop-blur-md transition-colors sm:gap-1 sm:px-2 sm:py-1 sm:text-[9px] lg:text-[10px] ${active ? 'border-amber-200/70 bg-[#670201]/85 text-amber-100 shadow-[#670201]/40' : 'border-white/25 bg-black/65 text-gray-200 group-hover:border-amber-300/60 group-hover:text-amber-100'}`}>
-                    <Icon className="hidden sm:block sm:h-3 sm:w-3" />
+                <button
+                  key={place.name}
+                  aria-label={`Chọn ${place.name}`}
+                  onClick={() => setSelectedPlace(place)}
+                  className={`group absolute z-30 -translate-x-1/2 -translate-y-1/2 rounded-lg transition-transform duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#1a0c0a] ${place.position} ${active ? 'scale-110' : 'hover:scale-110'}`}
+                >
+                  <span className={`flex items-center gap-0.5 rounded-md border px-1 py-0.5 text-[6px] font-bold whitespace-nowrap shadow-[0_3px_12px_rgba(0,0,0,0.45)] backdrop-blur-md transition-colors sm:gap-1 sm:rounded-full sm:px-2 sm:py-0.5 sm:text-[9px] lg:px-2.5 lg:py-1 lg:text-[11px] ${active ? 'border-amber-100 bg-[#670201]/95 text-amber-50 shadow-[#670201]/60' : 'border-[#f4e0ad]/45 bg-[#1b100a]/88 text-[#f5e3b8] group-hover:border-amber-200 group-hover:bg-[#670201]/90'}`}>
+                    <Icon className="h-2 w-2 sm:h-2.5 sm:w-2.5 lg:h-3 lg:w-3" />
                     {place.name}
                   </span>
-                  <span className={`mx-auto mt-0.5 block h-1 w-1 rounded-full border border-amber-100/70 bg-[#a00404] shadow-[0_0_8px_rgba(160,4,4,0.85)] sm:h-2 sm:w-2 ${active ? 'animate-pulse' : ''}`} />
+                  <span className={`mx-auto mt-0.5 block h-1 w-1 rounded-full border border-amber-50 bg-[#a00404] shadow-[0_0_8px_rgba(160,4,4,0.95)] sm:h-2 sm:w-2 ${active ? 'animate-pulse' : ''}`} />
+                  {active && <span className="absolute left-1/2 top-full mt-0.5 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-100/60 bg-amber-200/15" />}
                 </button>
               );
             })}
           </div>
           <div className="mt-2 flex items-center justify-between gap-2 px-1 text-[10px] text-gray-500 sm:mt-3 sm:text-xs">
-            <span>Chạm vào tên địa danh để xem ghi chép</span>
+            <span>Chạm vào nhãn địa danh để xem ghi chép</span>
             <span className="hidden items-center gap-1 sm:flex"><MapPinned className="h-3.5 w-3.5" /> {places.length} địa danh</span>
           </div>
         </div>
 
+        {/* Detail panel */}
         <aside className="flex flex-col rounded-2xl sm:rounded-3xl border border-[#670201]/25 bg-gradient-to-b from-[#160908] to-[#0b0505] p-4 sm:p-6">
           <div className="mb-5 flex items-center gap-3 border-b border-white/10 pb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-300/20 bg-amber-300/10"><MapPinned className="h-5 w-5 text-amber-200" /></div>
-            <div><p className="text-xs uppercase tracking-[0.18em] text-amber-300/60">Đang tra cứu</p><h2 className="font-serif text-xl font-bold text-amber-100">{selectedPlace.name}</h2></div>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-300/20 bg-amber-300/10"><MapPinned className="h-5 w-5 text-amber-200" /></div>
+            <div className="min-w-0"><p className="text-xs uppercase tracking-[0.18em] text-amber-300/60">Đang tra cứu</p><h2 className="font-serif text-xl font-bold text-amber-100">{selectedPlace.name}</h2></div>
           </div>
           <div className="mb-5 rounded-2xl border border-white/10 bg-black/20 p-4">
-            <div className={`mb-3 flex w-fit items-center gap-2 rounded-full border px-2.5 py-1 text-xs ${selectedPlace.tone}`}><selectedPlace.icon className="h-3.5 w-3.5" />{selectedPlace.region}</div>
+            <div className={`mb-3 flex w-fit items-center gap-2 rounded-full border px-2.5 py-1 text-xs ${selectedPlace.tone}`}><selectedPlace.icon className="h-3.5 w-3.5 shrink-0" />{selectedPlace.region}</div>
             <p className="text-sm leading-7 text-gray-400">{selectedPlace.description}</p>
           </div>
-          <button onClick={() => setShowPlaces(!showPlaces)} className="flex items-center justify-between rounded-xl border border-[#670201]/25 bg-[#670201]/10 px-4 py-3 text-sm font-semibold text-amber-200 transition-colors hover:bg-[#670201]/20">
-            <span>Danh mục địa danh</span><ChevronDown className={`h-4 w-4 transition-transform ${showPlaces ? 'rotate-180' : ''}`} />
+          <button onClick={() => setShowPlaces(!showPlaces)} aria-expanded={showPlaces} className="flex items-center justify-between rounded-xl border border-[#670201]/25 bg-[#670201]/10 px-4 py-3 text-sm font-semibold text-amber-200 transition-colors hover:bg-[#670201]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70">
+            <span>Danh mục địa danh</span><ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${showPlaces ? 'rotate-180' : ''}`} />
           </button>
-          {showPlaces && <div className="mt-2 max-h-64 space-y-1 overflow-y-auto pr-1">{places.map(place => <button key={place.name} onClick={() => { setSelectedPlace(place); setShowPlaces(false); }} className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${selectedPlace.name === place.name ? 'bg-[#670201]/25 text-amber-100' : 'text-gray-400 hover:bg-white/5 hover:text-amber-100'}`}>{place.name}<span className="ml-2 text-xs text-gray-600">{place.region}</span></button>)}</div>}
+          {showPlaces && <div className="mt-2 max-h-64 space-y-1 overflow-y-auto pr-1">{places.map(place => <button key={place.name} onClick={() => { setSelectedPlace(place); setShowPlaces(false); }} className={`w-full rounded-lg px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-200/70 ${selectedPlace.name === place.name ? 'bg-[#670201]/25 text-amber-100' : 'text-gray-400 hover:bg-white/5 hover:text-amber-100'}`}>{place.name}<span className="ml-2 text-xs text-gray-600">{place.region}</span></button>)}</div>}
           <div className="mt-auto hidden pt-8 sm:block"><div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-gray-600"><span className="h-px flex-1 bg-white/10" /><Sparkles className="h-3.5 w-3.5" /><span className="h-px flex-1 bg-white/10" /></div><p className="mt-3 text-center text-xs italic leading-6 text-gray-600">Mỗi vùng đất đều lưu giữ một dấu tích. Mỗi dấu tích đều có giá của nó.</p></div>
         </aside>
       </section>

@@ -1,223 +1,375 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1790 1000" width="1790" height="1000">
   <defs>
-    <!-- Parchment texture -->
-    <radialGradient id="parchment" cx="50%" cy="48%" r="65%">
-      <stop offset="0%" stop-color="#3a2818"/>
-      <stop offset="40%" stop-color="#2a1c12"/>
-      <stop offset="75%" stop-color="#1c120a"/>
+    <!-- Gradients -->
+    <radialGradient id="parchment" cx="50%" cy="48%" r="70%">
+      <stop offset="0%" stop-color="#3d2a1a"/>
+      <stop offset="35%" stop-color="#2d1d12"/>
+      <stop offset="70%" stop-color="#1e130a"/>
       <stop offset="100%" stop-color="#120906"/>
     </radialGradient>
-    <radialGradient id="seaGrad" cx="85%" cy="55%" r="40%">
-      <stop offset="0%" stop-color="#1a2a3a"/>
-      <stop offset="60%" stop-color="#0e1825"/>
-      <stop offset="100%" stop-color="#080e16"/>
-    </radialGradient>
-    <radialGradient id="forestGrad" cx="30%" cy="75%" r="35%">
-      <stop offset="0%" stop-color="#1a2818"/>
-      <stop offset="100%" stop-color="#0e160c"/>
-    </radialGradient>
-    <linearGradient id="mountainGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#4a3a2a"/>
-      <stop offset="100%" stop-color="#2a1e14"/>
+    <linearGradient id="landGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a3520" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#2a1c10" stop-opacity="0.15"/>
     </linearGradient>
-    <linearGradient id="riverGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#2a4a6a" stop-opacity="0.7"/>
-      <stop offset="100%" stop-color="#1a3a5a" stop-opacity="0.5"/>
-    </linearGradient>
-    <radialGradient id="forbiddenGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#4a1010" stop-opacity="0.5"/>
-      <stop offset="100%" stop-color="#1a0606" stop-opacity="0.2"/>
+    <radialGradient id="seaGrad" cx="80%" cy="60%" r="45%">
+      <stop offset="0%" stop-color="#1a3a5a"/>
+      <stop offset="50%" stop-color="#0e2238"/>
+      <stop offset="100%" stop-color="#08121e"/>
+    </radialGradient>
+    <radialGradient id="forestGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1e3a1a" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0e1a0c" stop-opacity="0.2"/>
+    </radialGradient>
+    <radialGradient id="mountainGrad" cx="50%" cy="30%" r="50%">
+      <stop offset="0%" stop-color="#5a4838" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#2a1e14" stop-opacity="0.15"/>
+    </radialGradient>
+    <radialGradient id="battleGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5a1818" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#1a0808" stop-opacity="0.1"/>
     </radialGradient>
     <radialGradient id="capitalGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#6a5028" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#2a1e10" stop-opacity="0.1"/>
+      <stop offset="0%" stop-color="#8a6a28" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#2a1e10" stop-opacity="0.05"/>
     </radialGradient>
-    <pattern id="waves" x="0" y="0" width="60" height="20" patternUnits="userSpaceOnUse">
-      <path d="M0,10 Q15,4 30,10 T60,10" fill="none" stroke="#2a4a6a" stroke-width="0.8" opacity="0.4"/>
+    <radialGradient id="forbiddenGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#5a1010" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#1a0606" stop-opacity="0.1"/>
+    </radialGradient>
+    <linearGradient id="riverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3a6a9a" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#1a3a5a" stop-opacity="0.4"/>
+    </linearGradient>
+
+    <!-- Patterns -->
+    <pattern id="wavePattern" x="0" y="0" width="50" height="16" patternUnits="userSpaceOnUse">
+      <path d="M0,8 Q12,2 25,8 T50,8" fill="none" stroke="#3a6a9a" stroke-width="0.7" opacity="0.35"/>
     </pattern>
-    <pattern id="mountains" x="0" y="0" width="80" height="40" patternUnits="userSpaceOnUse">
-      <path d="M0,40 L20,10 L40,40 M40,40 L60,15 L80,40" fill="none" stroke="#4a3a2a" stroke-width="1.2" opacity="0.3"/>
+    <pattern id="forestPat" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M18,6 L12,26 L24,26 Z" fill="none" stroke="#2a5a1a" stroke-width="0.8" opacity="0.3"/>
+      <circle cx="18" cy="28" r="1.5" fill="#2a5a1a" opacity="0.2"/>
+      <path d="M5,18 L0,32 L10,32 Z" fill="none" stroke="#2a5a1a" stroke-width="0.6" opacity="0.2"/>
+      <path d="M31,20 L26,34 L36,34 Z" fill="none" stroke="#2a5a1a" stroke-width="0.6" opacity="0.2"/>
     </pattern>
-    <pattern id="forestPattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M20,8 L14,28 L26,28 Z" fill="none" stroke="#2a3a1a" stroke-width="1" opacity="0.3"/>
-      <path d="M5,20 L0,34 L10,34 Z" fill="none" stroke="#2a3a1a" stroke-width="0.8" opacity="0.2"/>
-      <path d="M35,25 L30,38 L40,38 Z" fill="none" stroke="#2a3a1a" stroke-width="0.8" opacity="0.2"/>
+    <pattern id="mountainPat" x="0" y="0" width="70" height="35" patternUnits="userSpaceOnUse">
+      <path d="M0,35 L18,8 L36,35 M36,35 L54,12 L72,35" fill="none" stroke="#5a4838" stroke-width="1" opacity="0.25"/>
     </pattern>
-    <filter id="blur1"><feGaussianBlur stdDeviation="3"/></filter>
-    <filter id="blur2"><feGaussianBlur stdDeviation="8"/></filter>
-    <filter id="oldPaper">
-      <feTurbulence baseFrequency="0.04" numOctaves="3" seed="5"/>
-      <feColorMatrix values="0 0 0 0 0.15  0 0 0 0 0.1  0 0 0 0 0.05  0 0 0 0.15 0"/>
+    <pattern id="dotPat" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="12" r="0.8" fill="#5a4a3a" opacity="0.15"/>
+    </pattern>
+
+    <!-- Filters -->
+    <filter id="softBlur"><feGaussianBlur stdDeviation="2"/></filter>
+    <filter id="mistBlur"><feGaussianBlur stdDeviation="10"/></filter>
+    <filter id="paperTex">
+      <feTurbulence baseFrequency="0.03" numOctaves="3" seed="7"/>
+      <feColorMatrix values="0 0 0 0 0.12  0 0 0 0 0.08  0 0 0 0 0.04  0 0 0 0.12 0"/>
       <feComposite in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
   <!-- Background -->
   <rect width="1790" height="1000" fill="url(#parchment)"/>
+  <rect width="1790" height="1000" fill="url(#parchment)" filter="url(#paperTex)" opacity="0.25"/>
 
-  <!-- Old paper texture overlay -->
-  <rect width="1790" height="1000" fill="url(#parchment)" filter="url(#oldPaper)" opacity="0.3"/>
+  <!-- ===================== LANDMASS ===================== -->
+  <!-- Main continent shape -->
+  <path d="
+    M 80,200
+    C 120,140 200,100 300,90
+    C 400,80 480,95 560,70
+    C 640,50 720,65 800,85
+    C 880,100 960,75 1050,90
+    C 1140,100 1220,75 1300,95
+    C 1380,110 1460,130 1540,160
+    C 1620,185 1700,210 1760,260
+    L 1760,420
+    C 1700,440 1620,430 1540,450
+    C 1460,470 1400,500 1360,560
+    C 1320,620 1300,680 1280,740
+    C 1260,800 1220,840 1160,860
+    C 1080,880 1000,850 920,830
+    C 840,810 760,840 680,820
+    C 600,800 520,780 440,760
+    C 360,740 280,720 220,680
+    C 160,640 120,580 100,520
+    C 80,460 70,400 80,340
+    Z
+  " fill="url(#landGrad)" stroke="#7a5a3a" stroke-width="1.5" stroke-opacity="0.2"/>
 
-  <!-- === REGIONS === -->
+  <!-- ===================== REGIONS ===================== -->
 
-  <!-- Vô Tận Hải (far east, bottom) -->
-  <path d="M1500,650 Q1600,680 1650,720 Q1720,760 1790,780 L1790,1000 L1200,1000 Q1300,900 1400,820 Q1460,770 1500,650 Z" fill="url(#seaGrad)" opacity="0.8"/>
-  <rect x="1450" y="600" width="340" height="400" fill="url(#waves)" opacity="0.3"/>
+  <!-- Vô Tận Hải (far east, bottom-right) -->
+  <path d="M 1480,620 Q 1560,640 1620,680 Q 1700,720 1790,740 L 1790,1000 L 1100,1000 Q 1200,900 1300,820 Q 1380,760 1440,700 Q 1470,660 1480,620 Z" fill="url(#seaGrad)" opacity="0.7"/>
+  <rect x="1430" y="600" width="360" height="400" fill="url(#wavePattern)" opacity="0.25"/>
 
-  <!-- Minh Châu (east coast, 82%, 48%) -->
-  <path d="M1400,380 Q1500,360 1600,400 Q1700,440 1790,420 L1790,560 Q1700,580 1600,560 Q1500,540 1400,520 Z" fill="url(#seaGrad)" opacity="0.5"/>
-  <path d="M1350,350 Q1450,340 1550,380 Q1650,420 1790,400 L1790,480 L1400,480 Q1370,420 1350,350 Z" fill="#1a2a3a" opacity="0.3"/>
+  <!-- Minh Châu coast (east, 82%, 48%) -->
+  <path d="M 1380,360 Q 1480,350 1580,380 Q 1680,410 1790,400 L 1790,540 Q 1680,560 1580,540 Q 1480,520 1380,500 Z" fill="url(#seaGrad)" opacity="0.4"/>
+  <rect x="1380" y="380" width="410" height="160" fill="url(#wavePattern)" opacity="0.2"/>
 
-  <!-- Northern mountains band (Vân Châu, Thiên Môn Sơn, Huyền Châu) -->
-  <path d="M0,50 Q200,30 400,60 Q600,40 800,80 Q1000,50 1200,90 Q1400,60 1600,100 L1790,120 L1790,280 Q1600,250 1400,270 Q1200,240 1000,260 Q800,230 600,250 Q400,220 200,240 Q100,220 0,250 Z" fill="url(#mountainGrad)" opacity="0.4"/>
+  <!-- Northern mountain band -->
+  <path d="M 80,180 Q 300,120 500,100 Q 700,80 900,110 Q 1100,90 1300,120 Q 1500,140 1660,180 L 1660,280 Q 1500,250 1300,270 Q 1100,250 900,260 Q 700,240 500,250 Q 300,230 80,260 Z" fill="url(#mountainGrad)" opacity="0.5"/>
+  <rect x="80" y="120" width="1580" height="160" fill="url(#mountainPat)" opacity="0.3"/>
 
-  <!-- Thiên Môn Sơn specific peak area (35%, 10%) -->
-  <path d="M580,20 L620,100 L660,20 Z" fill="#5a4a3a" opacity="0.4"/>
-  <path d="M540,40 L600,120 L660,40 Z" fill="#4a3a2a" opacity="0.3"/>
-  <path d="M620,30 L660,110 L700,30 Z" fill="#4a3a2a" opacity="0.3"/>
-  <text x="627" y="15" font-family="serif" font-size="11" fill="#8a7a5a" opacity="0.5" text-anchor="middle" letter-spacing="2">天門山</text>
-
-  <!-- Vân Châu area (58%, 14%) -->
-  <ellipse cx="1038" cy="140" rx="120" ry="60" fill="#3a3040" opacity="0.25"/>
-  <path d="M960,100 L1000,170 L1040,100 Z M1040,110 L1080,180 L1120,110 Z" fill="none" stroke="#4a4050" stroke-width="1.5" opacity="0.3"/>
-  <text x="1038" y="95" font-family="serif" font-size="11" fill="#6a6a7a" opacity="0.4" text-anchor="middle" letter-spacing="2">雲州</text>
-
-  <!-- Huyền Châu area (20%, 28%) — battlefield, reddish tint -->
-  <ellipse cx="358" cy="280" rx="130" ry="70" fill="#4a1818" opacity="0.2"/>
-  <path d="M280,250 L320,300 L360,250 Z M340,260 L380,310 L420,260 Z" fill="none" stroke="#6a2828" stroke-width="1.5" opacity="0.25"/>
-  <text x="358" y="240" font-family="serif" font-size="11" fill="#8a4a4a" opacity="0.4" text-anchor="middle" letter-spacing="2">玄州</text>
-
-  <!-- Thanh Châu area (72%, 28%) — river plains -->
-  <ellipse cx="1289" cy="280" rx="130" ry="65" fill="#1a2838" opacity="0.15"/>
-  <text x="1289" y="245" font-family="serif" font-size="11" fill="#4a6a8a" opacity="0.4" text-anchor="middle" letter-spacing="2">青州</text>
-
-  <!-- Sở Châu area (12%, 48%) — mining mountains -->
-  <ellipse cx="215" cy="480" rx="110" ry="70" fill="#3a2010" opacity="0.2"/>
-  <path d="M150,440 L190,510 L230,440 Z M200,450 L240,520 L280,450 Z" fill="none" stroke="#5a3010" stroke-width="1.5" opacity="0.25"/>
-  <text x="215" y="430" font-family="serif" font-size="11" fill="#8a5a3a" opacity="0.4" text-anchor="middle" letter-spacing="2">楚州</text>
-
-  <!-- Thiên Kinh area (42%, 40%) — capital, golden glow -->
-  <ellipse cx="752" cy="400" rx="100" ry="60" fill="url(#capitalGrad)"/>
-  <!-- Capital city symbol -->
-  <g transform="translate(752,400)" opacity="0.35">
-    <rect x="-30" y="-20" width="60" height="40" fill="none" stroke="#c68b62" stroke-width="1.5" rx="2"/>
-    <rect x="-22" y="-14" width="44" height="28" fill="none" stroke="#c68b62" stroke-width="1" rx="1"/>
-    <path d="M-35,-20 L0,-35 L35,-20" fill="none" stroke="#c68b62" stroke-width="1.5"/>
-    <line x1="-30" y1="-35" x2="30" y2="-35" stroke="#c68b62" stroke-width="1"/>
-    <line x1="0" y1="-35" x2="0" y2="-20" stroke="#c68b62" stroke-width="0.8"/>
-    <circle cx="0" cy="-35" r="3" fill="none" stroke="#c68b62" stroke-width="1"/>
+  <!-- Thiên Môn Sơn (35%, 10%) — highest peaks -->
+  <g transform="translate(627,100)">
+    <!-- Main peak -->
+    <path d="M-50,30 L0,-50 L50,30 Z" fill="#5a4838" stroke="#7a6a4a" stroke-width="1.5" stroke-opacity="0.4" opacity="0.5"/>
+    <!-- Secondary peaks -->
+    <path d="M-80,30 L-40,-20 L0,30 Z" fill="#4a3828" stroke="#6a5a3a" stroke-width="1" stroke-opacity="0.3" opacity="0.4"/>
+    <path d="M0,30 L40,-20 L80,30 Z" fill="#4a3828" stroke="#6a5a3a" stroke-width="1" stroke-opacity="0.3" opacity="0.4"/>
+    <!-- Snow caps -->
+    <path d="M-12,-38 L0,-50 L12,-38 L6,-30 L-6,-30 Z" fill="#8a7a6a" opacity="0.3"/>
+    <path d="M-46,-10 L-40,-20 L-34,-10 Z" fill="#7a6a5a" opacity="0.25"/>
+    <path d="M34,-10 L40,-20 L46,-10 Z" fill="#7a6a5a" opacity="0.25"/>
   </g>
-  <text x="752" y="365" font-family="serif" font-size="13" fill="#c68b62" opacity="0.45" text-anchor="middle" letter-spacing="3">天京</text>
+  <text x="627" y="35" font-family="serif" font-size="16" fill="#9a8a6a" opacity="0.5" text-anchor="middle" letter-spacing="3" font-weight="bold">天門山</text>
 
-  <!-- Cấm Địa area (65%, 60%) — forbidden zone, dark red -->
-  <ellipse cx="1164" cy="600" rx="90" ry="55" fill="url(#forbiddenGrad)"/>
-  <g transform="translate(1164,600)" opacity="0.2">
-    <path d="M-40,-25 L40,-25 L40,25 L0,40 L-40,25 Z" fill="none" stroke="#8a2020" stroke-width="1.5"/>
-    <line x1="-25" y1="-10" x2="25" y2="-10" stroke="#8a2020" stroke-width="1"/>
-    <line x1="-25" y1="5" x2="25" y2="5" stroke="#8a2020" stroke-width="1"/>
+  <!-- Vân Châu (58%, 14%) — cold mountains -->
+  <g transform="translate(1038,140)">
+    <ellipse cx="0" cy="0" rx="110" ry="55" fill="#3a3848" opacity="0.25"/>
+    <path d="M-60,20 L-30,-30 L0,20 Z M-10,20 L20,-25 L50,20 Z" fill="none" stroke="#5a5060" stroke-width="1.5" stroke-opacity="0.35"/>
+    <!-- Mist -->
+    <ellipse cx="0" cy="10" rx="70" ry="12" fill="#6a6a7a" opacity="0.08" filter="url(#softBlur)"/>
   </g>
-  <text x="1164" y="570" font-family="serif" font-size="11" fill="#8a3030" opacity="0.35" text-anchor="middle" letter-spacing="2">禁地</text>
+  <text x="1038" y="80" font-family="serif" font-size="16" fill="#7a7a8a" opacity="0.45" text-anchor="middle" letter-spacing="3" font-weight="bold">雲州</text>
 
-  <!-- Giang Châu area (54%, 72%) — river network -->
-  <ellipse cx="967" cy="720" rx="120" ry="60" fill="#0a1a18" opacity="0.15"/>
-  <text x="967" y="685" font-family="serif" font-size="11" fill="#3a6a5a" opacity="0.4" text-anchor="middle" letter-spacing="2">江州</text>
+  <!-- Huyền Châu (20%, 28%) — battlefield, reddish -->
+  <g transform="translate(358,280)">
+    <ellipse cx="0" cy="0" rx="120" ry="65" fill="url(#battleGrad)"/>
+    <!-- Broken weapons / crosses -->
+    <g opacity="0.25" stroke="#7a2828" stroke-width="1.5" fill="none">
+      <path d="M-40,-10 L-30,10 M-35,-10 L-35,10"/>
+      <path d="M20,-15 L30,5 M25,-15 L25,5"/>
+      <path d="M50,-5 L60,15 M55,-5 L55,15"/>
+      <path d="M-10,10 L0,30 M-5,10 L-5,30"/>
+    </g>
+    <!-- Smoke wisps -->
+    <ellipse cx="-20" cy="-25" rx="30" ry="8" fill="#5a2020" opacity="0.06" filter="url(#softBlur)"/>
+  </g>
+  <text x="358" y="205" font-family="serif" font-size="16" fill="#9a4a4a" opacity="0.45" text-anchor="middle" letter-spacing="3" font-weight="bold">玄州</text>
 
-  <!-- Linh Châu area (28%, 72%) — jungle/swamp -->
-  <ellipse cx="501" cy="720" rx="120" ry="65" fill="url(#forestGrad)" opacity="0.5"/>
-  <rect x="420" y="680" width="160" height="80" fill="url(#forestPattern)" opacity="0.4"/>
-  <text x="501" y="685" font-family="serif" font-size="11" fill="#5a7a3a" opacity="0.4" text-anchor="middle" letter-spacing="2">靈州</text>
+  <!-- Thanh Châu (72%, 28%) — river plains -->
+  <g transform="translate(1289,280)">
+    <ellipse cx="0" cy="0" rx="120" ry="60" fill="#1a2a3a" opacity="0.15"/>
+    <!-- River channels -->
+    <g opacity="0.3" stroke="#3a6a9a" stroke-width="1.5" fill="none">
+      <path d="M-80,-20 Q-40,-10 0,-15 Q40,-20 80,-10"/>
+      <path d="M-70,10 Q-30,15 10,10 Q50,5 80,15"/>
+      <path d="M-50,-5 Q-10,0 30,-5"/>
+    </g>
+  </g>
+  <text x="1289" y="205" font-family="serif" font-size="16" fill="#5a7a9a" opacity="0.45" text-anchor="middle" letter-spacing="3" font-weight="bold">青州</text>
 
-  <!-- === RIVERS === -->
-  <!-- Main river from north mountains through Thiên Kinh to Giang Châu -->
-  <path d="M627,110 Q650,200 720,300 Q740,350 752,400 Q760,450 800,520 Q850,600 900,680 Q940,720 967,720" fill="none" stroke="url(#riverGrad)" stroke-width="3" opacity="0.5"/>
-  <!-- Branch river to Thanh Châu -->
-  <path d="M752,400 Q900,380 1100,320 Q1200,290 1289,280" fill="none" stroke="url(#riverGrad)" stroke-width="2.5" opacity="0.4"/>
-  <!-- Branch river to Minh Châu -->
-  <path d="M1289,280 Q1400,340 1500,420 Q1550,450 1600,440" fill="none" stroke="url(#riverGrad)" stroke-width="2.5" opacity="0.4"/>
-  <!-- River from Sở Châu -->
-  <path d="M215,480 Q400,500 600,480 Q700,470 752,400" fill="none" stroke="url(#riverGrad)" stroke-width="2" opacity="0.3"/>
-  <!-- River from Linh Châu to Giang Châu -->
-  <path d="M501,720 Q700,740 850,730 Q920,725 967,720" fill="none" stroke="url(#riverGrad)" stroke-width="2" opacity="0.3"/>
+  <!-- Sở Châu (12%, 48%) — mining mountains -->
+  <g transform="translate(215,480)">
+    <ellipse cx="0" cy="0" rx="100" ry="65" fill="#3a2010" opacity="0.2"/>
+    <!-- Mine peaks -->
+    <g opacity="0.3" fill="none" stroke="#6a3a10" stroke-width="1.5">
+      <path d="M-50,20 L-25,-25 L0,20 Z"/>
+      <path d="M5,20 L30,-20 L55,20 Z"/>
+      <path d="M-15,25 L10,-10 L35,25 Z"/>
+    </g>
+    <!-- Ore sparkles -->
+    <g fill="#8a5a2a" opacity="0.3">
+      <circle cx="-20" cy="0" r="1.5"/>
+      <circle cx="25" cy="5" r="1.5"/>
+      <circle cx="0" cy="15" r="1"/>
+      <circle cx="35" cy="-5" r="1"/>
+    </g>
+  </g>
+  <text x="215" y="395" font-family="serif" font-size="16" fill="#9a6a3a" opacity="0.45" text-anchor="middle" letter-spacing="3" font-weight="bold">楚州</text>
 
-  <!-- === MOUNTAIN RANGES (decorative) === -->
-  <!-- Northern range -->
-  <g opacity="0.25" fill="none" stroke="#5a4a3a" stroke-width="1.5">
-    <path d="M100,120 L140,70 L180,120 M180,120 L220,80 L260,120 M260,120 L300,60 L340,120"/>
-    <path d="M700,100 L740,50 L780,100 M780,100 L820,60 L860,100"/>
-    <path d="M1100,110 L1140,60 L1180,110 M1180,110 L1220,70 L1260,110"/>
-    <path d="M1450,130 L1490,80 L1530,130 M1530,130 L1570,90 L1610,130"/>
+  <!-- Thiên Kinh (42%, 40%) — capital city -->
+  <g transform="translate(752,400)">
+    <!-- Golden glow -->
+    <ellipse cx="0" cy="0" rx="90" ry="55" fill="url(#capitalGrad)"/>
+    <!-- City walls -->
+    <g opacity="0.4" stroke="#c68b62" stroke-width="2" fill="none">
+      <!-- Outer wall -->
+      <rect x="-35" y="-25" width="70" height="50" rx="3"/>
+      <!-- Inner wall -->
+      <rect x="-25" y="-18" width="50" height="36" rx="2" stroke-width="1.5"/>
+      <!-- Palace roof -->
+      <path d="M-40,-25 L0,-42 L40,-25" stroke-width="2"/>
+      <path d="M-30,-18 L0,-30 L30,-18" stroke-width="1.5"/>
+      <!-- Towers -->
+      <rect x="-38" y="-30" width="6" height="8"/>
+      <rect x="32" y="-30" width="6" height="8"/>
+      <!-- Gate -->
+      <path d="M-6,25 L-6,15 Q0,10 6,15 L6,25" stroke-width="1.5"/>
+      <!-- Central pillar -->
+      <line x1="0" y1="-42" x2="0" y2="-25" stroke-width="1"/>
+    </g>
+    <!-- Flag -->
+    <g opacity="0.3">
+      <line x1="0" y1="-42" x2="0" y2="-52" stroke="#c68b62" stroke-width="1"/>
+      <path d="M0,-52 L8,-49 L0,-46 Z" fill="#c68b62"/>
+    </g>
+  </g>
+  <text x="752" y="335" font-family="serif" font-size="18" fill="#c68b62" opacity="0.5" text-anchor="middle" letter-spacing="4" font-weight="bold">天京</text>
+
+  <!-- Cấm Địa (65%, 60%) — forbidden zone -->
+  <g transform="translate(1164,600)">
+    <ellipse cx="0" cy="0" rx="80" ry="50" fill="url(#forbiddenGrad)"/>
+    <!-- Seal symbol -->
+    <g opacity="0.25" stroke="#8a2020" stroke-width="1.5" fill="none">
+      <path d="M-35,-20 L35,-20 L35,20 L0,35 L-35,20 Z"/>
+      <line x1="-20" y1="-8 x2=-20" y2="-8" x2="20" y2="-8" stroke-width="1"/>
+      <line x1="-20" y1="5" x2="20" y2="5" stroke-width="1"/>
+      <line x1="-20" y1="18" x2="20" y2="18" stroke-width="1"/>
+      <!-- Cracks -->
+      <path d="M-30,-15 L-15,0 L-25,15" stroke-width="1"/>
+      <path d="M30,-15 L15,0 L25,15" stroke-width="1"/>
+    </g>
+  </g>
+  <text x="1164" y="535" font-family="serif" font-size="16" fill="#9a3030" opacity="0.4" text-anchor="middle" letter-spacing="3" font-weight="bold">禁地</text>
+
+  <!-- Giang Châu (54%, 72%) — river network -->
+  <g transform="translate(967,720)">
+    <ellipse cx="0" cy="0" rx="110" ry="55" fill="#0a1a18" opacity="0.15"/>
+    <!-- River network -->
+    <g opacity="0.35" stroke="#3a7a6a" stroke-width="2" fill="none">
+      <path d="M-70,-15 Q-30,-20 10,-10 Q50,0 80,-15"/>
+      <path d="M-60,10 Q-20,5 20,15 Q60,20 80,10"/>
+      <path d="M-40,0 Q0,-5 40,5"/>
+      <path d="M-50,-25 Q-20,-10 10,-20"/>
+    </g>
+    <!-- Small boats -->
+    <g opacity="0.2" fill="#4a7a6a">
+      <path d="M-30,-5 L-20,-5 L-25,0 Z"/>
+      <path d="M20,10 L30,10 L25,15 Z"/>
+    </g>
+  </g>
+  <text x="967" y="655" font-family="serif" font-size="16" fill="#4a8a7a" opacity="0.45" text-anchor="middle" letter-spacing="3" font-weight="bold">江州</text>
+
+  <!-- Linh Châu (28%, 72%) — jungle/swamp -->
+  <g transform="translate(501,720)">
+    <ellipse cx="0" cy="0" rx="110" ry="60" fill="url(#forestGrad)"/>
+    <rect x="-100" y="-50" width="200" height="110" fill="url(#forestPat)" opacity="0.35"/>
+    <!-- Swamp bubbles -->
+    <g fill="#3a6a2a" opacity="0.15">
+      <circle cx="-40" cy="20" r="3"/>
+      <circle cx="20" cy="30" r="2"/>
+      <circle cx="50" cy="15" r="2.5"/>
+      <circle cx="-10" cy="35" r="1.5"/>
+    </g>
+  </g>
+  <text x="501" y="655" font-family="serif" font-size="16" fill="#6a9a4a" opacity="0.45" text-anchor="middle" letter-spacing="3" font-weight="bold">靈州</text>
+
+  <!-- ===================== RIVERS ===================== -->
+  <!-- Main river: north mountains → Thiên Kinh → Giang Châu -->
+  <path d="M 627,110 Q 650,200 700,280 Q 730,340 752,400 Q 760,460 800,530 Q 850,610 910,680 Q 950,710 967,720" fill="none" stroke="url(#riverGrad)" stroke-width="4" opacity="0.55"/>
+  <!-- Branch: Thiên Kinh → Thanh Châu -->
+  <path d="M 752,400 Q 900,370 1100,320 Q 1200,290 1289,280" fill="none" stroke="url(#riverGrad)" stroke-width="3" opacity="0.4"/>
+  <!-- Branch: Thanh Châu → Minh Châu -->
+  <path d="M 1289,280 Q 1400,340 1500,400 Q 1560,430 1600,440" fill="none" stroke="url(#riverGrad)" stroke-width="3" opacity="0.4"/>
+  <!-- River: Sở Châu → Thiên Kinh -->
+  <path d="M 215,480 Q 400,490 600,470 Q 690,450 752,400" fill="none" stroke="url(#riverGrad)" stroke-width="2.5" opacity="0.35"/>
+  <!-- River: Linh Châu → Giang Châu -->
+  <path d="M 501,720 Q 700,740 850,730 Q 920,725 967,720" fill="none" stroke="url(#riverGrad)" stroke-width="2.5" opacity="0.35"/>
+
+  <!-- ===================== MOUNTAIN RANGES ===================== -->
+  <!-- Northern range — decorative peaks -->
+  <g opacity="0.3" fill="none" stroke="#6a5a4a" stroke-width="2">
+    <path d="M 150,160 L 180,110 L 210,160 M 210,160 L 250,120 L 290,160 M 290,160 L 330,100 L 370,160"/>
+    <path d="M 800,140 L 830,90 L 860,140 M 860,140 L 900,100 L 940,140"/>
+    <path d="M 1150,150 L 1180,100 L 1210,150 M 1210,150 L 1250,110 L 1290,150"/>
+    <path d="M 1450,170 L 1480,120 L 1510,170 M 1510,170 L 1550,130 L 1590,170"/>
   </g>
 
-  <!-- Western mountains (Sở Châu) -->
-  <g opacity="0.2" fill="none" stroke="#5a3a20" stroke-width="1.2">
-    <path d="M80,420 L120,370 L160,420 M160,420 L200,380 L240,420"/>
-    <path d="M60,520 L100,480 L140,520"/>
+  <!-- Western range (Sở Châu) -->
+  <g opacity="0.25" fill="none" stroke="#6a4a2a" stroke-width="1.5">
+    <path d="M 100,430 L 130,380 L 160,430 M 160,430 L 200,390 L 240,430"/>
+    <path d="M 80,530 L 110,490 L 140,530"/>
   </g>
 
-  <!-- === SEA WAVES (decorative) === -->
-  <g opacity="0.3" fill="none" stroke="#2a4a6a" stroke-width="1">
-    <path d="M1450,700 Q1470,692 1490,700 Q1510,708 1530,700"/>
-    <path d="M1500,740 Q1520,732 1540,740 Q1560,748 1580,740"/>
-    <path d="M1550,780 Q1570,772 1590,780 Q1610,788 1630,780"/>
-    <path d="M1600,820 Q1620,812 1640,820 Q1660,828 1680,820"/>
-    <path d="M1650,860 Q1670,852 1690,860 Q1710,868 1730,860"/>
-    <path d="M1450,750 Q1470,742 1490,750"/>
-    <path d="M1480,790 Q1500,782 1520,790"/>
-    <path d="M1520,830 Q1540,822 1560,830"/>
+  <!-- ===================== SEA WAVES ===================== -->
+  <g opacity="0.3" fill="none" stroke="#3a6a9a" stroke-width="1.2">
+    <path d="M 1450,680 Q 1470,672 1490,680 Q 1510,688 1530,680"/>
+    <path d="M 1500,720 Q 1520,712 1540,720 Q 1560,728 1580,720"/>
+    <path d="M 1550,760 Q 1570,752 1590,760 Q 1610,768 1630,760"/>
+    <path d="M 1600,800 Q 1620,792 1640,800 Q 1660,808 1680,800"/>
+    <path d="M 1650,840 Q 1670,832 1690,840 Q 1710,848 1730,840"/>
+    <path d="M 1480,730 Q 1500,722 1520,730"/>
+    <path d="M 1520,770 Q 1540,762 1560,770"/>
+    <path d="M 1560,810 Q 1580,802 1600,810"/>
+    <path d="M 1600,850 Q 1620,842 1640,850"/>
+    <path d="M 1500,870 Q 1520,862 1540,870"/>
+    <path d="M 1550,900 Q 1570,892 1590,900 Q 1610,908 1630,900"/>
+    <path d="M 1620,880 Q 1640,872 1660,880"/>
   </g>
 
-  <!-- Mist clouds over Vô Tận Hải -->
-  <g opacity="0.12" fill="#3a4a5a" filter="url(#blur2)">
-    <ellipse cx="1550" cy="750" rx="80" ry="25"/>
-    <ellipse cx="1650" cy="800" rx="70" ry="20"/>
-    <ellipse cx="1500" cy="850" rx="60" ry="18"/>
+  <!-- Mist over Vô Tận Hải -->
+  <g opacity="0.1" fill="#4a5a6a" filter="url(#mistBlur)">
+    <ellipse cx="1550" cy="730" rx="90" ry="28"/>
+    <ellipse cx="1660" cy="780" rx="80" ry="22"/>
+    <ellipse cx="1500" cy="830" rx="70" ry="20"/>
+    <ellipse cx="1620" cy="870" rx="60" ry="18"/>
   </g>
 
-  <!-- === COMPASS ROSE (bottom-left corner) === -->
-  <g transform="translate(80,900)" opacity="0.25">
-    <circle cx="0" cy="0" r="35" fill="none" stroke="#c68b62" stroke-width="1"/>
-    <circle cx="0" cy="0" r="28" fill="none" stroke="#c68b62" stroke-width="0.5"/>
-    <path d="M0,-35 L5,-5 L0,0 L-5,-5 Z" fill="#c68b62" opacity="0.6"/>
-    <path d="M0,35 L5,5 L0,0 L-5,5 Z" fill="#c68b62" opacity="0.3"/>
-    <path d="M35,0 L5,5 L0,0 L5,-5 Z" fill="#c68b62" opacity="0.4"/>
-    <path d="M-35,0 L-5,5 L0,0 L-5,-5 Z" fill="#c68b62" opacity="0.4"/>
-    <text x="0" y="-42" font-family="serif" font-size="10" fill="#c68b62" text-anchor="middle">北</text>
-    <text x="0" y="50" font-family="serif" font-size="10" fill="#c68b62" text-anchor="middle">南</text>
-    <text x="45" y="4" font-family="serif" font-size="10" fill="#c68b62" text-anchor="middle">東</text>
-    <text x="-45" y="4" font-family="serif" font-size="10" fill="#c68b62" text-anchor="middle">西</text>
+  <!-- ===================== COMPASS ROSE ===================== -->
+  <g transform="translate(90,910)" opacity="0.3">
+    <circle cx="0" cy="0" r="38" fill="none" stroke="#c68b62" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="30" fill="none" stroke="#c68b62" stroke-width="0.8"/>
+    <circle cx="0" cy="0" r="3" fill="#c68b62" opacity="0.5"/>
+    <!-- N arrow -->
+    <path d="M 0,-38 L 6,-6 L 0,0 L -6,-6 Z" fill="#c68b62" opacity="0.6"/>
+    <!-- S arrow -->
+    <path d="M 0,38 L 6,6 L 0,0 L -6,6 Z" fill="#c68b62" opacity="0.3"/>
+    <!-- E arrow -->
+    <path d="M 38,0 L 6,6 L 0,0 L 6,-6 Z" fill="#c68b62" opacity="0.4"/>
+    <!-- W arrow -->
+    <path d="M -38,0 L -6,6 L 0,0 L -6,-6 Z" fill="#c68b62" opacity="0.4"/>
+    <text x="0" y="-46" font-family="serif" font-size="12" fill="#c68b62" text-anchor="middle" font-weight="bold">北</text>
+    <text x="0" y="54" font-family="serif" font-size="12" fill="#c68b62" text-anchor="middle" font-weight="bold">南</text>
+    <text x="50" y="5" font-family="serif" font-size="12" fill="#c68b62" text-anchor="middle" font-weight="bold">東</text>
+    <text x="-50" y="5" font-family="serif" font-size="12" fill="#c68b62" text-anchor="middle" font-weight="bold">西</text>
   </g>
 
-  <!-- === DECORATIVE BORDER === -->
-  <rect x="20" y="20" width="1750" height="960" fill="none" stroke="#c68b62" stroke-width="2" opacity="0.15" rx="8"/>
-  <rect x="28" y="28" width="1734" height="944" fill="none" stroke="#c68b62" stroke-width="0.5" opacity="0.1" rx="6"/>
+  <!-- ===================== DECORATIVE BORDER ===================== -->
+  <rect x="20" y="20" width="1750" height="960" fill="none" stroke="#c68b62" stroke-width="2.5" opacity="0.18" rx="10"/>
+  <rect x="30" y="30" width="1730" height="940" fill="none" stroke="#c68b62" stroke-width="0.8" opacity="0.1" rx="8"/>
 
   <!-- Corner ornaments -->
-  <g opacity="0.15" fill="none" stroke="#c68b62" stroke-width="1">
-    <path d="M20,60 Q20,20 60,20 M40,20 Q20,20 20,40"/>
-    <path d="M1770,60 Q1770,20 1730,20 M1750,20 Q1770,20 1770,40"/>
-    <path d="M20,940 Q20,980 60,980 M40,980 Q20,980 20,960"/>
-    <path d="M1770,940 Q1770,980 1730,980 M1750,980 Q1770,980 1770,960"/>
+  <g opacity="0.2" fill="none" stroke="#c68b62" stroke-width="1.2">
+    <!-- TL -->
+    <path d="M 20,70 Q 20,20 70,20 M 40,20 Q 20,20 20,40"/>
+    <path d="M 35,35 L 50,50"/>
+    <!-- TR -->
+    <path d="M 1770,70 Q 1770,20 1720,20 M 1750,20 Q 1770,20 1770,40"/>
+    <path d="M 1755,35 L 1740,50"/>
+    <!-- BL -->
+    <path d="M 20,930 Q 20,980 70,980 M 40,980 Q 20,980 20,960"/>
+    <path d="M 35,965 L 50,950"/>
+    <!-- BR -->
+    <path d="M 1770,930 Q 1770,980 1720,980 M 1750,980 Q 1770,980 1770,960"/>
+    <path d="M 1755,965 L 1740,950"/>
   </g>
 
   <!-- Title cartouche (top center) -->
-  <g transform="translate(895,50)" opacity="0.2">
-    <rect x="-80" y="-18" width="160" height="36" fill="none" stroke="#c68b62" stroke-width="1" rx="4"/>
-    <rect x="-74" y="-14" width="148" height="28" fill="none" stroke="#c68b62" stroke-width="0.5" rx="2"/>
-    <text x="0" y="5" font-family="serif" font-size="14" fill="#c68b62" text-anchor="middle" letter-spacing="6">重還地圖</text>
+  <g transform="translate(895,55)" opacity="0.25">
+    <rect x="-90" y="-22" width="180" height="44" fill="none" stroke="#c68b62" stroke-width="1.5" rx="6"/>
+    <rect x="-82" y="-16" width="164" height="32" fill="none" stroke="#c68b62" stroke-width="0.8" rx="4"/>
+    <text x="0" y="6" font-family="serif" font-size="18" fill="#c68b62" text-anchor="middle" letter-spacing="8" font-weight="bold">重還地圖</text>
   </g>
 
-  <!-- Subtle region labels in larger text -->
-  <g font-family="serif" opacity="0.12" text-anchor="middle">
-    <text x="1289" y="290" font-size="20" fill="#4a6a8a" letter-spacing="4">青州</text>
-    <text x="1600" y="430" font-size="20" fill="#3a6a8a" letter-spacing="4">明州</text>
-    <text x="967" y="730" font-size="20" fill="#3a6a5a" letter-spacing="4">江州</text>
-    <text x="215" y="490" font-size="20" fill="#8a5a3a" letter-spacing="4">楚州</text>
+  <!-- ===================== LARGE REGION LABELS ===================== -->
+  <g font-family="serif" opacity="0.15" text-anchor="middle" font-weight="bold">
+    <text x="1289" y="300" font-size="26" fill="#4a7aaa" letter-spacing="6">青州</text>
+    <text x="1600" y="460" font-size="26" fill="#3a7aaa" letter-spacing="6">明州</text>
+    <text x="967" y="750" font-size="26" fill="#3a8a7a" letter-spacing="6">江州</text>
+    <text x="215" y="510" font-size="26" fill="#9a6a3a" letter-spacing="6">楚州</text>
   </g>
 
-  <!-- Fading vignette -->
-  <radialGradient id="vignette" cx="50%" cy="50%" r="55%">
-    <stop offset="60%" stop-color="#000000" stop-opacity="0"/>
-    <stop offset="100%" stop-color="#000000" stop-opacity="0.4"/>
+  <!-- ===================== VIGNETTE ===================== -->
+  <radialGradient id="vignette" cx="50%" cy="50%" r="60%">
+    <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+    <stop offset="100%" stop-color="#000000" stop-opacity="0.45"/>
   </radialGradient>
   <rect width="1790" height="1000" fill="url(#vignette)" pointer-events="none"/>
 </svg>
