@@ -130,7 +130,7 @@ export default function MapPage() {
       <section className="grid gap-4 sm:gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-[#670201]/25 bg-[#0a0505] p-1.5 shadow-[0_20px_80px_rgba(0,0,0,0.35)] sm:p-3 lg:p-4">
           <div className="relative aspect-[179/100] overflow-hidden rounded-xl sm:rounded-2xl border border-[#c68b62]/20 bg-[#1a0c0a]">
-            <img src="https://images.pexels.com/photos/12051029/pexels-photo-12051029.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" alt="Địa đồ minh họa các vùng đất Trùng Hoan" className="absolute inset-0 h-full w-full object-contain object-center opacity-100" />
+            <img src="/trung-hoan-map.svg" alt="Địa đồ minh họa các vùng đất Trùng Hoan" className="absolute inset-0 h-full w-full object-contain object-center opacity-100" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_52%,rgba(8,3,4,0.38)_100%)] pointer-events-none" />
 
             {places.map(place => {
