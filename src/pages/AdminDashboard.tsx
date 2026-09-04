@@ -583,11 +583,14 @@ export default function AdminDashboard() {
     const playerName = inv?.profiles?.oc_name || '';
     requireConfirm(
       'Thu Hồi Vật Phẩm',
-      `Bạn sắp thu hồi "${itemName}" khỏi kho của ${playerName}. Vật phẩm sẽ bị xóa vĩnh viễn khỏi kho người chơi.`,
+      `Bạn sắp thu hồi "${itemName}" khỏi kho của ${playerName}. Vật phẩm sẽ bị xóa khỏi kho, nhưng lịch sử giao dịch mua vật phẩm này vẫn được giữ nguyên.`,
       async () => {
-        const { error } = await supabase.from('inventories').delete().eq('id', invId);
+        const { data, error } = await supabase.rpc('admin_revoke_inventory_item', {
+          p_inv_id: invId,
+        });
         if (error) { alert(`Lỗi: ${error.message}`); return; }
-        logAction('revoke_inventory_item', inv?.user_id, `Thu hồi "${itemName}" khỏi kho ${playerName}`.trim(), { inv_id: invId, item_name: itemName });
+        const loggedName = data?.item_name || itemName;
+        logAction('revoke_inventory_item', inv?.user_id || data?.user_id, `Thu hồi "${loggedName}" khỏi kho ${playerName}`.trim(), { inv_id: invId, item_name: loggedName });
         fetchAllData();
       },
       [
