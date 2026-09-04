@@ -6,7 +6,8 @@ import {
   AlertCircle, CheckCircle2, History, Edit3, Eye, EyeOff, Dices, Package,
   Heart, Sparkle, Brain, Lock, Unlock, FileWarning, Crown, Save, ScrollText,
   Undo2, RotateCcw, Search, UserSearch, ArrowLeft, ChevronDown, ChevronUp, FileSignature, Info,
-  Download, FileDown, Loader2, Archive, Settings, Clock, Building2, UserCog, Megaphone, Send, Award, Tag
+  Download, FileDown, Loader2, Archive, Settings, Clock, Building2, UserCog, Megaphone, Send, Award, Tag,
+  Zap,
 } from 'lucide-react';
 import { LotusIcon } from '@/components/LotusIcon';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -169,6 +170,14 @@ export default function AdminDashboard() {
   const [userTitlesMap, setUserTitlesMap] = useState<Record<string, UserTitle[]>>({});
   const [assignTitleUserId, setAssignTitleUserId] = useState<string | null>(null);
   const [assignTitleId, setAssignTitleId] = useState('');
+
+  // Registration review
+  const [reviewFeedback, setReviewFeedback] = useState<Record<string, string>>({});
+  const [reviewMsg, setReviewMsg] = useState('');
+  const [expandedReviewId, setExpandedReviewId] = useState<string | null>(null);
+  const [allSkills, setAllSkills] = useState<Record<string, unknown[]>>({});
+  const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
+  const [editSkillDraft, setEditSkillDraft] = useState<Record<string, unknown>>({});
 
   // Backup / export
   const [exporting, setExporting] = useState(false);
@@ -478,17 +487,114 @@ export default function AdminDashboard() {
   const rejectUser = (userId: string) => {
     const targetUser = pendingProfiles.find(p => p.id === userId);
     const name = targetUser?.oc_name || userId.slice(0, 8);
+    const feedback = reviewFeedback[userId]?.trim();
     requireConfirm(
       'Từ Chối Tài Khoản',
       `Bạn sắp từ chối và xóa vĩnh viễn tài khoản "${name}". Hành động này không thể hoàn tác.`,
       async () => {
+        if (feedback) {
+          await supabase.from('registration_reviews').insert({
+            user_id: userId, admin_id: profile?.id, status: 'rejected', feedback,
+          });
+        }
         await supabase.from('profiles').delete().eq('id', userId);
-        logAction('reject_user', userId, `Từ chối và xóa ${name}`);
+        logAction('reject_user', userId, `Từ chối và xóa ${name}` + (feedback ? ` — Phản hồi: ${feedback}` : ''));
+        setReviewFeedback(prev => { const n = { ...prev }; delete n[userId]; return n; });
+        setReviewMsg('');
         fetchAllData();
       },
-      [{ label: 'Người chơi', value: name }],
+      [
+        { label: 'Người chơi', value: name },
+        ...(feedback ? [{ label: 'Phản hồi', value: feedback }] : []),
+      ],
       'Xóa tài khoản',
     );
+  };
+
+  const handleRequestEdit = async (userId: string) => {
+    const feedback = reviewFeedback[userId]?.trim();
+    if (!feedback) { setReviewMsg('Vui lòng nhập phản hồi cho người chơi.'); return; }
+    const targetUser = pendingProfiles.find(p => p.id === userId);
+    const name = targetUser?.oc_name || userId.slice(0, 8);
+    const { error: revError } = await supabase.from('registration_reviews').insert({
+      user_id: userId, admin_id: profile?.id, status: 'request_edit', feedback,
+    });
+    if (revError) { setReviewMsg(`Lỗi: ${revError.message}`); return; }
+    const { error: profError } = await supabase.from('profiles').update({
+      review_status: 'request_edit', review_feedback: feedback,
+    }).eq('id', userId);
+    if (profError) { setReviewMsg(`Lỗi: ${profError.message}`); return; }
+    await supabase.from('notifications').insert({
+      recipient_id: userId, type: 'review_request_edit',
+      title: 'Yêu cầu sửa hồ sơ',
+      body: `Quản trị viên yêu cầu chỉnh sửa hồ sơ của bạn: ${feedback}`,
+    });
+    logAction('request_edit_user', userId, `Yêu cầu sửa hồ sơ ${name} — ${feedback}`);
+    setReviewFeedback(prev => { const n = { ...prev }; delete n[userId]; return n; });
+    setReviewMsg(`Đã gửi yêu cầu sửa hồ sơ đến ${name}.`);
+    setTimeout(() => setReviewMsg(''), 4000);
+    fetchAllData();
+  };
+
+  const handleApproveWithFeedback = async (userId: string) => {
+    const feedback = reviewFeedback[userId]?.trim();
+    const targetUser = pendingProfiles.find(p => p.id === userId);
+    const name = targetUser?.oc_name || userId.slice(0, 8);
+    const { error } = await supabase.rpc('admin_approve_user', {
+      p_user_id: userId, p_admin_id: profile?.id,
+    });
+    if (error) { setReviewMsg(`Lỗi phê duyệt: ${error.message}`); return; }
+    if (feedback) {
+      await supabase.from('registration_reviews').insert({
+        user_id: userId, admin_id: profile?.id, status: 'approved', feedback,
+      });
+      await supabase.from('profiles').update({ review_feedback: feedback }).eq('id', userId);
+      await supabase.from('notifications').insert({
+        recipient_id: userId, type: 'review_approved',
+        title: 'Hồ sơ đã được phê duyệt',
+        body: `Hồ sơ của bạn đã được phê duyệt! ${feedback}`,
+      });
+    }
+    logAction('approve_user', userId, `Phê duyệt ${name}` + (feedback ? ` — Phản hồi: ${feedback}` : ''));
+    setReviewFeedback(prev => { const n = { ...prev }; delete n[userId]; return n; });
+    setReviewMsg('');
+    fetchAllData();
+  };
+
+  const fetchSkillsForUser = async (userId: string) => {
+    if (allSkills[userId]) return;
+    const { data } = await supabase.from('character_skills').select('*').eq('user_id', userId).order('slot', { ascending: true });
+    setAllSkills(prev => ({ ...prev, [userId]: data || [] }));
+  };
+
+  const handleSaveSkill = async (skillId: string) => {
+    const { error } = await supabase.from('character_skills').update(editSkillDraft).eq('id', skillId);
+    if (error) { setReviewMsg(`Lỗi: ${error.message}`); return; }
+    setEditingSkillId(null);
+    setEditSkillDraft({});
+    setAllSkills({});
+    fetchAllData();
+  };
+
+  const handleDeleteSkill = async (skillId: string) => {
+    if (!confirm('Xóa kỹ năng này?')) return;
+    const { error } = await supabase.from('character_skills').delete().eq('id', skillId);
+    if (error) { setReviewMsg(`Lỗi: ${error.message}`); return; }
+    setAllSkills({});
+    fetchAllData();
+  };
+
+  const handleAddSkill = async (userId: string) => {
+    const existing = allSkills[userId] || [];
+    const nextSlot = existing.length + 1;
+    if (nextSlot > 4) { setReviewMsg('Đã đủ 4 kỹ năng.'); return; }
+    const { error } = await supabase.from('character_skills').insert({
+      user_id: userId, slot: nextSlot, name: 'Kỹ năng mới',
+    });
+    if (error) { setReviewMsg(`Lỗi: ${error.message}`); return; }
+    setAllSkills({});
+    fetchSkillsForUser(userId);
+    fetchAllData();
   };
 
   const handleCurrencyChange = async (e: React.FormEvent) => {
@@ -1711,15 +1817,118 @@ export default function AdminDashboard() {
                           )}
                         </div>
                         {p.bio && <p className="text-xs text-gray-500 mt-2 italic line-clamp-3">"{p.bio}"</p>}
+                        {p.review_status === 'request_edit' && p.review_feedback && (
+                          <div className="mt-2 p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                            <p className="text-[10px] text-yellow-300/80 font-semibold">Đã yêu cầu sửa:</p>
+                            <p className="text-xs text-yellow-200/70 mt-0.5">{p.review_feedback}</p>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex gap-2 flex-shrink-0">
-                        <button onClick={() => approveUser(p.id)} className="p-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-all">
-                          <Check className="w-4 h-4" />
+                      <div className="flex flex-col gap-1.5 flex-shrink-0">
+                        <button onClick={() => handleApproveWithFeedback(p.id)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold transition-all" title="Phê duyệt">
+                          <Check className="w-3.5 h-3.5" /> Duyệt
                         </button>
-                        <button onClick={() => rejectUser(p.id)} className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all">
-                          <X className="w-4 h-4" />
+                        <button onClick={() => handleRequestEdit(p.id)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400 text-xs font-bold transition-all" title="Yêu cầu sửa">
+                          <Edit3 className="w-3.5 h-3.5" /> Sửa
+                        </button>
+                        <button onClick={() => rejectUser(p.id)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold transition-all" title="Từ chối">
+                          <X className="w-3.5 h-3.5" /> Xóa
                         </button>
                       </div>
+                    </div>
+
+                    {/* Expand/collapse skills */}
+                    <button
+                      onClick={() => {
+                        if (expandedReviewId === p.id) { setExpandedReviewId(null); }
+                        else { setExpandedReviewId(p.id); fetchSkillsForUser(p.id); }
+                      }}
+                      className="mt-3 flex items-center gap-1.5 text-[11px] text-gray-500 hover:text-amber-300 transition-all"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      {expandedReviewId === p.id ? 'Ẩn kỹ năng' : 'Xem kỹ năng'}
+                      {expandedReviewId === p.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+
+                    {expandedReviewId === p.id && (
+                      <div className="mt-2 space-y-2">
+                        {(allSkills[p.id] || []).length === 0 ? (
+                          <p className="text-xs text-gray-600 italic">Hồ sơ chưa có kỹ năng.</p>
+                        ) : (
+                          (allSkills[p.id] as Record<string, unknown>[]).map((sk) => (
+                            <div key={sk.id as string} className="p-2.5 rounded-lg bg-black/20 border border-white/5">
+                              <p className="text-xs font-bold text-amber-100/80">{sk.name as string}</p>
+                              <div className="mt-1 space-y-0.5 text-[10px] text-gray-500">
+                                {sk.usage_detail ? <p><span className="text-gray-600">Cách dùng:</span> {sk.usage_detail as string}</p> : null}
+                                {sk.effect ? <p><span className="text-gray-600">Hiệu quả:</span> {sk.effect as string}</p> : null}
+                                {sk.tradeoff ? <p><span className="text-gray-600">Đánh đổi:</span> {sk.tradeoff as string}</p> : null}
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {Number(sk.cong_duc_cost) > 0 && <span className="text-cyan-400">Tiêu hao CD: {sk.cong_duc_cost}</span>}
+                                  {Number(sk.am_duc_cost) > 0 && <span className="text-amber-400">Tiêu hao AD: {sk.am_duc_cost}</span>}
+                                  {sk.duration ? <span className="text-gray-400">Duy trì: {sk.duration as string}</span> : null}
+                                  {Number(sk.destruction_percent) > 0 && <span className="text-red-400">Tiêu diệt: {sk.destruction_percent}%</span>}
+                                </div>
+                                {sk.mental_effect ? <p className="mt-0.5"><span className="text-gray-600">Tinh thần:</span> {sk.mental_effect as string} ({sk.mental_duration as number}đv)</p> : null}
+                                {sk.health_effect ? <p><span className="text-gray-600">Sức khỏe:</span> {sk.health_effect as string} ({sk.health_duration as number}đv)</p> : null}
+                                {sk.spiritual_effect ? <p><span className="text-gray-600">Tâm linh:</span> {sk.spiritual_effect as string} ({sk.spiritual_duration as number}đv)</p> : null}
+                                {sk.ghost_level_effect ? <p><span className="text-gray-600">Cấp quỷ:</span> {sk.ghost_level_effect as string}</p> : null}
+                              </div>
+                              <div className="flex gap-1.5 mt-1.5">
+                                <button onClick={() => { setEditingSkillId(sk.id as string); setEditSkillDraft({ ...sk }); }} className="flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-[10px] font-bold transition-all">
+                                  <Edit3 className="w-3 h-3" /> Sửa
+                                </button>
+                                <button onClick={() => handleDeleteSkill(sk.id as string)} className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-bold transition-all">
+                                  <Trash2 className="w-3 h-3" /> Xóa
+                                </button>
+                              </div>
+                              {editingSkillId === sk.id && (
+                                <div className="mt-2 p-2 rounded-lg bg-black/30 border border-amber-500/10 space-y-2">
+                                  <input type="text" value={editSkillDraft.name as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, name: e.target.value }))} placeholder="Tên kỹ năng" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  <textarea value={editSkillDraft.usage_detail as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, usage_detail: e.target.value }))} placeholder="Cách dùng" rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                                  <textarea value={editSkillDraft.effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, effect: e.target.value }))} placeholder="Hiệu quả" rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                                  <textarea value={editSkillDraft.tradeoff as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, tradeoff: e.target.value }))} placeholder="Đánh đổi" rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <input type="number" value={editSkillDraft.cong_duc_cost as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, cong_duc_cost: parseInt(e.target.value) || 0 }))} placeholder="Tiêu hao CD" className="px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                    <input type="number" value={editSkillDraft.am_duc_cost as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, am_duc_cost: parseInt(e.target.value) || 0 }))} placeholder="Tiêu hao AD" className="px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  </div>
+                                  <input type="text" value={editSkillDraft.duration as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, duration: e.target.value }))} placeholder="Thời gian duy trì" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  <input type="text" value={editSkillDraft.mental_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, mental_effect: e.target.value }))} placeholder="Ảnh hưởng tinh thần" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  <input type="number" max={50} value={editSkillDraft.mental_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} placeholder="Thời gian tinh thần (max 50)" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  <input type="text" value={editSkillDraft.health_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, health_effect: e.target.value }))} placeholder="Ảnh hưởng sức khỏe" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  <input type="number" max={50} value={editSkillDraft.health_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} placeholder="Thời gian sức khỏe (max 50)" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  <input type="text" value={editSkillDraft.spiritual_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, spiritual_effect: e.target.value }))} placeholder="Ảnh hưởng tâm linh" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  <input type="number" max={50} value={editSkillDraft.spiritual_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} placeholder="Thời gian tâm linh (max 50)" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  <textarea value={editSkillDraft.ghost_level_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, ghost_level_effect: e.target.value }))} placeholder="Ảnh hưởng lên từng cấp quỷ" rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                                  <input type="number" max={100} value={editSkillDraft.destruction_percent as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) }))} placeholder="% tiêu diệt" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  <div className="flex gap-2">
+                                    <button onClick={() => handleSaveSkill(sk.id as string)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold transition-all">
+                                      <Save className="w-3.5 h-3.5" /> Lưu
+                                    </button>
+                                    <button onClick={() => { setEditingSkillId(null); setEditSkillDraft({}); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold transition-all">
+                                      <X className="w-3.5 h-3.5" /> Hủy
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))
+                        )}
+                        <button onClick={() => handleAddSkill(p.id)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-xs font-bold transition-all">
+                          <Plus className="w-3.5 h-3.5" /> Thêm kỹ năng
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Feedback input */}
+                    <div className="mt-3 pt-3 border-t border-white/5">
+                      <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Phản hồi BQL cho người chơi</label>
+                      <textarea
+                        value={reviewFeedback[p.id] || ''}
+                        onChange={e => setReviewFeedback(prev => ({ ...prev, [p.id]: e.target.value }))}
+                        placeholder="Nhập phản hồi cho người chơi (hiển thị khi duyệt, yêu cầu sửa, hoặc từ chối)..."
+                        rows={2}
+                        className="w-full px-2.5 py-2 bg-black/30 border border-white/10 rounded-lg text-xs text-gray-200 placeholder-gray-600 resize-none focus:outline-none focus:border-amber-500/40 transition-all"
+                      />
                     </div>
                   </div>
                 ))}

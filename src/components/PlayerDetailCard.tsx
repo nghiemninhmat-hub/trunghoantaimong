@@ -4,6 +4,7 @@ import {
   ArrowLeft, Users, Package, History, Mail, Lock, Eye, EyeOff,
   Heart, Sparkle, Brain, Coins, Gift, Plus, Minus, Dices, Loader2,
   CheckCircle2, AlertCircle, Trash2, UserCircle, Ban, Award,
+  Zap, Save, X, Edit3,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 
@@ -49,17 +50,24 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
   const [spinAmount, setSpinAmount] = useState(1);
   const [playerTitles, setPlayerTitles] = useState<UserTitle[]>([]);
 
+  // Skills state
+  const [skills, setSkills] = useState<Record<string, unknown>[]>([]);
+  const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
+  const [editSkillDraft, setEditSkillDraft] = useState<Record<string, unknown>>({});
+
   const refreshData = useCallback(async () => {
     if (!profile) return;
     setTxLoading(true);
-    const [txRes, invRes, titleRes] = await Promise.all([
+    const [txRes, invRes, titleRes, skillRes] = await Promise.all([
       supabase.from('transactions').select('*, profiles(oc_name, email)').eq('user_id', profile.id).order('created_at', { ascending: false }),
       supabase.from('inventories').select('*, shop_items(name, category), profiles(oc_name)').eq('user_id', profile.id).order('acquired_at', { ascending: false }),
       supabase.from('user_titles').select('*, titles(*)').eq('user_id', profile.id).order('granted_at', { ascending: false }),
+      supabase.from('character_skills').select('*').eq('user_id', profile.id).order('slot', { ascending: true }),
     ]);
     if (txRes.data) setAllTransactions(txRes.data as Transaction[]);
     if (invRes.data) setAllInventory(invRes.data as (InventoryItem & { shop_items?: ShopItem | null; profiles?: { oc_name: string } | null })[]);
     if (titleRes.data) setPlayerTitles(titleRes.data as UserTitle[]);
+    if (skillRes.data) setSkills(skillRes.data as Record<string, unknown>[]);
     setTxLoading(false);
   }, [profile]);
 
@@ -161,6 +169,41 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
     await onStatusUpdate(profile.id, field, value);
     setStatusMsg('Đã cập nhật trạng thái.');
     setTimeout(() => setStatusMsg(''), 3000);
+  };
+
+  const handleSaveSkill = async (skillId: string) => {
+    setActionLoading(true);
+    const { error } = await supabase.from('character_skills').update(editSkillDraft).eq('id', skillId);
+    setActionLoading(false);
+    if (error) { showMsg(error.message, true); return; }
+    setEditingSkillId(null);
+    setEditSkillDraft({});
+    showMsg('Đã lưu kỹ năng.');
+    refreshData();
+  };
+
+  const handleDeleteSkill = async (skillId: string) => {
+    if (!confirm('Xóa kỹ năng này?')) return;
+    setActionLoading(true);
+    const { error } = await supabase.from('character_skills').delete().eq('id', skillId);
+    setActionLoading(false);
+    if (error) { showMsg(error.message, true); return; }
+    showMsg('Đã xóa kỹ năng.');
+    refreshData();
+  };
+
+  const handleAddSkill = async () => {
+    if (!profile) return;
+    const nextSlot = skills.length + 1;
+    if (nextSlot > 4) { showMsg('Đã đủ 4 kỹ năng.', true); return; }
+    setActionLoading(true);
+    const { error } = await supabase.from('character_skills').insert({
+      user_id: profile.id, slot: nextSlot, name: 'Kỹ năng mới',
+    });
+    setActionLoading(false);
+    if (error) { showMsg(error.message, true); return; }
+    showMsg('Đã thêm kỹ năng mới.');
+    refreshData();
   };
 
   const handleResetStatus = async (field: 'status_physical' | 'status_spiritual' | 'status_mental') => {
@@ -412,6 +455,86 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                 );
               })}
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* Kỹ năng nhân vật */}
+      <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-amber-300/70" />
+            <h4 className="text-base sm:text-lg font-serif font-bold text-amber-100/80">Kỹ Năng Nhân Vật ({skills.length})</h4>
+          </div>
+          <button onClick={handleAddSkill} disabled={actionLoading || skills.length >= 4} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold transition-all disabled:opacity-50">
+            <Plus className="w-3.5 h-3.5" /> Thêm kỹ năng
+          </button>
+        </div>
+        {skills.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-4">Chưa có kỹ năng nào.</p>
+        ) : (
+          <div className="space-y-2">
+            {skills.map(sk => (
+              <div key={sk.id as string} className="p-3 rounded-lg bg-black/20 border border-white/5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-amber-100/90">{sk.name as string}</p>
+                    <div className="mt-1 space-y-0.5 text-xs text-gray-500">
+                      {sk.usage_detail ? <p><span className="text-gray-600">Cách dùng:</span> {sk.usage_detail as string}</p> : null}
+                      {sk.effect ? <p><span className="text-gray-600">Hiệu quả:</span> {sk.effect as string}</p> : null}
+                      {sk.tradeoff ? <p><span className="text-gray-600">Đánh đổi:</span> {sk.tradeoff as string}</p> : null}
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {Number(sk.cong_duc_cost) > 0 && <span className="text-cyan-400">Tiêu hao CD: {sk.cong_duc_cost}</span>}
+                        {Number(sk.am_duc_cost) > 0 && <span className="text-amber-400">Tiêu hao AD: {sk.am_duc_cost}</span>}
+                        {sk.duration ? <span className="text-gray-400">Duy trì: {sk.duration as string}</span> : null}
+                        {Number(sk.destruction_percent) > 0 && <span className="text-red-400">Tiêu diệt: {sk.destruction_percent}%</span>}
+                      </div>
+                      {sk.mental_effect ? <p className="mt-0.5"><span className="text-gray-600">Tinh thần:</span> {sk.mental_effect as string} ({sk.mental_duration as number}đv)</p> : null}
+                      {sk.health_effect ? <p><span className="text-gray-600">Sức khỏe:</span> {sk.health_effect as string} ({sk.health_duration as number}đv)</p> : null}
+                      {sk.spiritual_effect ? <p><span className="text-gray-600">Tâm linh:</span> {sk.spiritual_effect as string} ({sk.spiritual_duration as number}đv)</p> : null}
+                      {sk.ghost_level_effect ? <p><span className="text-gray-600">Cấp quỷ:</span> {sk.ghost_level_effect as string}</p> : null}
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5 flex-shrink-0">
+                    <button onClick={() => { setEditingSkillId(sk.id as string); setEditSkillDraft({ ...sk }); }} className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 transition-all">
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => handleDeleteSkill(sk.id as string)} disabled={actionLoading} className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all disabled:opacity-50">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+                {editingSkillId === sk.id && (
+                  <div className="mt-2 p-2.5 rounded-lg bg-black/30 border border-amber-500/10 space-y-2">
+                    <input type="text" value={editSkillDraft.name as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, name: e.target.value }))} placeholder="Tên kỹ năng" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                    <textarea value={editSkillDraft.usage_detail as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, usage_detail: e.target.value }))} placeholder="Cách dùng" rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                    <textarea value={editSkillDraft.effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, effect: e.target.value }))} placeholder="Hiệu quả" rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                    <textarea value={editSkillDraft.tradeoff as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, tradeoff: e.target.value }))} placeholder="Đánh đổi" rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input type="number" value={editSkillDraft.cong_duc_cost as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, cong_duc_cost: parseInt(e.target.value) || 0 }))} placeholder="Tiêu hao CD" className="px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                      <input type="number" value={editSkillDraft.am_duc_cost as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, am_duc_cost: parseInt(e.target.value) || 0 }))} placeholder="Tiêu hao AD" className="px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                    </div>
+                    <input type="text" value={editSkillDraft.duration as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, duration: e.target.value }))} placeholder="Thời gian duy trì" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                    <input type="text" value={editSkillDraft.mental_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, mental_effect: e.target.value }))} placeholder="Ảnh hưởng tinh thần" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                    <input type="number" max={50} value={editSkillDraft.mental_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} placeholder="Thời gian tinh thần (max 50)" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                    <input type="text" value={editSkillDraft.health_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, health_effect: e.target.value }))} placeholder="Ảnh hưởng sức khỏe" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                    <input type="number" max={50} value={editSkillDraft.health_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} placeholder="Thời gian sức khỏe (max 50)" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                    <input type="text" value={editSkillDraft.spiritual_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, spiritual_effect: e.target.value }))} placeholder="Ảnh hưởng tâm linh" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                    <input type="number" max={50} value={editSkillDraft.spiritual_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} placeholder="Thời gian tâm linh (max 50)" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                    <textarea value={editSkillDraft.ghost_level_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, ghost_level_effect: e.target.value }))} placeholder="Ảnh hưởng lên từng cấp quỷ" rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                    <input type="number" max={100} value={editSkillDraft.destruction_percent as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) }))} placeholder="% tiêu diệt" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                    <div className="flex gap-2">
+                      <button onClick={() => handleSaveSkill(sk.id as string)} disabled={actionLoading} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold transition-all disabled:opacity-50">
+                        {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Lưu
+                      </button>
+                      <button onClick={() => { setEditingSkillId(null); setEditSkillDraft({}); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold transition-all">
+                        <X className="w-3.5 h-3.5" /> Hủy
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>

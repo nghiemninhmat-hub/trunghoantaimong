@@ -6,7 +6,8 @@ import {
   UserCircle, Coins, Sparkles, Skull, Package, History, Edit3,
   CheckCircle2, Clock, AlertCircle, Ghost, Plus, Minus, Send,
   Heart, Sparkle, Brain, ShieldCheck, Camera, X, Loader2, Upload, Link,
-  ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronRight, Building2, Award, ToggleLeft, ToggleRight
+  ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronRight, Building2, Award, ToggleLeft, ToggleRight,
+  Zap,
 } from 'lucide-react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import VisitorProfileCard from '@/components/VisitorProfileCard';
@@ -67,14 +68,18 @@ export default function ProfilePage() {
   const [userTitles, setUserTitles] = useState<UserTitle[]>([]);
   const [titleMsg, setTitleMsg] = useState('');
 
+  // Skills (read-only)
+  const [mySkills, setMySkills] = useState<Record<string, unknown>[]>([]);
+
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [txRes, invRes, orgRes, titlesRes] = await Promise.all([
+    const [txRes, invRes, orgRes, titlesRes, skillRes] = await Promise.all([
       supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
       supabase.from('inventories').select('*, shop_items(*)').eq('user_id', user.id).order('acquired_at', { ascending: false }),
       supabase.from('organization_members').select('role, organization_id, organizations(id, name, category, leader_id)').eq('user_id', user.id),
       supabase.from('user_titles').select('*, titles(*)').eq('user_id', user.id).order('granted_at', { ascending: false }),
+      supabase.from('character_skills').select('*').eq('user_id', user.id).order('slot', { ascending: true }),
     ]);
     if (txRes.error) {
       console.error('Lỗi tải giao dịch:', txRes.error.message);
@@ -95,6 +100,9 @@ export default function ProfilePage() {
     }
     if (titlesRes.data) {
       setUserTitles(titlesRes.data as UserTitle[]);
+    }
+    if (skillRes.data) {
+      setMySkills(skillRes.data as Record<string, unknown>[]);
     }
     setLoading(false);
   }, [user]);
@@ -602,6 +610,41 @@ export default function ProfilePage() {
         <StatCard label="Âm Đức" value={profile.am_duc} icon={Skull} accent="gold" />
         <StatCard label="Vật Phẩm" value={inventory.length} icon={Package} accent="gold" hint="Trong kho" />
       </StatGrid>
+
+      {/* Kỹ năng nhân vật (chỉ xem) */}
+      <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
+        <div className="flex items-center gap-2 mb-4">
+          <Zap className="w-5 h-5 text-amber-300/70" />
+          <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Kỹ Năng Nhân Vật</h3>
+          <span className="ml-auto text-[10px] text-gray-600 uppercase tracking-wider">Quản trị viên thay đổi</span>
+        </div>
+        {mySkills.length === 0 ? (
+          <p className="text-sm text-gray-500 text-center py-4">Chưa có kỹ năng nào.</p>
+        ) : (
+          <div className="space-y-2">
+            {mySkills.map(sk => (
+              <div key={sk.id as string} className="p-3 rounded-lg bg-black/20 border border-white/5">
+                <p className="text-sm font-bold text-amber-100/90">{sk.name as string}</p>
+                <div className="mt-1 space-y-0.5 text-xs text-gray-500">
+                  {sk.usage_detail ? <p><span className="text-gray-600">Cách dùng:</span> {sk.usage_detail as string}</p> : null}
+                  {sk.effect ? <p><span className="text-gray-600">Hiệu quả:</span> {sk.effect as string}</p> : null}
+                  {sk.tradeoff ? <p><span className="text-gray-600">Đánh đổi:</span> {sk.tradeoff as string}</p> : null}
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {Number(sk.cong_duc_cost) > 0 && <span className="text-cyan-400">Tiêu hao CD: {sk.cong_duc_cost}</span>}
+                    {Number(sk.am_duc_cost) > 0 && <span className="text-amber-400">Tiêu hao AD: {sk.am_duc_cost}</span>}
+                    {sk.duration ? <span className="text-gray-400">Duy trì: {sk.duration as string}</span> : null}
+                    {Number(sk.destruction_percent) > 0 && <span className="text-red-400">Tiêu diệt: {sk.destruction_percent}%</span>}
+                  </div>
+                  {sk.mental_effect ? <p className="mt-0.5"><span className="text-gray-600">Tinh thần:</span> {sk.mental_effect as string} ({sk.mental_duration as number}đv)</p> : null}
+                  {sk.health_effect ? <p><span className="text-gray-600">Sức khỏe:</span> {sk.health_effect as string} ({sk.health_duration as number}đv)</p> : null}
+                  {sk.spiritual_effect ? <p><span className="text-gray-600">Tâm linh:</span> {sk.spiritual_effect as string} ({sk.spiritual_duration as number}đv)</p> : null}
+                  {sk.ghost_level_effect ? <p><span className="text-gray-600">Cấp quỷ:</span> {sk.ghost_level_effect as string}</p> : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Character Status */}
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
