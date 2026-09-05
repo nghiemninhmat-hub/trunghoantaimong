@@ -106,7 +106,9 @@ export default function ShopPage() {
     const item = confirmBuy;
     setBuyingId(item.id);
 
-    const { error } = await supabase.rpc('purchase_items', { p_item_ids: [item.id], p_coupon_id: selectedCouponId });
+    const rpcParams: Record<string, unknown> = { p_item_ids: [item.id] };
+    if (selectedCouponId) rpcParams.p_coupon_id = selectedCouponId;
+    const { error } = await supabase.rpc('purchase_items', rpcParams);
 
     if (error) {
       showNotification(error.message, 'error');
