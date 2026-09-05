@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote, Organization, OrganizationMember, Title, UserTitle, TITLE_COLORS } from '@/lib/supabase';
+import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote, Organization, OrganizationMember, Title, UserTitle, TITLE_COLORS, Coupon } from '@/lib/supabase';
 import {
   Shield, Users, Coins, Store, BookOpen, Ghost, Check, X, Plus, Trash2,
   AlertCircle, CheckCircle2, History, Edit3, Eye, EyeOff, Dices, Package,
@@ -22,7 +22,7 @@ const STATUS_TAGS = [
   { value: 'Ngưỡng sinh tử', label: 'Thẻ tím đậm', badgeClass: 'bg-purple-700/20 text-purple-400', activeClass: 'bg-purple-700/30 border-purple-700/50 text-purple-300', idleClass: 'bg-purple-700/5 border-purple-700/15 text-purple-500/70' },
 ];
 
-type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wills' | 'settings' | 'organizations' | 'broadcast' | 'titles';
+type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wills' | 'settings' | 'organizations' | 'broadcast' | 'titles' | 'coupons';
 
 export default function AdminDashboard() {
   const { profile, isAdmin } = useAuth();
@@ -186,6 +186,13 @@ export default function AdminDashboard() {
   // Backup / export
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState('');
+
+  // Coupons
+  const [coupons, setCoupons] = useState<(Coupon & { profiles?: { oc_name: string } | null })[]>([]);
+  const [newCoupon, setNewCoupon] = useState({ code: '', discount_percent: 10, max_uses: 1, user_id: '', note: '' });
+  const [couponMsg, setCouponMsg] = useState('');
+  const [editingCouponId, setEditingCouponId] = useState<string | null>(null);
+  const [editCoupon, setEditCoupon] = useState<Partial<Coupon>>({});
 
   // Generic confirm dialog
   const [confirmState, setConfirmState] = useState<{
@@ -400,8 +407,73 @@ export default function AdminDashboard() {
     fetchAllData();
   };
 
+  // ===== Coupon handlers =====
+  const handleAddCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCoupon.code || !newCoupon.user_id) { setCouponMsg('Vui lòng nhập mã phiếu và chọn người chơi.'); return; }
+    setCouponMsg('');
+    const { error } = await supabase.from('coupons').insert({
+      code: newCoupon.code,
+      discount_percent: newCoupon.discount_percent,
+      max_uses: newCoupon.max_uses,
+      user_id: newCoupon.user_id,
+      created_by: profile?.id || null,
+      note: newCoupon.note || null,
+    });
+    if (error) { setCouponMsg(`Lỗi: ${error.message}`); return; }
+    const targetUser = allProfiles.find(p => p.id === newCoupon.user_id);
+    const targetName = targetUser?.oc_name || newCoupon.user_id.slice(0, 8);
+    await supabase.from('notifications').insert({
+      recipient_id: newCoupon.user_id, type: 'coupon_granted',
+      title: 'Nhận phiếu giảm giá',
+      body: `Bạn nhận được phiếu giảm giá "${newCoupon.code}" — giảm ${newCoupon.discount_percent}% khi mua sắm tại thương thành.`,
+    });
+    logAction('grant_coupon', newCoupon.user_id, `Phát phiếu giảm giá "${newCoupon.code}" cho ${targetName} (${newCoupon.discount_percent}%, ${newCoupon.max_uses} lượt)`, { code: newCoupon.code, discount: newCoupon.discount_percent, max_uses: newCoupon.max_uses });
+    setNewCoupon({ code: '', discount_percent: 10, max_uses: 1, user_id: '', note: '' });
+    setCouponMsg(`Đã phát phiếu giảm giá thành công.`);
+    fetchAllData();
+  };
+
+  const handleEditCoupon = (c: Coupon) => {
+    setEditingCouponId(c.id);
+    setEditCoupon({ discount_percent: c.discount_percent, max_uses: c.max_uses, is_active: c.is_active, note: c.note });
+  };
+
+  const handleSaveEditCoupon = async (couponId: string) => {
+    const { error } = await supabase.from('coupons').update(editCoupon).eq('id', couponId);
+    if (error) { setCouponMsg(`Lỗi: ${error.message}`); return; }
+    setEditingCouponId(null);
+    setEditCoupon({});
+    setCouponMsg('Đã cập nhật phiếu giảm giá.');
+    fetchAllData();
+  };
+
+  const handleDeleteCoupon = (couponId: string) => {
+    const c = coupons.find(c => c.id === couponId);
+    requireConfirm(
+      'Xóa Phiếu Giảm Giá',
+      `Bạn sắp xóa phiếu giảm giá "${c?.code || ''}". Hành động này không thể hoàn tác.`,
+      async () => {
+        const { error } = await supabase.from('coupons').delete().eq('id', couponId);
+        if (error) { setCouponMsg(`Lỗi: ${error.message}`); return; }
+        logAction('delete_coupon', c?.user_id, `Xóa phiếu giảm giá "${c?.code}"`, { coupon_id: couponId });
+        setCouponMsg('Đã xóa phiếu giảm giá.');
+        fetchAllData();
+      },
+      [{ label: 'Mã phiếu', value: c?.code || '' }],
+      'Xóa phiếu',
+    );
+  };
+
+  const handleToggleCoupon = async (c: Coupon) => {
+    const { error } = await supabase.from('coupons').update({ is_active: !c.is_active }).eq('id', c.id);
+    if (error) { setCouponMsg(`Lỗi: ${error.message}`); return; }
+    setCouponMsg(c.is_active ? 'Đã vô hiệu hóa phiếu.' : 'Đã kích hoạt phiếu.');
+    fetchAllData();
+  };
+
   const fetchAllData = useCallback(async () => {
-    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData, titlesData] = await Promise.all([
+    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData, titlesData, couponData] = await Promise.all([
       supabase.from('profiles').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').eq('is_approved', true).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
@@ -420,8 +492,10 @@ export default function AdminDashboard() {
       supabase.from('organizations').select('*, leader:profiles!organizations_leader_id_fkey(oc_name)').order('created_at', { ascending: false }),
       supabase.from('organization_members').select('*, profiles(oc_name)').order('created_at', { ascending: true }),
       supabase.from('titles').select('*').order('created_at', { ascending: false }),
+      supabase.from('coupons').select('*, profiles(oc_name)').order('created_at', { ascending: false }),
     ]);
     if (titlesData?.data) setTitles(titlesData.data as Title[]);
+    if (couponData?.data) setCoupons(couponData.data as (Coupon & { profiles?: { oc_name: string } | null })[]);
     if (willData?.data) setWills(willData.data as Will[]);
     if (bachHoaData?.data) setBachHoaEntries(bachHoaData.data as BachHoaEntry[]);
     if (orgData?.data) setOrganizations(orgData.data as (Organization & { leader?: { oc_name: string } | null })[]);
@@ -1524,6 +1598,7 @@ export default function AdminDashboard() {
     { id: 'organizations', label: 'Tổ Chức', icon: Building2 },
     { id: 'broadcast', label: 'Phát Thông Báo', icon: Megaphone },
     { id: 'titles', label: 'Danh Hiệu', icon: Award },
+    { id: 'coupons', label: 'Phiếu Giảm Giá', icon: Ticket },
     { id: 'audit', label: 'Nhật Ký', icon: ScrollText },
     { id: 'settings', label: 'Cài Đặt & Sao Lưu', icon: Settings },
   ];
@@ -3534,6 +3609,116 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Coupons Tab */}
+      {activeTab === 'coupons' && (
+        <div className="space-y-6">
+          <div className={cardCls}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+                <Ticket className="w-5 h-5 text-amber-300" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80">Phát Phiếu Giảm Giá</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Tạo phiếu giảm giá cho người chơi. Mỗi phiếu tag riêng cho một người, áp dụng khi mua sắm tại thương thành.</p>
+              </div>
+            </div>
+            {couponMsg && (
+              <div className={`flex items-center gap-2 p-3 rounded-lg text-sm mb-4 ${couponMsg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
+                {couponMsg.startsWith('Lỗi') ? <AlertCircle className="w-4 h-4 flex-shrink-0" /> : <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
+                {couponMsg}
+              </div>
+            )}
+            <form onSubmit={handleAddCoupon} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input type="text" placeholder="Mã phiếu (vd: GIAM50)" value={newCoupon.code} onChange={e => setNewCoupon({ ...newCoupon, code: e.target.value.toUpperCase() })} required className={inputCls} />
+              <select value={newCoupon.user_id} onChange={e => setNewCoupon({ ...newCoupon, user_id: e.target.value })} required className={inputCls}>
+                <option value="">Chọn người chơi...</option>
+                {allProfiles.map(p => (
+                  <option key={p.id} value={p.id}>{p.oc_name} · {p.email}</option>
+                ))}
+              </select>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-gray-500 whitespace-nowrap">% Giảm</label>
+                <input type="number" min={1} max={100} value={newCoupon.discount_percent} onChange={e => setNewCoupon({ ...newCoupon, discount_percent: Math.min(100, Math.max(1, parseInt(e.target.value) || 1)) })} required className={inputCls} />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-gray-500 whitespace-nowrap">Số lần dùng</label>
+                <input type="number" min={1} value={newCoupon.max_uses} onChange={e => setNewCoupon({ ...newCoupon, max_uses: Math.max(1, parseInt(e.target.value) || 1) })} required className={inputCls} />
+              </div>
+              <input type="text" placeholder="Ghi chú (tùy chọn)" value={newCoupon.note} onChange={e => setNewCoupon({ ...newCoupon, note: e.target.value })} className="md:col-span-2 px-4 py-2.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#670201]/50 transition-all" />
+              <button type="submit" className="md:col-span-2 flex items-center justify-center gap-2 px-5 py-2.5 bg-[#670201] hover:bg-[#a00404] text-amber-100 text-sm font-bold rounded-lg transition-all">
+                <Plus className="w-4 h-4" /> Phát Phiếu Giảm Giá
+              </button>
+            </form>
+          </div>
+
+          <div className={cardCls}>
+            <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80 mb-4">Danh Sách Phiếu Giảm Giá ({coupons.length})</h3>
+            {coupons.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">Chưa có phiếu giảm giá nào.</p>
+            ) : (
+              <div className="space-y-2">
+                {coupons.map(c => (
+                  <div key={c.id} className="p-3 rounded-lg bg-black/20 border border-white/5">
+                    {editingCouponId === c.id ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <div className="flex items-center gap-2">
+                            <label className="text-[10px] text-gray-500 whitespace-nowrap">% Giảm</label>
+                            <input type="number" min={1} max={100} value={editCoupon.discount_percent ?? 10} onChange={e => setEditCoupon({ ...editCoupon, discount_percent: Math.min(100, Math.max(1, parseInt(e.target.value) || 1)) })} className="flex-1 px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <label className="text-[10px] text-gray-500 whitespace-nowrap">Số lần</label>
+                            <input type="number" min={1} value={editCoupon.max_uses ?? 1} onChange={e => setEditCoupon({ ...editCoupon, max_uses: Math.max(1, parseInt(e.target.value) || 1) })} className="flex-1 px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          </div>
+                          <input type="text" value={editCoupon.note ?? ''} onChange={e => setEditCoupon({ ...editCoupon, note: e.target.value })} placeholder="Ghi chú" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={() => handleSaveEditCoupon(c.id)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold">
+                            <Save className="w-3.5 h-3.5" /> Lưu
+                          </button>
+                          <button onClick={() => { setEditingCouponId(null); setEditCoupon({}); }} className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold">Hủy</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-bold text-amber-100/90">{c.code}</span>
+                            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-bold">{c.discount_percent}%</span>
+                            <span className="text-[10px] text-gray-500">Đã dùng {c.used_count}/{c.max_uses}</span>
+                            {c.is_active ? (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300">Hoạt động</span>
+                            ) : (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300">Vô hiệu</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            <span className="text-amber-300/80">{c.profiles?.oc_name || 'N/A'}</span>
+                            {c.note && <span className="text-gray-600"> · {c.note}</span>}
+                          </p>
+                          <p className="text-[10px] text-gray-600">{new Date(c.created_at).toLocaleDateString('vi-VN')}</p>
+                        </div>
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          <button onClick={() => handleEditCoupon(c)} className="p-2 text-gray-500 hover:text-amber-300 hover:bg-amber-500/10 rounded-lg transition-all" title="Sửa">
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleToggleCoupon(c)} className="p-2 text-gray-500 hover:text-blue-300 hover:bg-blue-500/10 rounded-lg transition-all" title={c.is_active ? 'Vô hiệu hóa' : 'Kích hoạt'}>
+                            {c.is_active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                          </button>
+                          <button onClick={() => handleDeleteCoupon(c.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Xóa">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

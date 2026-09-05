@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, ShopItem, CartItem, CURRENCY_LABELS, SHOP_AREA_LABELS } from '@/lib/supabase';
+import { supabase, ShopItem, CartItem, CURRENCY_LABELS, SHOP_AREA_LABELS, Coupon } from '@/lib/supabase';
 import { StatCard, StatGrid } from '@/components/StatCard';
 import {
   Store, ShoppingCart, Trash2, CheckCircle2, AlertCircle, Package, Coins,
-  Sparkles, Skull, Search, X, Crown, Star, Flame, Zap, Loader2, Pencil, Save
+  Sparkles, Skull, Search, X, Crown, Star, Flame, Zap, Loader2, Pencil, Save, Ticket
 } from 'lucide-react';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
@@ -27,6 +27,8 @@ export default function ShopPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<ShopItem>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [selectedCouponId, setSelectedCouponId] = useState<string | null>(null);
 
   const showNotification = (msg: string, type: 'success' | 'error' = 'success') => {
     setNotification(msg);
@@ -49,10 +51,22 @@ export default function ShopPage() {
     if (!error && data) setCart(data as CartItem[]);
   }, [user]);
 
+  const fetchCoupons = useCallback(async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+    if (!error && data) setCoupons(data as Coupon[]);
+  }, [user]);
+
   useEffect(() => {
     fetchItems();
     fetchCart();
-  }, [fetchItems, fetchCart]);
+    fetchCoupons();
+  }, [fetchItems, fetchCart, fetchCoupons]);
 
   const addToCart = async (item: ShopItem) => {
     if (!user) {
@@ -90,7 +104,7 @@ export default function ShopPage() {
     const item = confirmBuy;
     setBuyingId(item.id);
 
-    const { error } = await supabase.rpc('purchase_items', { p_item_ids: [item.id] });
+    const { error } = await supabase.rpc('purchase_items', { p_item_ids: [item.id], p_coupon_id: selectedCouponId });
 
     if (error) {
       showNotification(error.message, 'error');
@@ -115,7 +129,9 @@ export default function ShopPage() {
     setProcessing(true);
 
     const itemIds = cart.map(c => c.item_id);
-    const { error } = await supabase.rpc('purchase_items', { p_item_ids: itemIds });
+    const rpcParams: Record<string, unknown> = { p_item_ids: itemIds };
+    if (selectedCouponId) rpcParams.p_coupon_id = selectedCouponId;
+    const { error } = await supabase.rpc('purchase_items', rpcParams);
 
     if (error) {
       showNotification(error.message, 'error');
@@ -126,7 +142,9 @@ export default function ShopPage() {
     setConfirmCheckout(false);
     setProcessing(false);
     showNotification('Thanh toán thành công! Vật phẩm đã vào kho.');
+    setSelectedCouponId(null);
     fetchCart();
+    fetchCoupons();
     refreshProfile();
   };
 
@@ -200,6 +218,14 @@ export default function ShopPage() {
     },
     { huaTien: 0, congDuc: 0, amDuc: 0 }
   );
+
+  const selectedCoupon = coupons.find(c => c.id === selectedCouponId) || null;
+  const couponDiscount = selectedCoupon ? selectedCoupon.discount_percent : 0;
+  const discountedTotals = {
+    huaTien: couponDiscount > 0 ? Math.ceil(cartTotals.huaTien * (1 - couponDiscount / 100)) : cartTotals.huaTien,
+    congDuc: couponDiscount > 0 ? Math.ceil(cartTotals.congDuc * (1 - couponDiscount / 100)) : cartTotals.congDuc,
+    amDuc: couponDiscount > 0 ? Math.ceil(cartTotals.amDuc * (1 - couponDiscount / 100)) : cartTotals.amDuc,
+  };
 
   const getCurrencyIcon = (type: string, size = 'w-3.5 h-3.5') => {
     if (type === 'HUA_TIEN') return <Coins className={`${size} text-amber-400 inline`} />;
@@ -544,22 +570,64 @@ export default function ShopPage() {
               {cartTotals.huaTien > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-400 flex items-center gap-1.5"><Coins className="w-4 h-4 text-amber-400" /> Hoa Tiền</span>
-                  <span className="text-amber-200 font-bold">{cartTotals.huaTien}</span>
+                  <div className="flex items-center gap-2">
+                    {couponDiscount > 0 && cartTotals.huaTien !== discountedTotals.huaTien && (
+                      <span className="text-xs text-gray-600 line-through">{cartTotals.huaTien}</span>
+                    )}
+                    <span className="text-amber-200 font-bold">{discountedTotals.huaTien}</span>
+                  </div>
                 </div>
               )}
               {cartTotals.congDuc > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-400 flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-cyan-400" /> Công Đức</span>
-                  <span className="text-cyan-200 font-bold">{cartTotals.congDuc}</span>
+                  <div className="flex items-center gap-2">
+                    {couponDiscount > 0 && cartTotals.congDuc !== discountedTotals.congDuc && (
+                      <span className="text-xs text-gray-600 line-through">{cartTotals.congDuc}</span>
+                    )}
+                    <span className="text-cyan-200 font-bold">{discountedTotals.congDuc}</span>
+                  </div>
                 </div>
               )}
               {cartTotals.amDuc > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-400 flex items-center gap-1.5"><Skull className="w-4 h-4 text-amber-400" /> Âm Đức</span>
-                  <span className="text-amber-200 font-bold">{cartTotals.amDuc}</span>
+                  <div className="flex items-center gap-2">
+                    {couponDiscount > 0 && cartTotals.amDuc !== discountedTotals.amDuc && (
+                      <span className="text-xs text-gray-600 line-through">{cartTotals.amDuc}</span>
+                    )}
+                    <span className="text-amber-200 font-bold">{discountedTotals.amDuc}</span>
+                  </div>
                 </div>
               )}
             </div>
+
+            {/* Coupon selector */}
+            {coupons.length > 0 && (
+              <div className="mt-4 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Ticket className="w-4 h-4 text-amber-300" />
+                  <label className="text-xs font-semibold text-amber-200/80">Phiếu giảm giá</label>
+                </div>
+                <select
+                  value={selectedCouponId ?? ''}
+                  onChange={e => setSelectedCouponId(e.target.value || null)}
+                  className="w-full px-3 py-2 bg-black/40 border border-amber-500/20 rounded-lg text-sm text-amber-100 focus:outline-none focus:border-amber-500/40 transition-all"
+                >
+                  <option value="">Không sử dụng phiếu</option>
+                  {coupons.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.code} — giảm {c.discount_percent}% (còn {c.max_uses - c.used_count} lượt)
+                    </option>
+                  ))}
+                </select>
+                {selectedCoupon && (
+                  <p className="text-[10px] text-amber-300/60 mt-1.5">
+                    Áp dụng giảm {selectedCoupon.discount_percent}% cho toàn bộ đơn hàng.
+                  </p>
+                )}
+              </div>
+            )}
 
             <button
               onClick={handleCheckout}

@@ -369,6 +369,20 @@ export interface OrgTreasuryLog {
   created_at: string;
 }
 
+export interface Coupon {
+  id: string;
+  code: string;
+  discount_percent: number;
+  max_uses: number;
+  used_count: number;
+  user_id: string;
+  created_by: string | null;
+  note: string | null;
+  is_active: boolean;
+  created_at: string;
+  profiles?: { oc_name: string } | null;
+}
+
 export type WillStatus = 'pending' | 'approved' | 'revision_requested' | 'rejected';
 
 export interface Will {
