@@ -7,7 +7,7 @@ import {
   Heart, Sparkle, Brain, Lock, Unlock, FileWarning, Crown, Save, ScrollText,
   Undo2, RotateCcw, Search, UserSearch, ArrowLeft, ChevronDown, ChevronUp, FileSignature, Info,
   Download, FileDown, Loader2, Archive, Settings, Clock, Building2, UserCog, Megaphone, Send, Award, Tag,
-  Zap,
+  Zap, ToggleLeft, ToggleRight,
 } from 'lucide-react';
 import { LotusIcon } from '@/components/LotusIcon';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -1743,6 +1743,20 @@ export default function AdminDashboard() {
       [{ label: 'Danh hiệu', value: titleName }],
       'Thu hồi',
     );
+  };
+
+  const handleAdminToggleTitleDisplay = async (userTitleId: string, userId: string, currentDisplayed: boolean) => {
+    const { data, error } = await supabase.rpc('admin_toggle_title_display', {
+      p_user_title_id: userTitleId,
+      p_display: !currentDisplayed,
+    });
+    if (error) { setTitleMsg(`Lỗi: ${error.message}`); return; }
+    if (data && !data.success) { setTitleMsg(`Lỗi: ${data.error}`); return; }
+    setUserTitlesMap(m => {
+      const list = m[userId] || [];
+      return { ...m, [userId]: list.map(ut => ut.id === userTitleId ? { ...ut, is_displayed: !currentDisplayed } : ut) };
+    });
+    setTitleMsg('');
   };
 
   return (
@@ -4067,7 +4081,17 @@ export default function AdminDashboard() {
                                     <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold whitespace-nowrap ${ut.is_displayed ? colorCfg.activeClass : colorCfg.badgeClass}`}>{t?.name || '(?)'}</span>
                                     {ut.is_displayed && <span className="text-[10px] text-emerald-400/70">Đang hiển thị</span>}
                                   </div>
-                                  <button onClick={() => handleRevokeTitle(ut.id, p.id, t?.name || '')} className="p-1 rounded text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all flex-shrink-0"><X className="w-3.5 h-3.5" /></button>
+                                  <div className="flex items-center gap-1 flex-shrink-0">
+                                    <button
+                                      onClick={() => handleAdminToggleTitleDisplay(ut.id, p.id, ut.is_displayed)}
+                                      className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold transition-all ${ut.is_displayed ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}
+                                      title={ut.is_displayed ? 'Tắt hiển thị' : 'Bật hiển thị'}
+                                    >
+                                      {ut.is_displayed ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                                      {ut.is_displayed ? 'Hiện' : 'Ẩn'}
+                                    </button>
+                                    <button onClick={() => handleRevokeTitle(ut.id, p.id, t?.name || '')} className="p-1 rounded text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all flex-shrink-0"><X className="w-3.5 h-3.5" /></button>
+                                  </div>
                                 </div>
                               );
                             })}
