@@ -96,6 +96,7 @@ export default function ShopPage() {
       showNotification('Vui lòng đăng nhập để mua sắm.', 'error');
       return;
     }
+    setSelectedCouponId(null);
     setConfirmBuy(item);
   };
 
@@ -109,12 +110,15 @@ export default function ShopPage() {
     if (error) {
       showNotification(error.message, 'error');
       setBuyingId(null);
-      throw error;
+      return;
     }
 
     setBuyingId(null);
+    setConfirmBuy(null);
+    setSelectedCouponId(null);
     showNotification(`Đã mua "${item.name}" — vật phẩm đã vào kho.`);
     fetchCart();
+    fetchCoupons();
     refreshProfile();
   };
 
@@ -640,23 +644,98 @@ export default function ShopPage() {
         </div>
       )}
 
-      {/* Confirm Buy Now */}
-      <ConfirmDialog
-        open={confirmBuy !== null}
-        title="Xác Nhận Mua Hàng"
-        message={`Bạn sắp mua "${confirmBuy?.name}". Vật phẩm sẽ được thêm vào kho và số dư sẽ bị trừ.`}
-        confirmLabel="Mua Ngay"
-        cancelLabel="Hủy"
-        details={confirmBuy ? [
-          { label: 'Vật phẩm', value: confirmBuy.name },
-          { label: 'Giá', value: `${confirmBuy.price} ${CURRENCY_LABELS[confirmBuy.currency_type]}` },
-          ...(confirmBuy.price_secondary && confirmBuy.currency_type_secondary
-            ? [{ label: 'Giá phụ', value: `${confirmBuy.price_secondary} ${CURRENCY_LABELS[confirmBuy.currency_type_secondary]}` }]
-            : []),
-        ] : []}
-        onConfirm={executeBuyNow}
-        onCancel={() => setConfirmBuy(null)}
-      />
+      {/* Buy Now Modal with Coupon Selector */}
+      {confirmBuy && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => { if (!buyingId) setConfirmBuy(null); }}>
+          <div className="w-full max-w-md p-6 rounded-2xl bg-[#1a0a0a] border border-[#670201]/40 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-serif font-bold text-amber-100/90">Mua Hàng</h3>
+              <button onClick={() => { if (!buyingId) setConfirmBuy(null); }} className="text-gray-500 hover:text-gray-300 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2 p-3 rounded-lg bg-black/30 border border-white/5 mb-4">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Vật phẩm</span>
+                <span className="text-gray-200 font-semibold">{confirmBuy.name}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Giá gốc</span>
+                <span className="text-gray-200 font-semibold flex items-center gap-1.5">
+                  {getCurrencyIcon(confirmBuy.currency_type)}
+                  {confirmBuy.price} <span className="text-xs text-gray-500">{CURRENCY_LABELS[confirmBuy.currency_type]}</span>
+                </span>
+              </div>
+              {confirmBuy.price_secondary && confirmBuy.currency_type_secondary && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Giá phụ</span>
+                  <span className="text-gray-200 font-semibold flex items-center gap-1.5">
+                    {getCurrencyIcon(confirmBuy.currency_type_secondary)}
+                    {confirmBuy.price_secondary} <span className="text-xs text-gray-500">{CURRENCY_LABELS[confirmBuy.currency_type_secondary]}</span>
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {coupons.length > 0 && (
+              <div className="mb-4 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Ticket className="w-4 h-4 text-amber-300" />
+                  <label className="text-xs font-semibold text-amber-200/80">Phiếu giảm giá</label>
+                </div>
+                <select
+                  value={selectedCouponId ?? ''}
+                  onChange={e => setSelectedCouponId(e.target.value || null)}
+                  className="w-full px-3 py-2 bg-black/40 border border-amber-500/20 rounded-lg text-sm text-amber-100 focus:outline-none focus:border-amber-500/40 transition-all"
+                >
+                  <option value="">Không sử dụng phiếu</option>
+                  {coupons.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.code} — giảm {c.discount_percent}% (còn {c.max_uses - c.used_count} lượt)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {selectedCoupon && confirmBuy && (
+              <div className="mb-4 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 space-y-1.5">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">Giảm giá ({selectedCoupon.discount_percent}%)</span>
+                  <span className="text-emerald-400 font-semibold">
+                    −{Math.ceil(confirmBuy.price * selectedCoupon.discount_percent / 100)} {CURRENCY_LABELS[confirmBuy.currency_type]}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm pt-1.5 border-t border-white/5">
+                  <span className="text-gray-400 font-semibold">Thực trả</span>
+                  <span className="text-amber-200 font-bold text-base flex items-center gap-1.5">
+                    {getCurrencyIcon(confirmBuy.currency_type)}
+                    {Math.ceil(confirmBuy.price * (1 - selectedCoupon.discount_percent / 100))}
+                    <span className="text-xs text-gray-500">{CURRENCY_LABELS[confirmBuy.currency_type]}</span>
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={executeBuyNow}
+              disabled={buyingId === confirmBuy.id}
+              className="w-full py-3 bg-[#670201] hover:bg-[#a00404] text-amber-100 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {buyingId === confirmBuy.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              {buyingId === confirmBuy.id ? 'Đang xử lý...' : 'Mua Ngay'}
+            </button>
+            <button
+              onClick={() => { if (!buyingId) setConfirmBuy(null); }}
+              disabled={buyingId === confirmBuy.id}
+              className="w-full mt-2 py-2.5 text-gray-500 hover:text-gray-300 text-sm transition-all disabled:opacity-50"
+            >
+              Hủy
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Confirm Checkout */}
       <ConfirmDialog
@@ -667,9 +746,25 @@ export default function ShopPage() {
         cancelLabel="Hủy"
         details={[
           { label: 'Số vật phẩm', value: String(cart.length) },
-          ...(cartTotals.huaTien > 0 ? [{ label: 'Hoa Tiền', value: String(cartTotals.huaTien) }] : []),
-          ...(cartTotals.congDuc > 0 ? [{ label: 'Công Đức', value: String(cartTotals.congDuc) }] : []),
-          ...(cartTotals.amDuc > 0 ? [{ label: 'Âm Đức', value: String(cartTotals.amDuc) }] : []),
+          ...(cartTotals.huaTien > 0 ? [{
+            label: 'Hoa Tiền',
+            value: couponDiscount > 0 && cartTotals.huaTien !== discountedTotals.huaTien
+              ? `${cartTotals.huaTien} → ${discountedTotals.huaTien} (giảm ${cartTotals.huaTien - discountedTotals.huaTien})`
+              : String(cartTotals.huaTien)
+          }] : []),
+          ...(cartTotals.congDuc > 0 ? [{
+            label: 'Công Đức',
+            value: couponDiscount > 0 && cartTotals.congDuc !== discountedTotals.congDuc
+              ? `${cartTotals.congDuc} → ${discountedTotals.congDuc} (giảm ${cartTotals.congDuc - discountedTotals.congDuc})`
+              : String(cartTotals.congDuc)
+          }] : []),
+          ...(cartTotals.amDuc > 0 ? [{
+            label: 'Âm Đức',
+            value: couponDiscount > 0 && cartTotals.amDuc !== discountedTotals.amDuc
+              ? `${cartTotals.amDuc} → ${discountedTotals.amDuc} (giảm ${cartTotals.amDuc - discountedTotals.amDuc})`
+              : String(cartTotals.amDuc)
+          }] : []),
+          ...(selectedCoupon ? [{ label: 'Phiếu áp dụng', value: `${selectedCoupon.code} — giảm ${selectedCoupon.discount_percent}%` }] : []),
         ]}
         onConfirm={executeCheckout}
         onCancel={() => setConfirmCheckout(false)}

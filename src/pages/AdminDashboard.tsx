@@ -423,6 +423,15 @@ export default function AdminDashboard() {
     if (error) { setCouponMsg(`Lỗi: ${error.message}`); return; }
     const targetUser = allProfiles.find(p => p.id === newCoupon.user_id);
     const targetName = targetUser?.oc_name || newCoupon.user_id.slice(0, 8);
+    const adminName = profile?.oc_name || 'Quản trị viên';
+    const couponDetail = `Nhận phiếu giảm giá "${newCoupon.code}" từ ${adminName} — giảm ${newCoupon.discount_percent}% khi mua sắm, tối đa ${newCoupon.max_uses} lượt.${newCoupon.note ? ` Ghi chú: ${newCoupon.note}` : ''}`;
+    await supabase.from('transactions').insert({
+      user_id: newCoupon.user_id,
+      amount: 0,
+      currency_type: 'COUPON',
+      reason: couponDetail,
+      related_user_name: adminName,
+    });
     await supabase.from('notifications').insert({
       recipient_id: newCoupon.user_id, type: 'coupon_granted',
       title: 'Nhận phiếu giảm giá',

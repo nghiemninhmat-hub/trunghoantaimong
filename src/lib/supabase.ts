@@ -20,6 +20,7 @@ export const CURRENCY_LABELS: Record<string, string> = {
   HUA_TIEN: 'Hoa Tiền',
   CONG_DUC: 'Công Đức',
   AM_DUC: 'Âm Đức',
+  COUPON: 'Phiếu Giảm Giá',
 };
 
 export const SHOP_AREA_LABELS: Record<string, string> = {
