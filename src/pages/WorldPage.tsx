@@ -180,7 +180,7 @@ export default function WorldPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#670201]/15 border border-[#670201]/25 text-amber-300/70 font-medium">Nhân Vật</span>
-                        <span className="text-xs text-amber-300/50 font-medium">Trang riêng</span>
+                        <span className="text-xs text-amber-300/50 font-medium">Bổ sung</span>
                       </div>
                       <h4 className="text-lg sm:text-xl font-serif font-bold text-amber-100/90">Nghiệp Thuật</h4>
                       <p className="text-xs text-gray-500 mt-1 truncate">Kỹ thuật chuyên môn của các nghề nghiệp — 4 cấp độ từ Hiển Nghệ đến Hóa Cảnh</p>
