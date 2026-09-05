@@ -106,24 +106,28 @@ export default function ShopPage() {
     const item = confirmBuy;
     setBuyingId(item.id);
 
-    const rpcParams: Record<string, unknown> = { p_item_ids: [item.id] };
-    if (selectedCouponId) rpcParams.p_coupon_id = selectedCouponId;
-    const { error } = await supabase.rpc('purchase_items', rpcParams);
+    try {
+      const rpcParams: Record<string, unknown> = { p_item_ids: [item.id] };
+      if (selectedCouponId) rpcParams.p_coupon_id = selectedCouponId;
+      const { error } = await supabase.rpc('purchase_items', rpcParams);
 
-    if (error) {
-      showNotification(error.message, 'error');
+      if (error) {
+        showNotification(error.message, 'error');
+        return;
+      }
+
+      setConfirmBuy(null);
+      setSelectedCouponId(null);
+      showNotification(`Đã mua "${item.name}" — vật phẩm đã vào kho.`);
+      setPurchaseSuccess({ itemNames: [item.name], totals: { huaTien: item.currency_type === 'HUA_TIEN' ? item.price : 0, congDuc: item.currency_type === 'CONG_DUC' ? item.price : 0, amDuc: item.currency_type === 'AM_DUC' ? item.price : 0 } });
+      fetchCart();
+      fetchCoupons();
+      refreshProfile();
+    } catch {
+      showNotification('Lỗi kết nối, vui lòng thử lại.', 'error');
+    } finally {
       setBuyingId(null);
-      return;
     }
-
-    setBuyingId(null);
-    setConfirmBuy(null);
-    setSelectedCouponId(null);
-    showNotification(`Đã mua "${item.name}" — vật phẩm đã vào kho.`);
-    setPurchaseSuccess({ itemNames: [item.name], totals: { huaTien: item.currency_type === 'HUA_TIEN' ? item.price : 0, congDuc: item.currency_type === 'CONG_DUC' ? item.price : 0, amDuc: item.currency_type === 'AM_DUC' ? item.price : 0 } });
-    fetchCart();
-    fetchCoupons();
-    refreshProfile();
   };
 
   const handleCheckout = () => {
@@ -133,7 +137,10 @@ export default function ShopPage() {
   };
 
   const executeCheckout = async () => {
-    if (!user || !profile) return;
+    if (!user || !profile) {
+      showNotification('Vui lòng đăng nhập để mua sắm.', 'error');
+      return;
+    }
     setProcessing(true);
 
     const itemIds = cart.map(c => c.item_id);
