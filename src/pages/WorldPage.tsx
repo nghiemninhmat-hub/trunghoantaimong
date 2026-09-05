@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase, SitePage } from '@/lib/supabase';
 import { StatCard, StatGrid } from '@/components/StatCard';
 import { ContentRenderer } from '@/components/ContentRenderer';
 import {
   BookOpen, FileText, Search, Scroll, Ghost, Globe2,
-  Users, Shield, Flame, Bookmark, ChevronDown
+  Users, Shield, Flame, Bookmark, ChevronDown, Sparkles, ArrowRight
 } from 'lucide-react';
 
 const CATEGORY_ICONS: Record<string, typeof BookOpen> = {
@@ -168,6 +169,25 @@ export default function WorldPage() {
                     </article>
                   );
                 })}
+                {category === 'Nhân Vật' && (
+                  <Link
+                    to="/nghiep-thuat"
+                    className="group relative flex items-center gap-4 p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-[#0d0606] to-[#1a0a08] border border-[#670201]/30 hover:border-[#670201]/50 shadow-lg shadow-black/10 transition-all hover:shadow-[#670201]/10"
+                  >
+                    <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-[#670201]/20 border border-[#670201]/30 flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-amber-300/80" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-[#670201]/15 border border-[#670201]/25 text-amber-300/70 font-medium">Nhân Vật</span>
+                        <span className="text-xs text-amber-300/50 font-medium">Trang riêng</span>
+                      </div>
+                      <h4 className="text-lg sm:text-xl font-serif font-bold text-amber-100/90">Nghiệp Thuật</h4>
+                      <p className="text-xs text-gray-500 mt-1 truncate">Kỹ thuật chuyên môn của các nghề nghiệp — 4 cấp độ từ Hiển Nghệ đến Hóa Cảnh</p>
+                    </div>
+                    <ArrowRight className="flex-shrink-0 w-5 h-5 text-amber-300/50 group-hover:text-amber-300/80 group-hover:translate-x-1 transition-all" />
+                  </Link>
+                )}
               </div>
             </section>
           );

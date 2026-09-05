@@ -9,7 +9,7 @@ import MusicPlayer from '@/components/MusicPlayer';
 import PageTransition from '@/components/PageTransition';
 import {
   Home, Store, MessageSquare, Users, Shield, Moon, Sun, LogOut, LogIn,
-  BookOpen, Scroll, Menu, X, UserCircle, MapPinned, Dices, ShieldAlert, Ghost, Crown, ScrollText
+  BookOpen, Scroll, Menu, X, UserCircle, MapPinned, Dices, ShieldAlert, Ghost, Crown, ScrollText, Sparkles
 } from 'lucide-react';
 import { LotusIcon } from '@/components/LotusIcon';
 
@@ -26,6 +26,7 @@ const navItems = [
   { path: '/bach-quy-am', label: 'Bách Quỷ Âm', icon: Ghost },
   { path: '/di-chuc', label: 'Di Chúc', icon: ScrollText },
   { path: '/bach-hoa-trieu-phung', label: 'Bách Hoa', icon: LotusIcon },
+  { path: '/nghiep-thuat', label: 'Nghiệp Thuật', icon: Sparkles },
   { path: '/profile', label: 'Hồ Sơ', icon: UserCircle },
 ];
 
