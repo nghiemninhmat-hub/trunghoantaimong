@@ -575,21 +575,19 @@ export default function ShopPage() {
         </button>
       )}
 
-      {/* Checkout Drawer */}
+      {/* Checkout Popover */}
       {checkoutOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm" onClick={() => setCheckoutOpen(false)}>
-          <div
-            className="w-full max-w-sm h-full flex flex-col bg-[#1a0a0a] border-l border-[#670201]/30 shadow-2xl animate-[slideInRight_0.2s_ease-out]"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
-              <h3 className="text-base font-serif font-bold text-amber-100">Giỏ Hàng ({cartItemCount})</h3>
-              <button onClick={() => setCheckoutOpen(false)} className="text-gray-500 hover:text-gray-300 transition-colors p-1">
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setCheckoutOpen(false)} />
+          <div className="fixed bottom-20 right-4 left-4 sm:left-auto sm:w-[340px] z-50 flex flex-col bg-[#1a0a0a] border border-[#670201]/30 rounded-2xl shadow-2xl shadow-black/60 animate-[slideInRight_0.2s_ease-out] max-h-[70vh]">
+            <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-white/10 shrink-0">
+              <h3 className="text-sm font-serif font-bold text-amber-100">Giỏ Hàng ({cartItemCount})</h3>
+              <button onClick={() => setCheckoutOpen(false)} className="text-gray-400 hover:text-amber-200 hover:bg-white/10 rounded-lg transition-colors p-1">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+            <div className="overflow-y-auto px-3.5 py-2.5 space-y-1.5 flex-1 min-h-0">
               {cart.map(c => {
                 const qty = c.quantity || 1;
                 return (
@@ -636,7 +634,7 @@ export default function ShopPage() {
             </div>
 
             {/* Footer: Totals + Coupon + Checkout */}
-            <div className="shrink-0 border-t border-white/10 px-4 py-3 space-y-1.5">
+            <div className="shrink-0 border-t border-white/10 px-3.5 py-2.5 space-y-1.5">
               {cartTotals.huaTien > 0 && (
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-gray-400 flex items-center gap-1"><Coins className="w-3.5 h-3.5 text-amber-400" /> Hoa Tiền</span>
@@ -670,39 +668,38 @@ export default function ShopPage() {
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Coupon selector */}
-            {coupons.length > 0 && (
-              <div className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Ticket className="w-3.5 h-3.5 text-amber-300" />
-                  <label className="text-[11px] font-semibold text-amber-200/80">Phiếu giảm giá</label>
+              {coupons.length > 0 && (
+                <div className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Ticket className="w-3.5 h-3.5 text-amber-300" />
+                    <label className="text-[11px] font-semibold text-amber-200/80">Phiếu giảm giá</label>
+                  </div>
+                  <select
+                    value={selectedCouponId ?? ''}
+                    onChange={e => setSelectedCouponId(e.target.value || null)}
+                    className="w-full px-2.5 py-1.5 bg-black/40 border border-amber-500/20 rounded-lg text-xs text-amber-100 focus:outline-none focus:border-amber-500/40 transition-all"
+                  >
+                    <option value="">Không sử dụng phiếu</option>
+                    {coupons.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.code} — giảm {c.discount_percent}% (còn {c.max_uses - c.used_count} lượt)
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                <select
-                  value={selectedCouponId ?? ''}
-                  onChange={e => setSelectedCouponId(e.target.value || null)}
-                  className="w-full px-2.5 py-1.5 bg-black/40 border border-amber-500/20 rounded-lg text-xs text-amber-100 focus:outline-none focus:border-amber-500/40 transition-all"
-                >
-                  <option value="">Không sử dụng phiếu</option>
-                  {coupons.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.code} — giảm {c.discount_percent}% (còn {c.max_uses - c.used_count} lượt)
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+              )}
 
-            <button
-              onClick={handleCheckout}
-              disabled={processing || cart.length === 0}
-              className="w-full py-2.5 bg-gradient-to-r from-[#670201] to-[#a00404] text-amber-100 font-bold rounded-lg hover:shadow-lg hover:shadow-[#670201]/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
-            >
-              {processing ? 'Đang xử lý...' : 'Thanh Toán'}
-            </button>
+              <button
+                onClick={handleCheckout}
+                disabled={processing || cart.length === 0}
+                className="w-full py-2.5 bg-gradient-to-r from-[#670201] to-[#a00404] text-amber-100 font-bold rounded-lg hover:shadow-lg hover:shadow-[#670201]/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
+              >
+                {processing ? 'Đang xử lý...' : 'Thanh Toán'}
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Buy Now Modal with Coupon Selector */}
