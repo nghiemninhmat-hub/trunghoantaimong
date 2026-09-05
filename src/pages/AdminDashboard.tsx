@@ -7,7 +7,7 @@ import {
   Heart, Sparkle, Brain, Lock, Unlock, FileWarning, Crown, Save, ScrollText,
   Undo2, RotateCcw, Search, UserSearch, ArrowLeft, ChevronDown, ChevronUp, FileSignature, Info,
   Download, FileDown, Loader2, Archive, Settings, Clock, Building2, UserCog, Megaphone, Send, Award, Tag,
-  Zap, ToggleLeft, ToggleRight,
+  Zap, ToggleLeft, ToggleRight, Ticket,
 } from 'lucide-react';
 import { LotusIcon } from '@/components/LotusIcon';
 import ConfirmDialog from '@/components/ConfirmDialog';
