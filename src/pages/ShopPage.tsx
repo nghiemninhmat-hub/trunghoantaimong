@@ -568,63 +568,66 @@ export default function ShopPage() {
       {cart.length > 0 && (
         <button
           onClick={() => setCheckoutOpen(true)}
-          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#670201] to-[#a00404] text-amber-100 font-bold rounded-full shadow-2xl shadow-[#670201]/40 hover:scale-105 transition-all"
+          className="fixed bottom-5 right-5 z-40 flex items-center gap-1.5 px-4 py-2.5 bg-gradient-to-r from-[#670201] to-[#a00404] text-amber-100 font-bold rounded-full shadow-2xl shadow-[#670201]/40 hover:scale-105 transition-all text-sm"
         >
-          <ShoppingCart className="w-5 h-5" />
+          <ShoppingCart className="w-4 h-4" />
           <span>{cartItemCount}</span>
         </button>
       )}
 
-      {/* Checkout Modal */}
+      {/* Checkout Drawer */}
       {checkoutOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setCheckoutOpen(false)}>
-          <div className="w-full max-w-lg p-6 rounded-2xl bg-[#1a0a0a] border border-[#670201]/30 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-serif font-bold text-amber-100">Giỏ Hàng ({cartItemCount})</h3>
-              <button onClick={() => setCheckoutOpen(false)} className="text-gray-500 hover:text-gray-300 transition-colors">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm" onClick={() => setCheckoutOpen(false)}>
+          <div
+            className="w-full max-w-sm h-full flex flex-col bg-[#1a0a0a] border-l border-[#670201]/30 shadow-2xl animate-[slideInRight_0.2s_ease-out]"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
+              <h3 className="text-base font-serif font-bold text-amber-100">Giỏ Hàng ({cartItemCount})</h3>
+              <button onClick={() => setCheckoutOpen(false)} className="text-gray-500 hover:text-gray-300 transition-colors p-1">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
               {cart.map(c => {
                 const qty = c.quantity || 1;
                 return (
-                <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-black/30 border border-white/5">
+                <div key={c.id} className="flex items-center justify-between p-2.5 rounded-lg bg-black/30 border border-white/5">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-amber-100/90 truncate">{c.shop_items?.name}</p>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      {getCurrencyIcon(c.shop_items?.currency_type || '')}
-                      <span className="text-xs text-amber-200">{c.shop_items?.price}</span>
+                    <p className="text-xs font-semibold text-amber-100/90 truncate">{c.shop_items?.name}</p>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      {getCurrencyIcon(c.shop_items?.currency_type || '', 'w-3 h-3')}
+                      <span className="text-[11px] text-amber-200">{c.shop_items?.price}</span>
                       {c.shop_items?.price_secondary && c.shop_items?.currency_type_secondary && (
                         <>
-                          <span className="text-gray-600 text-xs">/</span>
-                          {getCurrencyIcon(c.shop_items.currency_type_secondary)}
-                          <span className="text-xs text-amber-200">{c.shop_items.price_secondary}</span>
+                          <span className="text-gray-600 text-[10px]">/</span>
+                          {getCurrencyIcon(c.shop_items.currency_type_secondary, 'w-3 h-3')}
+                          <span className="text-[11px] text-amber-200">{c.shop_items.price_secondary}</span>
                         </>
                       )}
                       {qty > 1 && (
-                        <span className="text-xs text-gray-500 ml-1">× {qty}</span>
+                        <span className="text-[10px] text-gray-500 ml-0.5">×{qty}</span>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 bg-black/40 rounded-lg border border-white/10 px-1">
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-0.5 bg-black/40 rounded-md border border-white/10">
                       <button
                         onClick={() => updateCartQuantity(c.id, qty - 1)}
-                        className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-amber-300 transition-colors"
+                        className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-amber-300 transition-colors text-xs"
                       >−</button>
-                      <span className="text-xs text-amber-200 font-semibold min-w-[1.2rem] text-center">{qty}</span>
+                      <span className="text-[11px] text-amber-200 font-semibold min-w-[1rem] text-center">{qty}</span>
                       <button
                         onClick={() => updateCartQuantity(c.id, qty + 1)}
-                        className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-amber-300 transition-colors"
+                        className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-amber-300 transition-colors text-xs"
                       >+</button>
                     </div>
                     <button
                       onClick={() => removeFromCart(c.id)}
-                      className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                      className="p-1 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-all"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -632,38 +635,38 @@ export default function ShopPage() {
               })}
             </div>
 
-            {/* Totals */}
-            <div className="mt-6 pt-4 border-t border-white/10 space-y-2">
+            {/* Footer: Totals + Coupon + Checkout */}
+            <div className="shrink-0 border-t border-white/10 px-4 py-3 space-y-1.5">
               {cartTotals.huaTien > 0 && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400 flex items-center gap-1.5"><Coins className="w-4 h-4 text-amber-400" /> Hoa Tiền</span>
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-400 flex items-center gap-1"><Coins className="w-3.5 h-3.5 text-amber-400" /> Hoa Tiền</span>
+                  <div className="flex items-center gap-1.5">
                     {couponDiscount > 0 && cartTotals.huaTien !== discountedTotals.huaTien && (
-                      <span className="text-xs text-gray-600 line-through">{cartTotals.huaTien}</span>
+                      <span className="text-[10px] text-gray-600 line-through">{cartTotals.huaTien}</span>
                     )}
-                    <span className="text-amber-200 font-bold">{discountedTotals.huaTien}</span>
+                    <span className="text-amber-200 font-bold text-sm">{discountedTotals.huaTien}</span>
                   </div>
                 </div>
               )}
               {cartTotals.congDuc > 0 && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400 flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-cyan-400" /> Công Đức</span>
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-400 flex items-center gap-1"><Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Công Đức</span>
+                  <div className="flex items-center gap-1.5">
                     {couponDiscount > 0 && cartTotals.congDuc !== discountedTotals.congDuc && (
-                      <span className="text-xs text-gray-600 line-through">{cartTotals.congDuc}</span>
+                      <span className="text-[10px] text-gray-600 line-through">{cartTotals.congDuc}</span>
                     )}
-                    <span className="text-cyan-200 font-bold">{discountedTotals.congDuc}</span>
+                    <span className="text-cyan-200 font-bold text-sm">{discountedTotals.congDuc}</span>
                   </div>
                 </div>
               )}
               {cartTotals.amDuc > 0 && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400 flex items-center gap-1.5"><Skull className="w-4 h-4 text-amber-400" /> Âm Đức</span>
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-400 flex items-center gap-1"><Skull className="w-3.5 h-3.5 text-amber-400" /> Âm Đức</span>
+                  <div className="flex items-center gap-1.5">
                     {couponDiscount > 0 && cartTotals.amDuc !== discountedTotals.amDuc && (
-                      <span className="text-xs text-gray-600 line-through">{cartTotals.amDuc}</span>
+                      <span className="text-[10px] text-gray-600 line-through">{cartTotals.amDuc}</span>
                     )}
-                    <span className="text-amber-200 font-bold">{discountedTotals.amDuc}</span>
+                    <span className="text-amber-200 font-bold text-sm">{discountedTotals.amDuc}</span>
                   </div>
                 </div>
               )}
@@ -671,15 +674,15 @@ export default function ShopPage() {
 
             {/* Coupon selector */}
             {coupons.length > 0 && (
-              <div className="mt-4 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <Ticket className="w-4 h-4 text-amber-300" />
-                  <label className="text-xs font-semibold text-amber-200/80">Phiếu giảm giá</label>
+              <div className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Ticket className="w-3.5 h-3.5 text-amber-300" />
+                  <label className="text-[11px] font-semibold text-amber-200/80">Phiếu giảm giá</label>
                 </div>
                 <select
                   value={selectedCouponId ?? ''}
                   onChange={e => setSelectedCouponId(e.target.value || null)}
-                  className="w-full px-3 py-2 bg-black/40 border border-amber-500/20 rounded-lg text-sm text-amber-100 focus:outline-none focus:border-amber-500/40 transition-all"
+                  className="w-full px-2.5 py-1.5 bg-black/40 border border-amber-500/20 rounded-lg text-xs text-amber-100 focus:outline-none focus:border-amber-500/40 transition-all"
                 >
                   <option value="">Không sử dụng phiếu</option>
                   {coupons.map(c => (
@@ -688,18 +691,13 @@ export default function ShopPage() {
                     </option>
                   ))}
                 </select>
-                {selectedCoupon && (
-                  <p className="text-[10px] text-amber-300/60 mt-1.5">
-                    Áp dụng giảm {selectedCoupon.discount_percent}% cho toàn bộ đơn hàng.
-                  </p>
-                )}
               </div>
             )}
 
             <button
               onClick={handleCheckout}
               disabled={processing || cart.length === 0}
-              className="w-full mt-6 py-3 bg-gradient-to-r from-[#670201] to-[#a00404] text-amber-100 font-bold rounded-lg hover:shadow-lg hover:shadow-[#670201]/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full py-2.5 bg-gradient-to-r from-[#670201] to-[#a00404] text-amber-100 font-bold rounded-lg hover:shadow-lg hover:shadow-[#670201]/40 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-sm"
             >
               {processing ? 'Đang xử lý...' : 'Thanh Toán'}
             </button>
@@ -710,47 +708,47 @@ export default function ShopPage() {
       {/* Buy Now Modal with Coupon Selector */}
       {confirmBuy && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => { if (!buyingId) setConfirmBuy(null); }}>
-          <div className="w-full max-w-md p-6 rounded-2xl bg-[#1a0a0a] border border-[#670201]/40 shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-serif font-bold text-amber-100/90">Mua Hàng</h3>
-              <button onClick={() => { if (!buyingId) setConfirmBuy(null); }} className="text-gray-500 hover:text-gray-300 transition-colors">
-                <X className="w-5 h-5" />
+          <div className="w-full max-w-sm p-5 rounded-2xl bg-[#1a0a0a] border border-[#670201]/40 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-serif font-bold text-amber-100/90">Mua Hàng</h3>
+              <button onClick={() => { if (!buyingId) setConfirmBuy(null); }} className="text-gray-500 hover:text-gray-300 transition-colors p-1">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-2 p-3 rounded-lg bg-black/30 border border-white/5 mb-4">
-              <div className="flex items-center justify-between text-sm">
+            <div className="space-y-1.5 p-2.5 rounded-lg bg-black/30 border border-white/5 mb-3">
+              <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-500">Vật phẩm</span>
-                <span className="text-gray-200 font-semibold">{confirmBuy.name}</span>
+                <span className="text-gray-200 font-semibold text-sm">{confirmBuy.name}</span>
               </div>
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-xs">
                 <span className="text-gray-500">Giá gốc</span>
-                <span className="text-gray-200 font-semibold flex items-center gap-1.5">
-                  {getCurrencyIcon(confirmBuy.currency_type)}
-                  {confirmBuy.price} <span className="text-xs text-gray-500">{CURRENCY_LABELS[confirmBuy.currency_type]}</span>
+                <span className="text-gray-200 font-semibold flex items-center gap-1">
+                  {getCurrencyIcon(confirmBuy.currency_type, 'w-3 h-3')}
+                  {confirmBuy.price} <span className="text-[10px] text-gray-500">{CURRENCY_LABELS[confirmBuy.currency_type]}</span>
                 </span>
               </div>
               {confirmBuy.price_secondary && confirmBuy.currency_type_secondary && (
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-xs">
                   <span className="text-gray-500">Giá phụ</span>
-                  <span className="text-gray-200 font-semibold flex items-center gap-1.5">
-                    {getCurrencyIcon(confirmBuy.currency_type_secondary)}
-                    {confirmBuy.price_secondary} <span className="text-xs text-gray-500">{CURRENCY_LABELS[confirmBuy.currency_type_secondary]}</span>
+                  <span className="text-gray-200 font-semibold flex items-center gap-1">
+                    {getCurrencyIcon(confirmBuy.currency_type_secondary, 'w-3 h-3')}
+                    {confirmBuy.price_secondary} <span className="text-[10px] text-gray-500">{CURRENCY_LABELS[confirmBuy.currency_type_secondary]}</span>
                   </span>
                 </div>
               )}
             </div>
 
             {coupons.length > 0 && (
-              <div className="mb-4 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
-                <div className="flex items-center gap-2 mb-2">
-                  <Ticket className="w-4 h-4 text-amber-300" />
-                  <label className="text-xs font-semibold text-amber-200/80">Phiếu giảm giá</label>
+              <div className="mb-3 p-2.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <Ticket className="w-3.5 h-3.5 text-amber-300" />
+                  <label className="text-[11px] font-semibold text-amber-200/80">Phiếu giảm giá</label>
                 </div>
                 <select
                   value={selectedCouponId ?? ''}
                   onChange={e => setSelectedCouponId(e.target.value || null)}
-                  className="w-full px-3 py-2 bg-black/40 border border-amber-500/20 rounded-lg text-sm text-amber-100 focus:outline-none focus:border-amber-500/40 transition-all"
+                  className="w-full px-2.5 py-1.5 bg-black/40 border border-amber-500/20 rounded-lg text-xs text-amber-100 focus:outline-none focus:border-amber-500/40 transition-all"
                 >
                   <option value="">Không sử dụng phiếu</option>
                   {coupons.map(c => (
@@ -763,19 +761,19 @@ export default function ShopPage() {
             )}
 
             {selectedCoupon && confirmBuy && (
-              <div className="mb-4 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/20 space-y-1.5">
-                <div className="flex items-center justify-between text-sm">
+              <div className="mb-3 p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20 space-y-1">
+                <div className="flex items-center justify-between text-xs">
                   <span className="text-gray-500">Giảm giá ({selectedCoupon.discount_percent}%)</span>
-                  <span className="text-emerald-400 font-semibold">
+                  <span className="text-emerald-400 font-semibold text-xs">
                     −{Math.ceil(confirmBuy.price * selectedCoupon.discount_percent / 100)} {CURRENCY_LABELS[confirmBuy.currency_type]}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-sm pt-1.5 border-t border-white/5">
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-white/5">
                   <span className="text-gray-400 font-semibold">Thực trả</span>
-                  <span className="text-amber-200 font-bold text-base flex items-center gap-1.5">
-                    {getCurrencyIcon(confirmBuy.currency_type)}
+                  <span className="text-amber-200 font-bold text-sm flex items-center gap-1">
+                    {getCurrencyIcon(confirmBuy.currency_type, 'w-3 h-3')}
                     {Math.ceil(confirmBuy.price * (1 - selectedCoupon.discount_percent / 100))}
-                    <span className="text-xs text-gray-500">{CURRENCY_LABELS[confirmBuy.currency_type]}</span>
+                    <span className="text-[10px] text-gray-500">{CURRENCY_LABELS[confirmBuy.currency_type]}</span>
                   </span>
                 </div>
               </div>
@@ -784,7 +782,7 @@ export default function ShopPage() {
             <button
               onClick={executeBuyNow}
               disabled={buyingId === confirmBuy.id}
-              className="w-full py-3 bg-[#670201] hover:bg-[#a00404] text-amber-100 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-[#670201] hover:bg-[#a00404] text-amber-100 font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
             >
               {buyingId === confirmBuy.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
               {buyingId === confirmBuy.id ? 'Đang xử lý...' : 'Mua Ngay'}
@@ -792,7 +790,7 @@ export default function ShopPage() {
             <button
               onClick={() => { if (!buyingId) setConfirmBuy(null); }}
               disabled={buyingId === confirmBuy.id}
-              className="w-full mt-2 py-2.5 text-gray-500 hover:text-gray-300 text-sm transition-all disabled:opacity-50"
+              className="w-full mt-2 py-2 text-gray-500 hover:text-gray-300 text-xs transition-all disabled:opacity-50"
             >
               Hủy
             </button>
@@ -836,43 +834,43 @@ export default function ShopPage() {
       {/* Purchase Success Screen */}
       {purchaseSuccess && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-md p-8 rounded-2xl bg-[#1a0a0a] border border-[#670201]/40 shadow-2xl text-center">
-            <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center">
-              <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+          <div className="w-full max-w-sm p-6 rounded-2xl bg-[#1a0a0a] border border-[#670201]/40 shadow-2xl text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-emerald-400" />
             </div>
-            <h3 className="text-2xl font-serif font-bold text-amber-100/90 mb-2">Quý khách mua hàng thành công</h3>
-            <p className="text-sm text-gray-400 mb-5">Vật phẩm đã được chuyển vào kho. Chúc quý khách tu hành thuận lợi!</p>
+            <h3 className="text-lg font-serif font-bold text-amber-100/90 mb-1.5">Mua hàng thành công</h3>
+            <p className="text-xs text-gray-400 mb-4">Vật phẩm đã được chuyển vào kho. Chúc quý khách tu hành thuận lợi!</p>
 
             {purchaseSuccess.itemNames.length > 0 && (
-              <div className="mb-5 p-3 rounded-lg bg-black/30 border border-white/5">
-                <p className="text-xs text-gray-500 mb-2">Vật phẩm đã mua ({purchaseSuccess.itemNames.length})</p>
-                <div className="flex flex-wrap gap-1.5 justify-center">
+              <div className="mb-4 p-2.5 rounded-lg bg-black/30 border border-white/5">
+                <p className="text-[10px] text-gray-500 mb-1.5">Vật phẩm đã mua ({purchaseSuccess.itemNames.length})</p>
+                <div className="flex flex-wrap gap-1 justify-center">
                   {purchaseSuccess.itemNames.map((name, i) => (
-                    <span key={i} className="text-xs px-2 py-1 rounded bg-amber-500/10 text-amber-200/90 border border-amber-500/20">{name}</span>
+                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-200/90 border border-amber-500/20">{name}</span>
                   ))}
                 </div>
               </div>
             )}
 
             {(purchaseSuccess.totals.huaTien > 0 || purchaseSuccess.totals.congDuc > 0 || purchaseSuccess.totals.amDuc > 0) && (
-              <div className="mb-5 p-3 rounded-lg bg-black/30 border border-white/5 space-y-1.5">
-                <p className="text-xs text-gray-500 mb-1">Tổng chi phí</p>
+              <div className="mb-4 p-2.5 rounded-lg bg-black/30 border border-white/5 space-y-1">
+                <p className="text-[10px] text-gray-500 mb-0.5">Tổng chi phí</p>
                 {purchaseSuccess.totals.huaTien > 0 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400 flex items-center gap-1.5"><Coins className="w-4 h-4 text-amber-400" /> Hoa Tiền</span>
-                    <span className="text-amber-200 font-bold">{purchaseSuccess.totals.huaTien}</span>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400 flex items-center gap-1"><Coins className="w-3.5 h-3.5 text-amber-400" /> Hoa Tiền</span>
+                    <span className="text-amber-200 font-bold text-sm">{purchaseSuccess.totals.huaTien}</span>
                   </div>
                 )}
                 {purchaseSuccess.totals.congDuc > 0 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400 flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-cyan-400" /> Công Đức</span>
-                    <span className="text-cyan-200 font-bold">{purchaseSuccess.totals.congDuc}</span>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400 flex items-center gap-1"><Sparkles className="w-3.5 h-3.5 text-cyan-400" /> Công Đức</span>
+                    <span className="text-cyan-200 font-bold text-sm">{purchaseSuccess.totals.congDuc}</span>
                   </div>
                 )}
                 {purchaseSuccess.totals.amDuc > 0 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-400 flex items-center gap-1.5"><Skull className="w-4 h-4 text-amber-400" /> Âm Đức</span>
-                    <span className="text-amber-200 font-bold">{purchaseSuccess.totals.amDuc}</span>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400 flex items-center gap-1"><Skull className="w-3.5 h-3.5 text-amber-400" /> Âm Đức</span>
+                    <span className="text-amber-200 font-bold text-sm">{purchaseSuccess.totals.amDuc}</span>
                   </div>
                 )}
               </div>
@@ -880,7 +878,7 @@ export default function ShopPage() {
 
             <button
               onClick={() => setPurchaseSuccess(null)}
-              className="w-full py-3 bg-[#670201] hover:bg-[#a00404] text-amber-100 font-bold rounded-lg transition-all"
+              className="w-full py-2.5 bg-[#670201] hover:bg-[#a00404] text-amber-100 font-bold rounded-lg transition-all text-sm"
             >
               Tiếp tục mua sắm
             </button>
