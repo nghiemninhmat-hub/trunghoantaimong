@@ -93,8 +93,13 @@ export default function ShopPage() {
   };
 
   const buyNow = (item: ShopItem) => {
-    if (!user || !profile) {
+    if (!user) {
       showNotification('Vui lòng đăng nhập để mua sắm.', 'error');
+      return;
+    }
+    if (!profile) {
+      showNotification('Đang tải hồ sơ, vui lòng thử lại sau giây lát.', 'error');
+      refreshProfile();
       return;
     }
     setSelectedCouponId(null);
@@ -143,25 +148,32 @@ export default function ShopPage() {
     }
     setProcessing(true);
 
-    const itemIds = cart.map(c => c.item_id);
-    const rpcParams: Record<string, unknown> = { p_item_ids: itemIds };
-    if (selectedCouponId) rpcParams.p_coupon_id = selectedCouponId;
-    const { error } = await supabase.rpc('purchase_items', rpcParams);
+    try {
+      const itemIds = cart.map(c => c.item_id);
+      const rpcParams: Record<string, unknown> = { p_item_ids: itemIds };
+      if (selectedCouponId) rpcParams.p_coupon_id = selectedCouponId;
+      const { error } = await supabase.rpc('purchase_items', rpcParams);
 
-    if (error) {
-      showNotification(error.message, 'error');
+      if (error) {
+        showNotification(error.message, 'error');
+        throw error;
+      }
+
+      const purchasedNames = cart.map(c => c.shop_items?.name || '').filter(Boolean);
+      setConfirmCheckout(false);
+      setSelectedCouponId(null);
+      setPurchaseSuccess({ itemNames: purchasedNames, totals: { ...discountedTotals } });
+      fetchCart();
+      fetchCoupons();
+      refreshProfile();
+    } catch (err) {
+      if (err instanceof Error && err.message && !notification) {
+        showNotification('Lỗi kết nối, vui lòng thử lại.', 'error');
+      }
+      throw err;
+    } finally {
       setProcessing(false);
-      throw error;
     }
-
-    const purchasedNames = cart.map(c => c.shop_items?.name || '').filter(Boolean);
-    setConfirmCheckout(false);
-    setProcessing(false);
-    setSelectedCouponId(null);
-    setPurchaseSuccess({ itemNames: purchasedNames, totals: { ...discountedTotals } });
-    fetchCart();
-    fetchCoupons();
-    refreshProfile();
   };
 
   const startEdit = (item: ShopItem) => {
