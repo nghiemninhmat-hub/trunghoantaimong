@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Friendship, Organization, UserTitle, TITLE_COLORS } from '@/lib/supabase';
+import { supabase, Friendship, Organization, UserTitle, TITLE_COLORS, OrgTreasury, OrgTreasuryLog } from '@/lib/supabase';
 import {
   UserCircle, Crown, Ghost, Mail, Eye, EyeOff, UserPlus, Check, Loader2,
-  MessageCircle, ArrowLeft, AlertCircle, Building2, Award,
+  MessageCircle, ArrowLeft, AlertCircle, Building2, Award, Coins, TrendingUp, TrendingDown, History,
 } from 'lucide-react';
 
 type RelationState = 'none' | 'outgoing' | 'incoming' | 'friends';
@@ -29,6 +29,19 @@ export default function VisitorProfileCard() {
   const [relation, setRelation] = useState<RelationState>('none');
   const [actionPending, setActionPending] = useState(false);
   const [actionError, setActionError] = useState('');
+
+  // Treasury state
+  const [ledOrgs, setLedOrgs] = useState<Organization[]>([]);
+  const [treasuries, setTreasuries] = useState<Record<string, OrgTreasury | null>>({});
+  const [treasuryLogs, setTreasuryLogs] = useState<Record<string, OrgTreasuryLog[]>>({});
+  const [showTreasuryForm, setShowTreasuryForm] = useState<string | null>(null);
+  const [treasuryCurrency, setTreasuryCurrency] = useState('HUA_TIEN');
+  const [treasuryAmount, setTreasuryAmount] = useState(0);
+  const [treasuryReason, setTreasuryReason] = useState('');
+  const [treasuryMode, setTreasuryMode] = useState<'add' | 'sub'>('add');
+  const [treasuryPending, setTreasuryPending] = useState(false);
+  const [treasuryMsg, setTreasuryMsg] = useState('');
+  const [expandedLogOrg, setExpandedLogOrg] = useState<string | null>(null);
 
   const fetchProfile = useCallback(async () => {
     if (!targetId) return;
@@ -73,8 +86,86 @@ export default function VisitorProfileCard() {
     if (titleData) {
       setVisitorTitles(titleData as UserTitle[]);
     }
+    // Fetch orgs where this user is the leader
+    const { data: ledData } = await supabase
+      .from('organizations')
+      .select('id, name, category, leader_id')
+      .eq('leader_id', targetId);
+    if (ledData) {
+      const ledList = ledData as Organization[];
+      setLedOrgs(ledList);
+      // Fetch treasury for each led org
+      const tMap: Record<string, OrgTreasury | null> = {};
+      for (const org of ledList) {
+        const { data: tData } = await supabase
+          .from('organization_treasuries')
+          .select('*')
+          .eq('organization_id', org.id)
+          .maybeSingle();
+        tMap[org.id] = tData as OrgTreasury | null;
+      }
+      setTreasuries(tMap);
+    }
     setLoading(false);
   }, [targetId]);
+
+  // Real-time subscription for treasury changes
+  useEffect(() => {
+    if (ledOrgs.length === 0) return;
+    const channel = supabase
+      .channel('org-treasury-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'organization_treasuries' }, (payload) => {
+        const t = payload.new as OrgTreasury;
+        if (t && ledOrgs.some(o => o.id === t.organization_id)) {
+          setTreasuries(prev => ({ ...prev, [t.organization_id]: t }));
+        }
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'organization_treasury_logs' }, (payload) => {
+        const log = payload.new as OrgTreasuryLog;
+        if (log && ledOrgs.some(o => o.id === log.organization_id)) {
+          setTreasuryLogs(prev => ({
+            ...prev,
+            [log.organization_id]: [log, ...(prev[log.organization_id] || [])],
+          }));
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [ledOrgs]);
+
+  const fetchTreasuryLogs = async (orgId: string) => {
+    const { data } = await supabase
+      .from('organization_treasury_logs')
+      .select('*')
+      .eq('organization_id', orgId)
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (data) {
+      setTreasuryLogs(prev => ({ ...prev, [orgId]: data as OrgTreasuryLog[] }));
+    }
+  };
+
+  const handleTreasurySubmit = async (orgId: string) => {
+    if (!user) return;
+    setTreasuryPending(true);
+    setTreasuryMsg('');
+    const signedAmount = treasuryMode === 'sub' ? -Math.abs(treasuryAmount) : Math.abs(treasuryAmount);
+    const { data, error } = await supabase.rpc('adjust_org_treasury', {
+      p_org_id: orgId,
+      p_currency_type: treasuryCurrency,
+      p_amount: signedAmount,
+      p_reason: treasuryReason,
+    });
+    setTreasuryPending(false);
+    if (error) { setTreasuryMsg(`Lỗi: ${error.message}`); return; }
+    if (data && !data.success) { setTreasuryMsg(`Lỗi: ${data.error}`); return; }
+    setShowTreasuryForm(null);
+    setTreasuryAmount(0);
+    setTreasuryReason('');
+    setTreasuryMsg('');
+    // Refresh logs
+    fetchTreasuryLogs(orgId);
+  };
 
   const fetchRelation = useCallback(async () => {
     if (!user || !targetId || user.id === targetId) return;
@@ -341,6 +432,158 @@ export default function VisitorProfileCard() {
           </div>
         )}
       </div>
+
+      {/* Organization Treasury — visible to all, editable by leader */}
+      {ledOrgs.length > 0 && (
+        <div className="space-y-4">
+          {ledOrgs.map(org => {
+            const treasury = treasuries[org.id];
+            const isLeader = user?.id === org.leader_id;
+            const logs = treasuryLogs[org.id] || [];
+            const currencyLabels: Record<string, string> = { HUA_TIEN: 'Hoa Tiền', CONG_DUC: 'Công Đức', AM_DUC: 'Âm Đức' };
+            return (
+              <div key={org.id} className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
+                <div className="flex items-center gap-2 mb-4">
+                  <Coins className="w-5 h-5 text-amber-300/70" />
+                  <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Tài Sản Chung — {org.name}</h3>
+                  {isLeader && (
+                    <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 font-bold">Người Đứng Đầu</span>
+                  )}
+                </div>
+
+                {/* Balance display */}
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {[
+                    { key: 'hua_tien', label: 'Hoa Tiền', value: treasury?.hua_tien || 0, color: 'text-amber-200', bg: 'bg-amber-500/5 border-amber-500/15' },
+                    { key: 'cong_duc', label: 'Công Đức', value: treasury?.cong_duc || 0, color: 'text-emerald-200', bg: 'bg-emerald-500/5 border-emerald-500/15' },
+                    { key: 'am_duc', label: 'Âm Đức', value: treasury?.am_duc || 0, color: 'text-blue-200', bg: 'bg-blue-500/5 border-blue-500/15' },
+                  ].map(c => (
+                    <div key={c.key} className={`rounded-lg border p-3 text-center ${c.bg}`}>
+                      <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{c.label}</p>
+                      <p className={`text-lg font-bold ${c.color}`}>{c.value.toLocaleString('vi-VN')}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Leader actions */}
+                {isLeader && (
+                  <div className="space-y-3">
+                    {showTreasuryForm === org.id ? (
+                      <div className="p-3 rounded-lg bg-black/30 border border-white/10 space-y-3">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setTreasuryMode('add')}
+                            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${treasuryMode === 'add' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-white/5 text-gray-400 border border-transparent hover:bg-white/10'}`}
+                          >
+                            <TrendingUp className="w-4 h-4" /> Cộng
+                          </button>
+                          <button
+                            onClick={() => setTreasuryMode('sub')}
+                            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${treasuryMode === 'sub' ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-white/5 text-gray-400 border border-transparent hover:bg-white/10'}`}
+                          >
+                            <TrendingDown className="w-4 h-4" /> Trừ
+                          </button>
+                        </div>
+                        <select
+                          value={treasuryCurrency}
+                          onChange={e => setTreasuryCurrency(e.target.value)}
+                          className="w-full px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-amber-500/40"
+                        >
+                          <option value="HUA_TIEN">Hoa Tiền</option>
+                          <option value="CONG_DUC">Công Đức</option>
+                          <option value="AM_DUC">Âm Đức</option>
+                        </select>
+                        <input
+                          type="number"
+                          value={treasuryAmount || ''}
+                          onChange={e => setTreasuryAmount(parseInt(e.target.value) || 0)}
+                          placeholder="Số lượng"
+                          className="w-full px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40"
+                        />
+                        <input
+                          type="text"
+                          value={treasuryReason}
+                          onChange={e => setTreasuryReason(e.target.value)}
+                          placeholder="Lý do (bắt buộc) — vd: Kinh doanh buôn bán"
+                          className="w-full px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-amber-500/40"
+                        />
+                        {treasuryMsg && <p className="text-xs text-red-300">{treasuryMsg}</p>}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleTreasurySubmit(org.id)}
+                            disabled={treasuryPending || treasuryAmount <= 0 || !treasuryReason.trim()}
+                            className="flex-1 px-4 py-2 rounded-lg bg-[#670201] hover:bg-[#a00404] text-amber-100 text-xs font-bold transition-all disabled:opacity-50"
+                          >
+                            {treasuryPending ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Xác nhận'}
+                          </button>
+                          <button
+                            onClick={() => { setShowTreasuryForm(null); setTreasuryMsg(''); setTreasuryAmount(0); setTreasuryReason(''); }}
+                            className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold transition-all"
+                          >
+                            Huỷ
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setShowTreasuryForm(org.id); setTreasuryMode('add'); setTreasuryCurrency('HUA_TIEN'); setTreasuryAmount(0); setTreasuryReason(''); setTreasuryMsg(''); }}
+                        className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#670201]/40 hover:bg-[#670201]/60 text-amber-100 text-xs font-bold transition-all border border-[#670201]/30"
+                      >
+                        <Coins className="w-4 h-4" /> Điều chỉnh tài sản chung
+                      </button>
+                    )}
+
+                    {/* Log toggle */}
+                    <button
+                      onClick={() => {
+                        if (expandedLogOrg === org.id) {
+                          setExpandedLogOrg(null);
+                        } else {
+                          setExpandedLogOrg(org.id);
+                          if (!logs.length) fetchTreasuryLogs(org.id);
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-semibold transition-all"
+                    >
+                      <History className="w-3.5 h-3.5" />
+                      {expandedLogOrg === org.id ? 'Ẩn lịch sử' : `Xem lịch sử (${logs.length})`}
+                    </button>
+                  </div>
+                )}
+
+                {/* Logs */}
+                {expandedLogOrg === org.id && logs.length > 0 && (
+                  <div className="mt-3 space-y-1.5 max-h-64 overflow-y-auto">
+                    {logs.map(log => (
+                      <div key={log.id} className="flex items-start gap-2 p-2 rounded-lg bg-black/20 border border-white/5">
+                        <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${log.amount >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+                          {log.amount >= 0 ? <TrendingUp className="w-3 h-3 text-emerald-400" /> : <TrendingDown className="w-3 h-3 text-red-400" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs text-gray-300">
+                            <span className={log.amount >= 0 ? 'text-emerald-300' : 'text-red-300'}>
+                              {log.amount >= 0 ? '+' : ''}{log.amount.toLocaleString('vi-VN')}
+                            </span>
+                            <span className="text-gray-500"> {currencyLabels[log.currency_type] || log.currency_type}</span>
+                          </p>
+                          <p className="text-[10px] text-gray-500 truncate">"{log.reason}"</p>
+                          <p className="text-[10px] text-gray-600">
+                            {log.actor_name || '—'} · {new Date(log.created_at).toLocaleString('vi-VN')} · Dư: {log.balance_after.toLocaleString('vi-VN')}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {expandedLogOrg === org.id && logs.length === 0 && (
+                  <p className="mt-3 text-xs text-gray-600 text-center py-2">Chưa có giao dịch nào.</p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

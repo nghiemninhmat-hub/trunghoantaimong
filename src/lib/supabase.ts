@@ -348,6 +348,27 @@ export const TITLE_COLORS: Record<string, { label: string; badgeClass: string; a
   gray: { label: 'Hư Vô', badgeClass: 'bg-gray-500/15 border-gray-500/30 text-gray-300', activeClass: 'bg-gray-500/25 border-gray-500/50 text-gray-100' },
 };
 
+export interface OrgTreasury {
+  id: string;
+  organization_id: string;
+  hua_tien: number;
+  cong_duc: number;
+  am_duc: number;
+  updated_at: string;
+}
+
+export interface OrgTreasuryLog {
+  id: string;
+  organization_id: string;
+  actor_id: string;
+  actor_name: string | null;
+  currency_type: string;
+  amount: number;
+  reason: string;
+  balance_after: number;
+  created_at: string;
+}
+
 export type WillStatus = 'pending' | 'approved' | 'revision_requested' | 'rejected';
 
 export interface Will {
