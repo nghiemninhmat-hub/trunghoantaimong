@@ -29,6 +29,7 @@ export default function ShopPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [selectedCouponId, setSelectedCouponId] = useState<string | null>(null);
+  const [purchaseSuccess, setPurchaseSuccess] = useState<{ itemNames: string[]; totals: { huaTien: number; congDuc: number; amDuc: number } } | null>(null);
 
   const showNotification = (msg: string, type: 'success' | 'error' = 'success') => {
     setNotification(msg);
@@ -117,6 +118,7 @@ export default function ShopPage() {
     setConfirmBuy(null);
     setSelectedCouponId(null);
     showNotification(`Đã mua "${item.name}" — vật phẩm đã vào kho.`);
+    setPurchaseSuccess({ itemNames: [item.name], totals: { huaTien: item.currency_type === 'HUA_TIEN' ? item.price : 0, congDuc: item.currency_type === 'CONG_DUC' ? item.price : 0, amDuc: item.currency_type === 'AM_DUC' ? item.price : 0 } });
     fetchCart();
     fetchCoupons();
     refreshProfile();
@@ -143,10 +145,11 @@ export default function ShopPage() {
       throw error;
     }
 
+    const purchasedNames = cart.map(c => c.shop_items?.name || '').filter(Boolean);
     setConfirmCheckout(false);
     setProcessing(false);
-    showNotification('Thanh toán thành công! Vật phẩm đã vào kho.');
     setSelectedCouponId(null);
+    setPurchaseSuccess({ itemNames: purchasedNames, totals: { ...discountedTotals } });
     fetchCart();
     fetchCoupons();
     refreshProfile();
@@ -769,6 +772,61 @@ export default function ShopPage() {
         onConfirm={executeCheckout}
         onCancel={() => setConfirmCheckout(false)}
       />
+
+      {/* Purchase Success Screen */}
+      {purchaseSuccess && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-md p-8 rounded-2xl bg-[#1a0a0a] border border-[#670201]/40 shadow-2xl text-center">
+            <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-emerald-500/15 border-2 border-emerald-500/30 flex items-center justify-center">
+              <CheckCircle2 className="w-10 h-10 text-emerald-400" />
+            </div>
+            <h3 className="text-2xl font-serif font-bold text-amber-100/90 mb-2">Quý khách mua hàng thành công</h3>
+            <p className="text-sm text-gray-400 mb-5">Vật phẩm đã được chuyển vào kho. Chúc quý khách tu hành thuận lợi!</p>
+
+            {purchaseSuccess.itemNames.length > 0 && (
+              <div className="mb-5 p-3 rounded-lg bg-black/30 border border-white/5">
+                <p className="text-xs text-gray-500 mb-2">Vật phẩm đã mua ({purchaseSuccess.itemNames.length})</p>
+                <div className="flex flex-wrap gap-1.5 justify-center">
+                  {purchaseSuccess.itemNames.map((name, i) => (
+                    <span key={i} className="text-xs px-2 py-1 rounded bg-amber-500/10 text-amber-200/90 border border-amber-500/20">{name}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(purchaseSuccess.totals.huaTien > 0 || purchaseSuccess.totals.congDuc > 0 || purchaseSuccess.totals.amDuc > 0) && (
+              <div className="mb-5 p-3 rounded-lg bg-black/30 border border-white/5 space-y-1.5">
+                <p className="text-xs text-gray-500 mb-1">Tổng chi phí</p>
+                {purchaseSuccess.totals.huaTien > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400 flex items-center gap-1.5"><Coins className="w-4 h-4 text-amber-400" /> Hoa Tiền</span>
+                    <span className="text-amber-200 font-bold">{purchaseSuccess.totals.huaTien}</span>
+                  </div>
+                )}
+                {purchaseSuccess.totals.congDuc > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400 flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-cyan-400" /> Công Đức</span>
+                    <span className="text-cyan-200 font-bold">{purchaseSuccess.totals.congDuc}</span>
+                  </div>
+                )}
+                {purchaseSuccess.totals.amDuc > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400 flex items-center gap-1.5"><Skull className="w-4 h-4 text-amber-400" /> Âm Đức</span>
+                    <span className="text-amber-200 font-bold">{purchaseSuccess.totals.amDuc}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              onClick={() => setPurchaseSuccess(null)}
+              className="w-full py-3 bg-[#670201] hover:bg-[#a00404] text-amber-100 font-bold rounded-lg transition-all"
+            >
+              Tiếp tục mua sắm
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
