@@ -5,12 +5,12 @@ import { supabase, ShopItem, CartItem, CURRENCY_LABELS, SHOP_AREA_LABELS } from 
 import { StatCard, StatGrid } from '@/components/StatCard';
 import {
   Store, ShoppingCart, Trash2, CheckCircle2, AlertCircle, Package, Coins,
-  Sparkles, Skull, Search, X, Crown, Star, Flame, Zap, Loader2
+  Sparkles, Skull, Search, X, Crown, Star, Flame, Zap, Loader2, Pencil, Save
 } from 'lucide-react';
 import ConfirmDialog from '@/components/ConfirmDialog';
 
 export default function ShopPage() {
-  const { profile, user, refreshProfile } = useAuth();
+  const { profile, user, refreshProfile, isAdmin } = useAuth();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [notification, setNotification] = useState('');
@@ -24,6 +24,9 @@ export default function ShopPage() {
   const [buyingId, setBuyingId] = useState<string | null>(null);
   const [confirmBuy, setConfirmBuy] = useState<ShopItem | null>(null);
   const [confirmCheckout, setConfirmCheckout] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<ShopItem>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   const showNotification = (msg: string, type: 'success' | 'error' = 'success') => {
     setNotification(msg);
@@ -125,6 +128,50 @@ export default function ShopPage() {
     showNotification('Thanh toán thành công! Vật phẩm đã vào kho.');
     fetchCart();
     refreshProfile();
+  };
+
+  const startEdit = (item: ShopItem) => {
+    setEditingId(item.id);
+    setEditForm({
+      price: item.price,
+      currency_type: item.currency_type,
+      price_secondary: item.price_secondary,
+      currency_type_secondary: item.currency_type_secondary,
+      purchase_limit: item.purchase_limit,
+      shop_area: item.shop_area,
+    });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditForm({});
+  };
+
+  const saveEdit = async (item: ShopItem) => {
+    setSavingId(item.id);
+    const updates: Record<string, unknown> = {};
+    if (editForm.price !== undefined && editForm.price !== item.price) updates.price = editForm.price;
+    if (editForm.currency_type !== undefined && editForm.currency_type !== item.currency_type) updates.currency_type = editForm.currency_type;
+    if (editForm.price_secondary !== item.price_secondary) updates.price_secondary = editForm.price_secondary || null;
+    if (editForm.currency_type_secondary !== item.currency_type_secondary) updates.currency_type_secondary = editForm.currency_type_secondary || null;
+    if (editForm.purchase_limit !== item.purchase_limit) updates.purchase_limit = editForm.purchase_limit || null;
+    if (editForm.shop_area !== undefined && editForm.shop_area !== item.shop_area) updates.shop_area = editForm.shop_area;
+
+    if (Object.keys(updates).length === 0) {
+      cancelEdit();
+      setSavingId(null);
+      return;
+    }
+
+    const { error } = await supabase.from('shop_items').update(updates).eq('id', item.id);
+    if (error) {
+      showNotification(`Lỗi: ${error.message}`, 'error');
+    } else {
+      showNotification(`Đã cập nhật "${item.name}".`);
+      fetchItems();
+    }
+    setSavingId(null);
+    cancelEdit();
   };
 
   const categories = ['all', ...Array.from(new Set(items.map(i => i.category)))];
@@ -263,55 +310,163 @@ export default function ShopPage() {
 
       {/* Items Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {filteredItems.map(item => (
+        {filteredItems.map(item => {
+          const isEditing = editingId === item.id;
+          return (
           <div
             key={item.id}
-            className="group relative p-5 rounded-xl bg-black/30 border border-white/5 backdrop-blur-sm hover:border-[#670201]/30 transition-all duration-300"
+            className={`group relative p-5 rounded-xl bg-black/30 backdrop-blur-sm transition-all duration-300 ${
+              isEditing ? 'border-2 border-amber-500/50' : 'border border-white/5 hover:border-[#670201]/30'
+            }`}
           >
             <div className="flex items-start justify-between mb-3">
               <div className="w-10 h-10 rounded-lg bg-[#670201]/15 flex items-center justify-center">
                 {getAreaIcon(item.shop_area)}
               </div>
               <div className="flex flex-col items-end gap-1">
-                <span className={`text-xs px-2 py-1 rounded border ${getAreaBadgeColor(item.shop_area)}`}>
-                  {item.shop_area}
-                </span>
+                {isEditing ? (
+                  <select
+                    value={editForm.shop_area ?? item.shop_area}
+                    onChange={e => setEditForm(f => ({ ...f, shop_area: e.target.value }))}
+                    className="text-xs px-2 py-1 rounded border border-amber-500/30 bg-black/40 text-amber-200 focus:outline-none focus:border-amber-500/60"
+                  >
+                    <option value="Thường">Thường</option>
+                    <option value="Hiếm">Hiếm</option>
+                    <option value="Sự kiện">Sự kiện</option>
+                  </select>
+                ) : (
+                  <span className={`text-xs px-2 py-1 rounded border ${getAreaBadgeColor(item.shop_area)}`}>
+                    {item.shop_area}
+                  </span>
+                )}
                 <span className="text-xs text-gray-500 px-2 py-0.5 rounded bg-white/5">{item.category}</span>
               </div>
             </div>
             <h4 className="font-bold text-base text-amber-100/90 mb-1">{item.name}</h4>
             <p className="text-xs text-gray-500 leading-relaxed mb-3 min-h-[2.5rem]">{item.description}</p>
-            {item.purchase_limit && (
-              <p className="text-[10px] text-gray-600 mb-3 flex items-center gap-1">
-                <Star className="w-3 h-3" /> Giới hạn: {item.purchase_limit}
-              </p>
+
+            {isEditing ? (
+              <div className="space-y-2.5 mb-3">
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] text-gray-500 w-14 shrink-0">Giá chính</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editForm.price ?? 0}
+                    onChange={e => setEditForm(f => ({ ...f, price: parseInt(e.target.value) || 0 }))}
+                    className="w-20 px-2 py-1 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60"
+                  />
+                  <select
+                    value={editForm.currency_type ?? item.currency_type}
+                    onChange={e => setEditForm(f => ({ ...f, currency_type: e.target.value }))}
+                    className="px-2 py-1 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60"
+                  >
+                    <option value="HUA_TIEN">Hoa Tiền</option>
+                    <option value="CONG_DUC">Công Đức</option>
+                    <option value="AM_DUC">Âm Đức</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] text-gray-500 w-14 shrink-0">Giá phụ</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editForm.price_secondary ?? ''}
+                    placeholder="—"
+                    onChange={e => setEditForm(f => ({ ...f, price_secondary: e.target.value ? parseInt(e.target.value) : null }))}
+                    className="w-20 px-2 py-1 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60"
+                  />
+                  <select
+                    value={editForm.currency_type_secondary ?? ''}
+                    onChange={e => setEditForm(f => ({ ...f, currency_type_secondary: e.target.value || null }))}
+                    className="px-2 py-1 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60"
+                  >
+                    <option value="">— Không —</option>
+                    <option value="HUA_TIEN">Hoa Tiền</option>
+                    <option value="CONG_DUC">Công Đức</option>
+                    <option value="AM_DUC">Âm Đức</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] text-gray-500 w-14 shrink-0">Giới hạn</label>
+                  <input
+                    type="text"
+                    value={editForm.purchase_limit ?? ''}
+                    placeholder="—"
+                    onChange={e => setEditForm(f => ({ ...f, purchase_limit: e.target.value || null }))}
+                    className="flex-1 px-2 py-1 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60"
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                {item.purchase_limit && (
+                  <p className="text-[10px] text-gray-600 mb-3 flex items-center gap-1">
+                    <Star className="w-3 h-3" /> Giới hạn: {item.purchase_limit}
+                  </p>
+                )}
+              </>
             )}
+
             <div className="flex items-center justify-between gap-2">
-              {renderPrice(item)}
-              {user ? (
+              {isEditing ? (
                 <div className="flex items-center gap-1.5">
                   <button
-                    onClick={() => addToCart(item)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold rounded-lg transition-all hover:scale-105 border border-white/10"
+                    onClick={() => saveEdit(item)}
+                    disabled={savingId === item.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600/80 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <ShoppingCart className="w-3.5 h-3.5" />
-                    Giỏ
+                    {savingId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                    Lưu
                   </button>
                   <button
-                    onClick={() => buyNow(item)}
-                    disabled={buyingId === item.id}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#670201]/80 hover:bg-[#670201] text-amber-100 text-xs font-semibold rounded-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={cancelEdit}
+                    className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold rounded-lg transition-all border border-white/10"
                   >
-                    {buyingId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-                    Mua
+                    Hủy
                   </button>
                 </div>
               ) : (
-                <Link to="/login" className="text-xs font-semibold text-amber-300 hover:text-amber-100 underline">Đăng nhập để mua</Link>
+                <>
+                  {renderPrice(item)}
+                  <div className="flex items-center gap-1.5">
+                    {isAdmin && (
+                      <button
+                        onClick={() => startEdit(item)}
+                        title="Sửa giá"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-semibold rounded-lg transition-all hover:scale-105 border border-amber-500/20"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                    {user ? (
+                      <>
+                        <button
+                          onClick={() => addToCart(item)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-semibold rounded-lg transition-all hover:scale-105 border border-white/10"
+                        >
+                          <ShoppingCart className="w-3.5 h-3.5" />
+                          Giỏ
+                        </button>
+                        <button
+                          onClick={() => buyNow(item)}
+                          disabled={buyingId === item.id}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#670201]/80 hover:bg-[#670201] text-amber-100 text-xs font-semibold rounded-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {buyingId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
+                          Mua
+                        </button>
+                      </>
+                    ) : (
+                      <Link to="/login" className="text-xs font-semibold text-amber-300 hover:text-amber-100 underline">Đăng nhập để mua</Link>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {filteredItems.length === 0 && (
