@@ -139,6 +139,7 @@ export default function ShopPage() {
       currency_type_secondary: item.currency_type_secondary,
       purchase_limit: item.purchase_limit,
       shop_area: item.shop_area,
+      description: item.description,
     });
   };
 
@@ -156,6 +157,7 @@ export default function ShopPage() {
     if (editForm.currency_type_secondary !== item.currency_type_secondary) updates.currency_type_secondary = editForm.currency_type_secondary || null;
     if (editForm.purchase_limit !== item.purchase_limit) updates.purchase_limit = editForm.purchase_limit || null;
     if (editForm.shop_area !== undefined && editForm.shop_area !== item.shop_area) updates.shop_area = editForm.shop_area;
+    if (editForm.description !== undefined && editForm.description !== item.description) updates.description = editForm.description;
 
     if (Object.keys(updates).length === 0) {
       cancelEdit();
@@ -343,7 +345,19 @@ export default function ShopPage() {
               </div>
             </div>
             <h4 className="font-bold text-base text-amber-100/90 mb-1">{item.name}</h4>
-            <p className="text-xs text-gray-500 leading-relaxed mb-3 min-h-[2.5rem]">{item.description}</p>
+            {isEditing ? (
+              <div className="mb-3">
+                <label className="text-[10px] text-gray-500 block mb-1">Mô tả vật phẩm</label>
+                <textarea
+                  value={editForm.description ?? ''}
+                  onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                  rows={5}
+                  className="w-full px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-gray-300 leading-relaxed focus:outline-none focus:border-amber-500/60 resize-y"
+                />
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 leading-relaxed mb-3 min-h-[2.5rem]">{item.description}</p>
+            )}
 
             {isEditing ? (
               <div className="space-y-2.5 mb-3">
