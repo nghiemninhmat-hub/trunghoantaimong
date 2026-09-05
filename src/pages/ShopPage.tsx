@@ -74,17 +74,33 @@ export default function ShopPage() {
       showNotification('Vui lòng đăng nhập để mua sắm.', 'error');
       return;
     }
-    if (cart.length >= 10) {
-      showNotification('Giỏ hàng đã đạt giới hạn tối đa 10 món!', 'error');
+    const existing = cart.find(c => c.item_id === item.id);
+    if (existing) {
+      const { error } = await supabase.from('carts').update({ quantity: existing.quantity + 1 }).eq('id', existing.id);
+      if (error) {
+        showNotification(`Lỗi: ${error.message}`, 'error');
+      } else {
+        showNotification(`Đã tăng số lượng "${item.name}" trong giỏ hàng.`);
+        fetchCart();
+      }
+    } else {
+      const { error } = await supabase.from('carts').insert([{ user_id: user.id, item_id: item.id, quantity: 1 }]);
+      if (error) {
+        showNotification(`Lỗi: ${error.message}`, 'error');
+      } else {
+        showNotification(`Đã thêm "${item.name}" vào giỏ hàng.`);
+        fetchCart();
+      }
+    }
+  };
+
+  const updateCartQuantity = async (cartId: string, newQty: number) => {
+    if (newQty < 1) {
+      removeFromCart(cartId);
       return;
     }
-    const { error } = await supabase.from('carts').insert([{ user_id: user.id, item_id: item.id }]);
-    if (error) {
-      showNotification(`Lỗi: ${error.message}`, 'error');
-    } else {
-      showNotification(`Đã thêm "${item.name}" vào giỏ hàng.`);
-      fetchCart();
-    }
+    const { error } = await supabase.from('carts').update({ quantity: newQty }).eq('id', cartId);
+    if (!error) fetchCart();
   };
 
   const removeFromCart = async (cartId: string) => {
@@ -112,7 +128,7 @@ export default function ShopPage() {
     setBuyingId(item.id);
 
     try {
-      const rpcParams: Record<string, unknown> = { p_item_ids: [item.id] };
+      const rpcParams: Record<string, unknown> = { p_item_ids: [item.id], p_quantities: [1] };
       if (selectedCouponId) rpcParams.p_coupon_id = selectedCouponId;
       const { error } = await supabase.rpc('purchase_items', rpcParams);
 
@@ -150,7 +166,8 @@ export default function ShopPage() {
 
     try {
       const itemIds = cart.map(c => c.item_id);
-      const rpcParams: Record<string, unknown> = { p_item_ids: itemIds };
+      const quantities = cart.map(c => c.quantity || 1);
+      const rpcParams: Record<string, unknown> = { p_item_ids: itemIds, p_quantities: quantities };
       if (selectedCouponId) rpcParams.p_coupon_id = selectedCouponId;
       const { error } = await supabase.rpc('purchase_items', rpcParams);
 
@@ -235,17 +252,20 @@ export default function ShopPage() {
   const cartTotals = cart.reduce(
     (acc, c) => {
       if (c.shop_items) {
-        if (c.shop_items.currency_type === 'HUA_TIEN') acc.huaTien += c.shop_items.price;
-        if (c.shop_items.currency_type === 'CONG_DUC') acc.congDuc += c.shop_items.price;
-        if (c.shop_items.currency_type === 'AM_DUC') acc.amDuc += c.shop_items.price;
-        if (c.shop_items.currency_type_secondary === 'HUA_TIEN') acc.huaTien += c.shop_items.price_secondary || 0;
-        if (c.shop_items.currency_type_secondary === 'CONG_DUC') acc.congDuc += c.shop_items.price_secondary || 0;
-        if (c.shop_items.currency_type_secondary === 'AM_DUC') acc.amDuc += c.shop_items.price_secondary || 0;
+        const qty = c.quantity || 1;
+        if (c.shop_items.currency_type === 'HUA_TIEN') acc.huaTien += c.shop_items.price * qty;
+        if (c.shop_items.currency_type === 'CONG_DUC') acc.congDuc += c.shop_items.price * qty;
+        if (c.shop_items.currency_type === 'AM_DUC') acc.amDuc += c.shop_items.price * qty;
+        if (c.shop_items.currency_type_secondary === 'HUA_TIEN') acc.huaTien += (c.shop_items.price_secondary || 0) * qty;
+        if (c.shop_items.currency_type_secondary === 'CONG_DUC') acc.congDuc += (c.shop_items.price_secondary || 0) * qty;
+        if (c.shop_items.currency_type_secondary === 'AM_DUC') acc.amDuc += (c.shop_items.price_secondary || 0) * qty;
       }
       return acc;
     },
     { huaTien: 0, congDuc: 0, amDuc: 0 }
   );
+
+  const cartItemCount = cart.reduce((sum, c) => sum + (c.quantity || 1), 0);
 
   const selectedCoupon = coupons.find(c => c.id === selectedCouponId) || null;
   const couponDiscount = selectedCoupon ? selectedCoupon.discount_percent : 0;
@@ -329,7 +349,7 @@ export default function ShopPage() {
         <StatCard label="Tổng Vật Phẩm" value={items.length} icon={Package} accent="gold" />
         <StatCard label="Vật Phẩm Hiếm" value={items.filter(i => i.shop_area === 'Hiếm').length} icon={Crown} accent="vermilion" />
         <StatCard label="Sự Kiện" value={items.filter(i => i.shop_area === 'Sự kiện').length} icon={Flame} accent="vermilion" />
-        <StatCard label="Giỏ Hàng" value={`${cart.length}/10`} icon={ShoppingCart} accent={cart.length > 0 ? 'gold' : 'neutral'} hint={cart.length > 0 ? 'Sẵn sàng thanh toán' : 'Trống'} />
+        <StatCard label="Giỏ Hàng" value={cartItemCount} icon={ShoppingCart} accent={cart.length > 0 ? 'gold' : 'neutral'} hint={cart.length > 0 ? `${cart.length} loại vật phẩm` : 'Trống'} />
       </StatGrid>
 
       {/* Search & Filter */}
@@ -551,7 +571,7 @@ export default function ShopPage() {
           className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-[#670201] to-[#a00404] text-amber-100 font-bold rounded-full shadow-2xl shadow-[#670201]/40 hover:scale-105 transition-all"
         >
           <ShoppingCart className="w-5 h-5" />
-          <span>{cart.length}/10</span>
+          <span>{cartItemCount}</span>
         </button>
       )}
 
@@ -560,14 +580,16 @@ export default function ShopPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setCheckoutOpen(false)}>
           <div className="w-full max-w-lg p-6 rounded-2xl bg-[#1a0a0a] border border-[#670201]/30 shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-serif font-bold text-amber-100">Giỏ Hàng ({cart.length}/10)</h3>
+              <h3 className="text-xl font-serif font-bold text-amber-100">Giỏ Hàng ({cartItemCount})</h3>
               <button onClick={() => setCheckoutOpen(false)} className="text-gray-500 hover:text-gray-300 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
-              {cart.map(c => (
+              {cart.map(c => {
+                const qty = c.quantity || 1;
+                return (
                 <div key={c.id} className="flex items-center justify-between p-3 rounded-lg bg-black/30 border border-white/5">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-amber-100/90 truncate">{c.shop_items?.name}</p>
@@ -581,16 +603,33 @@ export default function ShopPage() {
                           <span className="text-xs text-amber-200">{c.shop_items.price_secondary}</span>
                         </>
                       )}
+                      {qty > 1 && (
+                        <span className="text-xs text-gray-500 ml-1">× {qty}</span>
+                      )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => removeFromCart(c.id)}
-                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 bg-black/40 rounded-lg border border-white/10 px-1">
+                      <button
+                        onClick={() => updateCartQuantity(c.id, qty - 1)}
+                        className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-amber-300 transition-colors"
+                      >−</button>
+                      <span className="text-xs text-amber-200 font-semibold min-w-[1.2rem] text-center">{qty}</span>
+                      <button
+                        onClick={() => updateCartQuantity(c.id, qty + 1)}
+                        className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-amber-300 transition-colors"
+                      >+</button>
+                    </div>
+                    <button
+                      onClick={() => removeFromCart(c.id)}
+                      className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Totals */}
@@ -765,11 +804,11 @@ export default function ShopPage() {
       <ConfirmDialog
         open={confirmCheckout}
         title="Xác Nhận Thanh Toán"
-        message={`Bạn sắp thanh toán ${cart.length} vật phẩm trong giỏ hàng. Số dư sẽ bị trừ và không thể hoàn tác.`}
+        message={`Bạn sắp thanh toán ${cartItemCount} vật phẩm trong giỏ hàng. Số dư sẽ bị trừ và không thể hoàn tác.`}
         confirmLabel="Thanh Toán"
         cancelLabel="Hủy"
         details={[
-          { label: 'Số vật phẩm', value: String(cart.length) },
+          { label: 'Số vật phẩm', value: String(cartItemCount) },
           ...(cartTotals.huaTien > 0 ? [{
             label: 'Hoa Tiền',
             value: couponDiscount > 0 && cartTotals.huaTien !== discountedTotals.huaTien

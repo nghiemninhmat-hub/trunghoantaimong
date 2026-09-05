@@ -121,6 +121,7 @@ export interface CartItem {
   id: string;
   user_id: string;
   item_id: string;
+  quantity: number;
   created_at: string;
   shop_items?: ShopItem;
 }
