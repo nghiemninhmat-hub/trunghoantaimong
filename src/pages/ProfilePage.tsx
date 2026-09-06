@@ -6,7 +6,7 @@ import {
   UserCircle, Coins, Sparkles, Skull, Package, History, Edit3,
   CheckCircle2, Clock, AlertCircle, Ghost, Plus, Minus, Send,
   Heart, Sparkle, Brain, ShieldCheck, Camera, X, Loader2, Upload, Link,
-  ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronRight, Building2, Award, ToggleLeft, ToggleRight,
+  ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronRight, ChevronDown, Building2, Award, ToggleLeft, ToggleRight,
   Zap,
 } from 'lucide-react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
@@ -70,6 +70,10 @@ export default function ProfilePage() {
 
   // Skills (read-only)
   const [mySkills, setMySkills] = useState<Record<string, unknown>[]>([]);
+
+  // Collapsible sections
+  const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [transactionsOpen, setTransactionsOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -949,10 +953,16 @@ export default function ProfilePage() {
 
       {/* Inventory */}
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
-        <div className="flex items-center gap-2 mb-4">
-          <Package className="w-5 h-5 text-amber-300/70" />
-          <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Kho Vật Phẩm</h3>
-        </div>
+        <button
+          onClick={() => setInventoryOpen(o => !o)}
+          className="flex items-center gap-2 w-full text-left group"
+        >
+          <Package className="w-5 h-5 text-amber-300/70 flex-shrink-0" />
+          <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90 flex-1">Kho Vật Phẩm</h3>
+          <span className="text-xs text-gray-500 mr-1">{inventory.length > 0 && `${inventory.reduce((s, i) => s + (i.quantity || 1), 0)} món`}</span>
+          <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${inventoryOpen ? 'rotate-180' : ''} group-hover:text-gray-300`} />
+        </button>
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${inventoryOpen ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
         {inventory.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-6">Chưa có vật phẩm nào. Hãy ghé thăm thương thành!</p>
         ) : (
@@ -975,6 +985,7 @@ export default function ProfilePage() {
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {/* Titles (Bộ Sưu Tầm) */}
@@ -1022,10 +1033,16 @@ export default function ProfilePage() {
 
       {/* Transaction History */}
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
-        <div className="flex items-center gap-2 mb-4">
-          <History className="w-5 h-5 text-amber-300/70" />
-          <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Lịch Sử Giao Dịch</h3>
-        </div>
+        <button
+          onClick={() => setTransactionsOpen(o => !o)}
+          className="flex items-center gap-2 w-full text-left group"
+        >
+          <History className="w-5 h-5 text-amber-300/70 flex-shrink-0" />
+          <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90 flex-1">Lịch Sử Giao Dịch</h3>
+          <span className="text-xs text-gray-500 mr-1">{transactions.length > 0 && `${transactions.length} giao dịch`}</span>
+          <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${transactionsOpen ? 'rotate-180' : ''} group-hover:text-gray-300`} />
+        </button>
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${transactionsOpen ? 'max-h-[3000px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
         {transactions.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-6">Chưa có giao dịch nào.</p>
         ) : (
@@ -1066,6 +1083,7 @@ export default function ProfilePage() {
             })}
           </div>
         )}
+        </div>
       </div>
     </div>
   );
