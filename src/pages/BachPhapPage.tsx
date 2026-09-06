@@ -240,13 +240,39 @@ export default function BachPhapPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm" onClick={() => setResult(null)}>
           <div className={`relative w-full max-w-sm rounded-2xl border-2 p-8 text-center shadow-2xl ${rarityConfig[getRewardRarity(result.reward_group)].border} ${rarityConfig[getRewardRarity(result.reward_group)].bg}`} onClick={event => event.stopPropagation()}>
             <button onClick={() => setResult(null)} className="absolute right-3 top-3 text-gray-500 transition-colors hover:text-gray-200" aria-label="Đóng"><X className="h-5 w-5" /></button>
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10">
-              {result.is_special ? <Gift className="h-8 w-8 text-rose-300" /> : result.reward_group === 'MISS' ? <Frown className="h-8 w-8 text-gray-400" /> : <Sparkles className="h-8 w-8 text-amber-300" />}
-            </div>
-            <div className="mb-3 flex justify-center"><Stars count={getRewardRarity(result.reward_group)} /></div>
-            <h2 className="font-serif text-xl font-bold text-amber-100">{result.reward_group === 'MISS' ? 'Tiếc quá!' : 'Chúc mừng!'}</h2>
-            <p className="mt-2 text-lg font-semibold text-gray-200">{result.reward_label}</p>
-            {result.is_special && <p className="mt-3 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-xs text-rose-300">Quà Đặc Biệt chỉ được nhận một lần cho mỗi tài khoản — bạn đã quay đủ 26 lượt để nhận!</p>}
+
+            {result.is_special ? (
+              <>
+                <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-rose-400/40 bg-rose-500/15 shadow-[0_0_32px_rgba(244,63,94,0.25)]">
+                  <Gift className="h-10 w-10 text-rose-300" />
+                </div>
+                <div className="mb-3 flex justify-center"><Stars count={5} /></div>
+                <div className="mb-1 text-xs font-semibold uppercase tracking-widest text-rose-400/80">Quà Đặc Biệt</div>
+                <h2 className="font-serif text-2xl font-bold text-amber-100">Chúc mừng!</h2>
+                <div className="mt-4 rounded-xl border border-rose-400/25 bg-rose-500/10 px-5 py-4">
+                  <p className="text-base font-bold text-rose-200 leading-snug">{result.reward_label}</p>
+                </div>
+              </>
+            ) : result.reward_group === 'MISS' ? (
+              <>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-gray-600/30 bg-gray-700/20">
+                  <Frown className="h-8 w-8 text-gray-400" />
+                </div>
+                <div className="mb-3 flex justify-center"><Stars count={getRewardRarity(result.reward_group)} /></div>
+                <h2 className="font-serif text-xl font-bold text-amber-100">Tiếc quá!</h2>
+                <p className="mt-2 text-base text-gray-400">{result.reward_label}</p>
+              </>
+            ) : (
+              <>
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10">
+                  <Sparkles className="h-8 w-8 text-amber-300" />
+                </div>
+                <div className="mb-3 flex justify-center"><Stars count={getRewardRarity(result.reward_group)} /></div>
+                <h2 className="font-serif text-xl font-bold text-amber-100">Chúc mừng!</h2>
+                <p className="mt-2 text-lg font-semibold text-gray-200">{result.reward_label}</p>
+              </>
+            )}
+
             <button onClick={() => setResult(null)} className="mt-6 w-full rounded-lg bg-gradient-to-r from-[#670201] to-[#a00404] py-3 text-sm font-bold text-amber-100 transition-opacity hover:opacity-90">Đã nhận</button>
           </div>
         </div>
