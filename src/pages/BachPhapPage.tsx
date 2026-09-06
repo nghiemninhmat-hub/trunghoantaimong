@@ -131,7 +131,14 @@ export default function BachPhapPage() {
       await refreshWheelProfile();
     } catch (cause) {
       console.error('spin wheel failed', cause);
-      setError('Không thể quay lúc này. Vui lòng thử lại.');
+      const msg = cause instanceof Error ? cause.message : String(cause);
+      if (msg.includes('không có lượt quay')) {
+        setError('Bạn đã hết lượt quay. Vui lòng chờ Ban Điều Hành cấp thêm lượt.');
+      } else if (msg.includes('Not authenticated')) {
+        setError('Vui lòng đăng nhập lại để quay.');
+      } else {
+        setError('Không thể quay lúc này. Vui lòng thử lại sau.');
+      }
       setSpinning(false);
     }
   };
