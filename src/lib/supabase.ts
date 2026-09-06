@@ -84,12 +84,12 @@ export interface PasswordHistoryEntry {
 }
 
 export interface WheelSpinResult {
-  reward_key: string;
-  reward_label: string;
-  reward_group: string;
-  is_special: boolean;
-  currency_type: string | null;
-  amount: number;
+  p_reward_key: string;
+  p_reward_label: string;
+  p_reward_group: string;
+  p_is_special: boolean;
+  p_currency_type: string | null;
+  p_amount: number;
 }
 
 export interface WheelSpinLog {
