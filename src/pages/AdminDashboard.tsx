@@ -22,7 +22,7 @@ const STATUS_TAGS = [
   { value: 'Ngưỡng sinh tử', label: 'Thẻ tím đậm', badgeClass: 'bg-purple-700/20 text-purple-400', activeClass: 'bg-purple-700/30 border-purple-700/50 text-purple-300', idleClass: 'bg-purple-700/5 border-purple-700/15 text-purple-500/70' },
 ];
 
-type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wills' | 'settings' | 'organizations' | 'broadcast' | 'titles' | 'coupons';
+type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wheel' | 'wills' | 'settings' | 'organizations' | 'broadcast' | 'titles' | 'coupons';
 
 export default function AdminDashboard() {
   const { profile, isAdmin } = useAuth();
@@ -60,16 +60,12 @@ export default function AdminDashboard() {
   const [newPage, setNewPage] = useState({ page_number: 1, title: '', category: '', content: '' });
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
   const [editPage, setEditPage] = useState<Partial<SitePage>>({});
-  const [archiveSubTab, setArchiveSubTab] = useState<'currency' | 'identities' | 'inventories' | 'wheel' | 'status'>('currency');
+  const [archiveSubTab, setArchiveSubTab] = useState<'currency' | 'identities' | 'inventories' | 'status'>('currency');
 
   // Identity reveal
   const [revealIds, setRevealIds] = useState<Set<string>>(new Set());
 
   // Wheel spins management
-  const [spinUserId, setSpinUserId] = useState('');
-  const [spinAmount, setSpinAmount] = useState(1);
-  const [spinMsg, setSpinMsg] = useState('');
-  const [spinMode, setSpinMode] = useState<'grant' | 'revoke'>('grant');
   const [spinLog, setSpinLog] = useState<WheelSpinLog[]>([]);
   const [expandedSpinUsers, setExpandedSpinUsers] = useState<Set<string>>(new Set());
 
@@ -237,55 +233,6 @@ export default function AdminDashboard() {
     setRegistrationOpen(newValue);
     setRegMsg(newValue ? 'Đã mở cổng đăng ký.' : 'Đã khóa cổng đăng ký.');
     logAction('toggle_registration', undefined, newValue ? 'Mở cổng đăng ký' : 'Khóa cổng đăng ký');
-  };
-
-  const handleSpins = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!spinUserId || spinAmount < 1) return;
-    setSpinMsg('');
-    const targetUser = allProfiles.find(p => p.id === spinUserId);
-    const targetName = targetUser?.oc_name || spinUserId.slice(0, 8);
-
-    if (spinMode === 'revoke') {
-      requireConfirm(
-        'Trừ Lượt Quay',
-        `Bạn sắp trừ ${spinAmount} lượt quay khỏi tài khoản "${targetName}". Người chơi sẽ không nhận được thông báo nào về thao tác này.`,
-        async () => {
-          const { error } = await supabase.rpc('admin_revoke_spins', {
-            p_user_id: spinUserId,
-            p_amount: spinAmount,
-          });
-          if (error) {
-            setSpinMsg(`Lỗi: ${error.message}`);
-            return;
-          }
-          setSpinMsg(`Đã trừ ${spinAmount} lượt quay thành công.`);
-          logAction('revoke_spins', spinUserId, `Trừ ${spinAmount} lượt quay của ${targetName}`, { amount: spinAmount });
-          setSpinUserId('');
-          setSpinAmount(1);
-          fetchAllData();
-        },
-        [
-          { label: 'Người chơi', value: targetName },
-          { label: 'Số lượt trừ', value: String(spinAmount) },
-        ],
-        'Trừ lượt quay',
-      );
-    } else {
-      const { error } = await supabase.rpc('admin_grant_spins', {
-        p_user_id: spinUserId,
-        p_amount: spinAmount,
-      });
-      if (error) {
-        setSpinMsg(`Lỗi: ${error.message}`);
-        return;
-      }
-      setSpinMsg(`Đã cấp ${spinAmount} lượt quay thành công.`);
-      logAction('grant_spins', spinUserId, `Cấp ${spinAmount} lượt quay cho ${targetName}`, { amount: spinAmount });
-      setSpinUserId('');
-      setSpinAmount(1);
-      fetchAllData();
-    }
   };
 
   const toggleRevealPwd = (id: string) => {
@@ -1596,6 +1543,7 @@ export default function AdminDashboard() {
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: 'lookup', label: 'Tra Cứu', icon: UserSearch },
+    { id: 'wheel', label: 'Vòng Quay', icon: Dices },
     { id: 'accounts', label: 'Phê Duyệt', icon: Users },
     { id: 'shop', label: 'Thương Thành', icon: Store },
     { id: 'pages', label: 'Bách Khoa', icon: BookOpen },
@@ -2204,7 +2152,6 @@ export default function AdminDashboard() {
             { id: 'currency' as const, label: 'Tài Sản', icon: Coins },
             { id: 'identities' as const, label: 'Danh Tính', icon: Ghost },
             { id: 'inventories' as const, label: 'Kho Vật Phẩm', icon: Package },
-            { id: 'wheel' as const, label: 'Vòng Quay', icon: Dices },
             { id: 'status' as const, label: 'Trạng Thái', icon: Heart },
           ]).map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setArchiveSubTab(id)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${archiveSubTab === id ? 'bg-[#670201]/30 text-amber-100' : 'bg-black/20 text-gray-400 hover:text-amber-100 hover:bg-white/5'}`}>
@@ -2632,77 +2579,8 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {activeTab === 'archive' && archiveSubTab === 'wheel' && (
+      {activeTab === 'wheel' && (
         <div className="space-y-6">
-          <div className={cardCls}>
-            <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80 mb-4">Quản Lý Lượt Quay Bách Pháp Mệnh</h3>
-            <form onSubmit={handleSpins} className="space-y-4">
-              <div>
-                <label className={labelCls}>Chế độ</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => { setSpinMode('grant'); setSpinMsg(''); }}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold border transition-all ${
-                      spinMode === 'grant'
-                        ? 'bg-[#670201]/30 border-[#670201]/50 text-amber-200'
-                        : 'bg-black/20 border-white/5 text-gray-500 hover:text-amber-200/70'
-                    }`}
-                  >
-                    <Plus className="w-4 h-4" /> Cấp lượt
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setSpinMode('revoke'); setSpinMsg(''); }}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold border transition-all ${
-                      spinMode === 'revoke'
-                        ? 'bg-red-600/20 border-red-600/50 text-red-300'
-                        : 'bg-black/20 border-white/5 text-gray-500 hover:text-red-300/70'
-                    }`}
-                  >
-                    <Undo2 className="w-4 h-4" /> Trừ lượt
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className={labelCls}>Người chơi</label>
-                <select value={spinUserId} onChange={e => setSpinUserId(e.target.value)} required className={inputCls}>
-                  <option value="">Chọn người chơi...</option>
-                  {allProfiles.map(p => (
-                    <option key={p.id} value={p.id}>{p.oc_name} · ID: {p.id.slice(0, 8)} · {p.email} — Đang có {p.wheel_spins ?? 0} lượt</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className={labelCls}>Số lượt (1-1000)</label>
-                <input type="number" min={1} max={1000} value={spinAmount} onChange={e => setSpinAmount(parseInt(e.target.value) || 1)} required className={inputCls} />
-              </div>
-              {spinMode === 'revoke' && (
-                <div className="p-3 rounded-lg bg-red-500/5 border border-red-500/15">
-                  <p className="text-xs text-red-300/70">
-                    <AlertCircle className="w-3.5 h-3.5 inline mr-1" />
-                    Trừ lượt quay sẽ không thông báo cho người chơi và không hiển thị trong lịch sử giao dịch. Chỉ lưu trong nhật ký quản trị.
-                  </p>
-                </div>
-              )}
-              <button
-                type="submit"
-                className={`flex items-center gap-2 px-5 py-2.5 text-amber-100 text-sm font-bold rounded-lg transition-all ${
-                  spinMode === 'grant' ? 'bg-[#670201] hover:bg-[#a00404]' : 'bg-red-600/80 hover:bg-red-700'
-                }`}
-              >
-                {spinMode === 'grant' ? <Plus className="w-4 h-4" /> : <Undo2 className="w-4 h-4" />}
-                {spinMode === 'grant' ? 'Cấp Lượt Quay' : 'Trừ Lượt Quay'}
-              </button>
-              {spinMsg && (
-                <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${spinMsg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
-                  {spinMsg.startsWith('Lỗi') ? <AlertCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
-                  {spinMsg}
-                </div>
-              )}
-            </form>
-          </div>
-
           <div className={cardCls}>
             <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80 mb-4">Lượt Quay Của Người Chơi</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
