@@ -628,8 +628,10 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
           <p className="text-sm text-gray-500 text-center py-4">Chưa có giao dịch nào.</p>
         ) : (
           <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1 sm:pr-2">
-            {allTransactions.map(tx => (
-              <div key={tx.id} className="flex items-center justify-between gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-black/20 border border-white/5">
+            {allTransactions.map(tx => {
+              const isSpecial = tx.reason.startsWith('Quà Đặc Biệt');
+              return (
+              <div key={tx.id} className={`flex items-center justify-between gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-lg bg-black/20 border ${isSpecial ? 'border-rose-500/30' : 'border-white/5'}`}>
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] sm:text-sm text-gray-300 break-words">{tx.reason}</p>
                   <p className="text-[11px] sm:text-xs text-gray-500">
@@ -638,13 +640,20 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                   </p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <span className={`text-sm font-bold ${tx.amount > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {tx.amount > 0 ? '+' : ''}{tx.amount}
-                  </span>
-                  <p className="text-[11px] sm:text-xs text-gray-500">{CURRENCY_LABELS[tx.currency_type]}</p>
+                  {isSpecial ? (
+                    <span className="text-sm font-bold text-rose-300 whitespace-nowrap">Quà Đặc Biệt</span>
+                  ) : (
+                    <>
+                      <span className={`text-sm font-bold ${tx.amount > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {tx.amount > 0 ? '+' : ''}{tx.amount}
+                      </span>
+                      <p className="text-[11px] sm:text-xs text-gray-500">{CURRENCY_LABELS[tx.currency_type]}</p>
+                    </>
+                  )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

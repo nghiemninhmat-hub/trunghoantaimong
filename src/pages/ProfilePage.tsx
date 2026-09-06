@@ -1031,10 +1031,11 @@ export default function ProfilePage() {
         ) : (
           <div className="space-y-2">
             {transactions.map(tx => {
-              const isItemReward = tx.amount === 0 && tx.currency_type !== 'COUPON';
+              const isSpecial = tx.reason.startsWith('Quà Đặc Biệt');
+              const isItemReward = !isSpecial && tx.amount === 0 && tx.currency_type !== 'COUPON';
               const isCoupon = tx.currency_type === 'COUPON';
               return (
-                <div key={tx.id} className={`flex items-start justify-between gap-3 p-3 rounded-lg bg-black/20 border ${isCoupon ? 'border-amber-500/20' : 'border-white/5'}`}>
+                <div key={tx.id} className={`flex items-start justify-between gap-3 p-3 rounded-lg bg-black/20 border ${isSpecial ? 'border-rose-500/30' : isCoupon ? 'border-amber-500/20' : 'border-white/5'}`}>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm text-gray-300 break-words leading-snug">{tx.reason}</p>
                     <p className="text-xs text-gray-600 mt-1">
@@ -1045,7 +1046,9 @@ export default function ProfilePage() {
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    {isCoupon ? (
+                    {isSpecial ? (
+                      <span className="text-sm font-bold text-rose-300 whitespace-nowrap">Quà Đặc Biệt</span>
+                    ) : isCoupon ? (
                       <span className="text-sm font-bold text-amber-300 whitespace-nowrap">Phiếu giảm giá</span>
                     ) : isItemReward ? (
                       <span className="text-sm font-bold text-amber-300 whitespace-nowrap">Vật phẩm</span>
