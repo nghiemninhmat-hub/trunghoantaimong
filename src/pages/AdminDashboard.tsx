@@ -3829,26 +3829,110 @@ export default function AdminDashboard() {
             </div>
 
             {showAddTemplate && (
-              <form onSubmit={handleAddTemplate} className="mb-6 p-4 rounded-xl bg-black/30 border border-amber-500/20 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input type="text" placeholder="Tên kỹ năng" value={newTemplate.name} onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })} required className={inputCls} />
-                  <input type="text" placeholder="Nhóm (tùy chọn)" value={newTemplate.category} onChange={e => setNewTemplate({ ...newTemplate, category: e.target.value })} className={inputCls} />
-                  <textarea placeholder="Chi tiết cách sử dụng" value={newTemplate.usage_detail} onChange={e => setNewTemplate({ ...newTemplate, usage_detail: e.target.value })} rows={2} className={`md:col-span-2 ${inputCls}`} />
-                  <textarea placeholder="Hiệu quả" value={newTemplate.effect} onChange={e => setNewTemplate({ ...newTemplate, effect: e.target.value })} rows={2} className={`md:col-span-2 ${inputCls}`} />
-                  <textarea placeholder="Đánh đổi" value={newTemplate.tradeoff} onChange={e => setNewTemplate({ ...newTemplate, tradeoff: e.target.value })} rows={2} className={`md:col-span-2 ${inputCls}`} />
-                  <div className="flex items-center gap-2"><label className="text-xs text-gray-500 whitespace-nowrap">Công đức</label><input type="number" min={0} value={newTemplate.cong_duc_cost} onChange={e => setNewTemplate({ ...newTemplate, cong_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} className={inputCls} /></div>
-                  <div className="flex items-center gap-2"><label className="text-xs text-gray-500 whitespace-nowrap">Âm đức</label><input type="number" min={0} value={newTemplate.am_duc_cost} onChange={e => setNewTemplate({ ...newTemplate, am_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} className={inputCls} /></div>
-                  <input type="text" placeholder="Thời gian duy trì" value={newTemplate.duration} onChange={e => setNewTemplate({ ...newTemplate, duration: e.target.value })} className={inputCls} />
-                  <div className="md:col-span-2"><StatusTagSelector category="mental" value={newTemplate.mental_effect} onChange={v => setNewTemplate({ ...newTemplate, mental_effect: v })} /></div>
-                  <div className="flex items-center gap-2"><label className="text-xs text-gray-500 whitespace-nowrap">TG tinh thần (tối đa 50)</label><input type="number" min={0} max={50} value={newTemplate.mental_duration} onChange={e => setNewTemplate({ ...newTemplate, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} /></div>
-                  <div className="md:col-span-2"><StatusTagSelector category="health" value={newTemplate.health_effect} onChange={v => setNewTemplate({ ...newTemplate, health_effect: v })} /></div>
-                  <div className="flex items-center gap-2"><label className="text-xs text-gray-500 whitespace-nowrap">TG sức khỏe (tối đa 50)</label><input type="number" min={0} max={50} value={newTemplate.health_duration} onChange={e => setNewTemplate({ ...newTemplate, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} /></div>
-                  <div className="md:col-span-2"><StatusTagSelector category="spiritual" value={newTemplate.spiritual_effect} onChange={v => setNewTemplate({ ...newTemplate, spiritual_effect: v })} /></div>
-                  <div className="flex items-center gap-2"><label className="text-xs text-gray-500 whitespace-nowrap">TG tâm linh (tối đa 50)</label><input type="number" min={0} max={50} value={newTemplate.spiritual_duration} onChange={e => setNewTemplate({ ...newTemplate, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} /></div>
-                  <textarea placeholder="Ảnh hưởng lên từng cấp quỷ" value={newTemplate.ghost_level_effect} onChange={e => setNewTemplate({ ...newTemplate, ghost_level_effect: e.target.value })} rows={2} className={inputCls} />
-                  <div className="flex items-center gap-2"><label className="text-xs text-gray-500 whitespace-nowrap">% Tiêu diệt (0-100)</label><input type="number" min={0} max={100} value={newTemplate.destruction_percent} onChange={e => setNewTemplate({ ...newTemplate, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} /></div>
+              <form onSubmit={handleAddTemplate} className="mb-6 p-5 rounded-xl bg-black/30 border border-amber-500/20 space-y-5">
+                {/* Tên kỹ năng + Nhóm */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Tên kỹ năng</label>
+                    <input type="text" placeholder="vd: Đồng Sinh..." value={newTemplate.name} onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })} required className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Nhóm (tùy chọn)</label>
+                    <input type="text" placeholder="vd: Y sư, Đạo sĩ..." value={newTemplate.category} onChange={e => setNewTemplate({ ...newTemplate, category: e.target.value })} className={inputCls} />
+                  </div>
                 </div>
-                <div className="flex gap-2">
+
+                {/* Chi tiết cách sử dụng */}
+                <div>
+                  <label className={labelCls}>Chi tiết cách sử dụng</label>
+                  <textarea placeholder="Mô tả chi tiết cách sử dụng kỹ năng..." value={newTemplate.usage_detail} onChange={e => setNewTemplate({ ...newTemplate, usage_detail: e.target.value })} rows={3} className={inputCls} />
+                </div>
+
+                {/* Hiệu quả */}
+                <div>
+                  <label className={labelCls}>Hiệu quả</label>
+                  <textarea placeholder="Mô tả hiệu quả của kỹ năng..." value={newTemplate.effect} onChange={e => setNewTemplate({ ...newTemplate, effect: e.target.value })} rows={3} className={inputCls} />
+                </div>
+
+                {/* Đánh đổi */}
+                <div>
+                  <label className={labelCls}>Đánh đổi</label>
+                  <textarea placeholder="vd: Không thể sử dụng trong 2-3-4 dị sự liên tiếp..." value={newTemplate.tradeoff} onChange={e => setNewTemplate({ ...newTemplate, tradeoff: e.target.value })} rows={2} className={inputCls} />
+                </div>
+
+                {/* Tiêu hao công đức + âm đức */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Tiêu hao công đức</label>
+                    <input type="number" min={0} value={newTemplate.cong_duc_cost} onChange={e => setNewTemplate({ ...newTemplate, cong_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} className={inputCls} />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Tiêu hao âm đức</label>
+                    <input type="number" min={0} value={newTemplate.am_duc_cost} onChange={e => setNewTemplate({ ...newTemplate, am_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} className={inputCls} />
+                  </div>
+                </div>
+
+                {/* Thời gian duy trì */}
+                <div>
+                  <label className={labelCls}>Thời gian duy trì</label>
+                  <input type="text" placeholder="vd: 3 dị sự, 1 ngày..." value={newTemplate.duration} onChange={e => setNewTemplate({ ...newTemplate, duration: e.target.value })} className={inputCls} />
+                </div>
+
+                {/* Ảnh hưởng tinh thần */}
+                <div className="rounded-lg border border-white/10 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Brain className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm font-semibold text-purple-300">Ảnh hưởng tinh thần</span>
+                    <span className="text-[10px] text-gray-500">(chọn tag phù hợp)</span>
+                  </div>
+                  <StatusTagSelector category="mental" value={newTemplate.mental_effect} onChange={v => setNewTemplate({ ...newTemplate, mental_effect: v })} />
+                  <div>
+                    <label className={labelCls}>Thời gian ảnh hưởng tinh thần (tính bình luận, tối đa 50)</label>
+                    <input type="number" min={0} max={50} value={newTemplate.mental_duration} onChange={e => setNewTemplate({ ...newTemplate, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
+                  </div>
+                </div>
+
+                {/* Ảnh hưởng sức khỏe */}
+                <div className="rounded-lg border border-white/10 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-red-400" />
+                    <span className="text-sm font-semibold text-red-300">Ảnh hưởng sức khỏe</span>
+                    <span className="text-[10px] text-gray-500">(chọn tag phù hợp)</span>
+                  </div>
+                  <StatusTagSelector category="health" value={newTemplate.health_effect} onChange={v => setNewTemplate({ ...newTemplate, health_effect: v })} />
+                  <div>
+                    <label className={labelCls}>Thời gian ảnh hưởng sức khỏe (tính bình luận, tối đa 50)</label>
+                    <input type="number" min={0} max={50} value={newTemplate.health_duration} onChange={e => setNewTemplate({ ...newTemplate, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
+                  </div>
+                </div>
+
+                {/* Ảnh hưởng tâm linh */}
+                <div className="rounded-lg border border-white/10 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkle className="w-4 h-4 text-amber-400" />
+                    <span className="text-sm font-semibold text-amber-300">Ảnh hưởng tâm linh</span>
+                    <span className="text-[10px] text-gray-500">(chọn tag phù hợp)</span>
+                  </div>
+                  <StatusTagSelector category="spiritual" value={newTemplate.spiritual_effect} onChange={v => setNewTemplate({ ...newTemplate, spiritual_effect: v })} />
+                  <div>
+                    <label className={labelCls}>Thời gian ảnh hưởng tâm linh (tính bình luận, tối đa 50)</label>
+                    <input type="number" min={0} max={50} value={newTemplate.spiritual_duration} onChange={e => setNewTemplate({ ...newTemplate, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
+                  </div>
+                </div>
+
+                {/* Ảnh hưởng lên từng cấp quỷ */}
+                <div>
+                  <label className={labelCls}>Ảnh hưởng lên từng cấp quỷ</label>
+                  <textarea placeholder="vd: Quỷ cấp 1: 100%, cấp 2: 80%, cấp 3: 50%..." value={newTemplate.ghost_level_effect} onChange={e => setNewTemplate({ ...newTemplate, ghost_level_effect: e.target.value })} rows={2} className={inputCls} />
+                </div>
+
+                {/* Gây bao nhiêu % tiêu diệt */}
+                <div>
+                  <label className={labelCls}>Gây bao nhiêu % tiêu diệt (0-100)</label>
+                  <input type="number" min={0} max={100} value={newTemplate.destruction_percent} onChange={e => setNewTemplate({ ...newTemplate, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
+                </div>
+
+                <div className="flex gap-2 pt-2">
                   <button type="submit" className="flex items-center gap-2 px-5 py-2.5 bg-[#670201] hover:bg-[#a00404] text-amber-100 text-sm font-bold rounded-lg transition-all"><Save className="w-4 h-4" /> Lưu Mẫu</button>
                   <button type="button" onClick={() => setShowAddTemplate(false)} className="px-5 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm font-bold">Hủy</button>
                 </div>
@@ -3863,28 +3947,109 @@ export default function AdminDashboard() {
                 {skillTemplates.map(t => (
                   <div key={t.id} className="p-3 rounded-lg bg-black/20 border border-white/5">
                     {editingTemplateId === t.id ? (
-                      <div className="space-y-2">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <input type="text" value={editTemplate.name ?? ''} onChange={e => setEditTemplate({ ...editTemplate, name: e.target.value })} placeholder="Tên" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
-                          <input type="text" value={editTemplate.category ?? ''} onChange={e => setEditTemplate({ ...editTemplate, category: e.target.value })} placeholder="Nhóm" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
-                          <textarea value={editTemplate.usage_detail ?? ''} onChange={e => setEditTemplate({ ...editTemplate, usage_detail: e.target.value })} placeholder="Cách sử dụng" rows={2} className="sm:col-span-2 px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
-                          <textarea value={editTemplate.effect ?? ''} onChange={e => setEditTemplate({ ...editTemplate, effect: e.target.value })} placeholder="Hiệu quả" rows={2} className="sm:col-span-2 px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
-                          <textarea value={editTemplate.tradeoff ?? ''} onChange={e => setEditTemplate({ ...editTemplate, tradeoff: e.target.value })} placeholder="Đánh đổi" rows={2} className="sm:col-span-2 px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
-                          <input type="number" min={0} value={editTemplate.cong_duc_cost ?? 0} onChange={e => setEditTemplate({ ...editTemplate, cong_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} placeholder="Công đức" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
-                          <input type="number" min={0} value={editTemplate.am_duc_cost ?? 0} onChange={e => setEditTemplate({ ...editTemplate, am_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} placeholder="Âm đức" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
-                          <input type="text" value={editTemplate.duration ?? ''} onChange={e => setEditTemplate({ ...editTemplate, duration: e.target.value })} placeholder="Thời gian" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
-                          <div className="sm:col-span-2"><StatusTagSelector category="mental" value={editTemplate.mental_effect ?? ''} onChange={v => setEditTemplate({ ...editTemplate, mental_effect: v })} compact /></div>
-                          <input type="number" min={0} max={50} value={editTemplate.mental_duration ?? 0} onChange={e => setEditTemplate({ ...editTemplate, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} placeholder="TG tinh thần" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
-                          <div className="sm:col-span-2"><StatusTagSelector category="health" value={editTemplate.health_effect ?? ''} onChange={v => setEditTemplate({ ...editTemplate, health_effect: v })} compact /></div>
-                          <input type="number" min={0} max={50} value={editTemplate.health_duration ?? 0} onChange={e => setEditTemplate({ ...editTemplate, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} placeholder="TG sức khỏe" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
-                          <div className="sm:col-span-2"><StatusTagSelector category="spiritual" value={editTemplate.spiritual_effect ?? ''} onChange={v => setEditTemplate({ ...editTemplate, spiritual_effect: v })} compact /></div>
-                          <input type="number" min={0} max={50} value={editTemplate.spiritual_duration ?? 0} onChange={e => setEditTemplate({ ...editTemplate, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} placeholder="TG tâm linh" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
-                          <textarea value={editTemplate.ghost_level_effect ?? ''} onChange={e => setEditTemplate({ ...editTemplate, ghost_level_effect: e.target.value })} placeholder="Cấp quỷ" rows={2} className="sm:col-span-2 px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
-                          <input type="number" min={0} max={100} value={editTemplate.destruction_percent ?? 0} onChange={e => setEditTemplate({ ...editTemplate, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })} placeholder="% Tiêu diệt" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                      <div className="space-y-4 p-4 rounded-lg bg-black/30 border border-amber-500/20">
+                        {/* Tên kỹ năng + Nhóm */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className={labelCls}>Tên kỹ năng</label>
+                            <input type="text" value={editTemplate.name ?? ''} onChange={e => setEditTemplate({ ...editTemplate, name: e.target.value })} className={inputCls} />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Nhóm (tùy chọn)</label>
+                            <input type="text" value={editTemplate.category ?? ''} onChange={e => setEditTemplate({ ...editTemplate, category: e.target.value })} className={inputCls} />
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => handleSaveEditTemplate(t.id)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold"><Save className="w-3.5 h-3.5" /> Lưu</button>
-                          <button onClick={() => { setEditingTemplateId(null); setEditTemplate({}); }} className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold">Hủy</button>
+
+                        {/* Chi tiết cách sử dụng */}
+                        <div>
+                          <label className={labelCls}>Chi tiết cách sử dụng</label>
+                          <textarea value={editTemplate.usage_detail ?? ''} onChange={e => setEditTemplate({ ...editTemplate, usage_detail: e.target.value })} rows={3} className={inputCls} />
+                        </div>
+
+                        {/* Hiệu quả */}
+                        <div>
+                          <label className={labelCls}>Hiệu quả</label>
+                          <textarea value={editTemplate.effect ?? ''} onChange={e => setEditTemplate({ ...editTemplate, effect: e.target.value })} rows={3} className={inputCls} />
+                        </div>
+
+                        {/* Đánh đổi */}
+                        <div>
+                          <label className={labelCls}>Đánh đổi</label>
+                          <textarea value={editTemplate.tradeoff ?? ''} onChange={e => setEditTemplate({ ...editTemplate, tradeoff: e.target.value })} rows={2} className={inputCls} />
+                        </div>
+
+                        {/* Tiêu hao công đức + âm đức */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className={labelCls}>Tiêu hao công đức</label>
+                            <input type="number" min={0} value={editTemplate.cong_duc_cost ?? 0} onChange={e => setEditTemplate({ ...editTemplate, cong_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} className={inputCls} />
+                          </div>
+                          <div>
+                            <label className={labelCls}>Tiêu hao âm đức</label>
+                            <input type="number" min={0} value={editTemplate.am_duc_cost ?? 0} onChange={e => setEditTemplate({ ...editTemplate, am_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} className={inputCls} />
+                          </div>
+                        </div>
+
+                        {/* Thời gian duy trì */}
+                        <div>
+                          <label className={labelCls}>Thời gian duy trì</label>
+                          <input type="text" value={editTemplate.duration ?? ''} onChange={e => setEditTemplate({ ...editTemplate, duration: e.target.value })} className={inputCls} />
+                        </div>
+
+                        {/* Ảnh hưởng tinh thần */}
+                        <div className="rounded-lg border border-white/10 p-3 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Brain className="w-4 h-4 text-purple-400" />
+                            <span className="text-sm font-semibold text-purple-300">Ảnh hưởng tinh thần</span>
+                          </div>
+                          <StatusTagSelector category="mental" value={editTemplate.mental_effect ?? ''} onChange={v => setEditTemplate({ ...editTemplate, mental_effect: v })} />
+                          <div>
+                            <label className={labelCls}>Thời gian ảnh hưởng tinh thần (tối đa 50)</label>
+                            <input type="number" min={0} max={50} value={editTemplate.mental_duration ?? 0} onChange={e => setEditTemplate({ ...editTemplate, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
+                          </div>
+                        </div>
+
+                        {/* Ảnh hưởng sức khỏe */}
+                        <div className="rounded-lg border border-white/10 p-3 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Heart className="w-4 h-4 text-red-400" />
+                            <span className="text-sm font-semibold text-red-300">Ảnh hưởng sức khỏe</span>
+                          </div>
+                          <StatusTagSelector category="health" value={editTemplate.health_effect ?? ''} onChange={v => setEditTemplate({ ...editTemplate, health_effect: v })} />
+                          <div>
+                            <label className={labelCls}>Thời gian ảnh hưởng sức khỏe (tối đa 50)</label>
+                            <input type="number" min={0} max={50} value={editTemplate.health_duration ?? 0} onChange={e => setEditTemplate({ ...editTemplate, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
+                          </div>
+                        </div>
+
+                        {/* Ảnh hưởng tâm linh */}
+                        <div className="rounded-lg border border-white/10 p-3 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Sparkle className="w-4 h-4 text-amber-400" />
+                            <span className="text-sm font-semibold text-amber-300">Ảnh hưởng tâm linh</span>
+                          </div>
+                          <StatusTagSelector category="spiritual" value={editTemplate.spiritual_effect ?? ''} onChange={v => setEditTemplate({ ...editTemplate, spiritual_effect: v })} />
+                          <div>
+                            <label className={labelCls}>Thời gian ảnh hưởng tâm linh (tối đa 50)</label>
+                            <input type="number" min={0} max={50} value={editTemplate.spiritual_duration ?? 0} onChange={e => setEditTemplate({ ...editTemplate, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
+                          </div>
+                        </div>
+
+                        {/* Ảnh hưởng lên từng cấp quỷ */}
+                        <div>
+                          <label className={labelCls}>Ảnh hưởng lên từng cấp quỷ</label>
+                          <textarea value={editTemplate.ghost_level_effect ?? ''} onChange={e => setEditTemplate({ ...editTemplate, ghost_level_effect: e.target.value })} rows={2} className={inputCls} />
+                        </div>
+
+                        {/* Gây bao nhiêu % tiêu diệt */}
+                        <div>
+                          <label className={labelCls}>Gây bao nhiêu % tiêu diệt (0-100)</label>
+                          <input type="number" min={0} max={100} value={editTemplate.destruction_percent ?? 0} onChange={e => setEditTemplate({ ...editTemplate, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
+                        </div>
+
+                        <div className="flex gap-2 pt-1">
+                          <button onClick={() => handleSaveEditTemplate(t.id)} className="flex items-center gap-1 px-4 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold"><Save className="w-3.5 h-3.5" /> Lưu</button>
+                          <button onClick={() => { setEditingTemplateId(null); setEditTemplate({}); }} className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold">Hủy</button>
                         </div>
                       </div>
                     ) : (
