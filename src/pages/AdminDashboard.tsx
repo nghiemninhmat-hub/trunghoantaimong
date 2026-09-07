@@ -2035,7 +2035,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tab Bar — horizontal scroll on mobile, wrap on desktop */}
-      <div className="flex items-center gap-1 overflow-x-auto border-b border-white/10 pb-2 -mx-2 px-2 sm:flex-wrap sm:mx-0 sm:px-0">
+      <div className="flex flex-wrap items-center gap-1 border-b border-white/10 pb-2 -mx-2 px-2 sm:mx-0 sm:px-0">
         {tabs.map(tab => {
           const Icon = tab.icon;
           return (
