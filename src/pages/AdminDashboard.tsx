@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote, Organization, OrganizationMember, Title, UserTitle, TITLE_COLORS, Coupon, SkillTemplate } from '@/lib/supabase';
+import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote, Organization, OrganizationMember, Title, UserTitle, TITLE_COLORS, Coupon, SkillTemplate, OrgTreasury, OrgTreasuryLog } from '@/lib/supabase';
 import {
   Shield, Users, Coins, Store, BookOpen, Ghost, Check, X, Plus, Trash2,
   AlertCircle, CheckCircle2, History, Edit3, Eye, EyeOff, Dices, Package,
@@ -149,6 +149,13 @@ export default function AdminDashboard() {
   const [newMemberUserId, setNewMemberUserId] = useState('');
   const [newMemberRole, setNewMemberRole] = useState('Thành viên');
   const [newOrgMembers, setNewOrgMembers] = useState<{ user_id: string; role: string; oc_name: string }[]>([]);
+  const [orgTreasuries, setOrgTreasuries] = useState<Record<string, OrgTreasury>>({});
+  const [orgTreasuryLogs, setOrgTreasuryLogs] = useState<Record<string, OrgTreasuryLog[]>>({});
+  const [orgTreasuryAdjustOrgId, setOrgTreasuryAdjustOrgId] = useState<string | null>(null);
+  const [orgTreasuryCurrency, setOrgTreasuryCurrency] = useState('HUA_TIEN');
+  const [orgTreasuryAmount, setOrgTreasuryAmount] = useState(0);
+  const [orgTreasuryReason, setOrgTreasuryReason] = useState('');
+  const [orgTreasuryMode, setOrgTreasuryMode] = useState<'add' | 'subtract'>('add');
 
   // Broadcast & bulk grant
   const [broadcastTitle, setBroadcastTitle] = useState('');
@@ -539,7 +546,7 @@ export default function AdminDashboard() {
   };
 
   const fetchAllData = useCallback(async () => {
-    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData, titlesData, couponData, skillTemplateData] = await Promise.all([
+    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData, titlesData, couponData, skillTemplateData, orgTreasData, orgTreasLogData] = await Promise.all([
       supabase.from('profiles').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').eq('is_approved', true).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
@@ -560,6 +567,8 @@ export default function AdminDashboard() {
       supabase.from('titles').select('*').order('created_at', { ascending: false }),
       supabase.from('coupons').select('*, profiles(oc_name)').order('created_at', { ascending: false }),
       supabase.from('skill_templates').select('*').order('created_at', { ascending: false }),
+      supabase.from('organization_treasuries').select('*'),
+      supabase.from('organization_treasury_logs').select('*').order('created_at', { ascending: false }).limit(200),
     ]);
     if (titlesData?.data) setTitles(titlesData.data as Title[]);
     if (couponData?.data) setCoupons(couponData.data as (Coupon & { profiles?: { oc_name: string } | null })[]);
@@ -574,6 +583,19 @@ export default function AdminDashboard() {
         memMap[m.organization_id].push(m);
       });
       setOrgMembers(memMap);
+    }
+    if (orgTreasData?.data) {
+      const tMap: Record<string, OrgTreasury> = {};
+      (orgTreasData.data as OrgTreasury[]).forEach(t => { tMap[t.organization_id] = t; });
+      setOrgTreasuries(tMap);
+    }
+    if (orgTreasLogData?.data) {
+      const lMap: Record<string, OrgTreasuryLog[]> = {};
+      (orgTreasLogData.data as OrgTreasuryLog[]).forEach(l => {
+        if (!lMap[l.organization_id]) lMap[l.organization_id] = [];
+        lMap[l.organization_id].push(l);
+      });
+      setOrgTreasuryLogs(lMap);
     }
     if (kimBang?.data) setKimBangEntries(kimBang.data as KimBangEntry[]);
     if (pending.data) setPendingProfiles(pending.data as Profile[]);
@@ -1681,6 +1703,30 @@ export default function AdminDashboard() {
   const adminName = (id: string | null) => allProfiles.find(p => p.id === id)?.oc_name || (id ? id.slice(0, 8) : '—');
 
   // ===== Organization handlers =====
+  const handleAdminAdjustOrgTreasury = async (orgId: string) => {
+    if (!orgTreasuryAmount || orgTreasuryAmount <= 0) { setOrgMsg('Vui lòng nhập số lượng hợp lệ.'); return; }
+    if (!orgTreasuryReason.trim()) { setOrgMsg('Vui lòng nhập lý do.'); return; }
+    const signedAmount = orgTreasuryMode === 'subtract' ? -orgTreasuryAmount : orgTreasuryAmount;
+    const { data, error } = await supabase.rpc('admin_adjust_org_treasury', {
+      p_org_id: orgId,
+      p_currency_type: orgTreasuryCurrency,
+      p_amount: signedAmount,
+      p_reason: orgTreasuryReason.trim(),
+    });
+    if (error) { setOrgMsg(`Lỗi: ${error.message}`); return; }
+    if (data && !data.success) { setOrgMsg(`Lỗi: ${data.error}`); return; }
+    const org = organizations.find(o => o.id === orgId);
+    logAction('adjust_org_treasury', undefined, `${orgTreasuryMode === 'add' ? 'Cộng' : 'Trừ'} ${orgTreasuryAmount} ${CURRENCY_LABELS[orgTreasuryCurrency]} vào tổ chức "${org?.name || ''}"`, { org_id: orgId, currency: orgTreasuryCurrency, amount: signedAmount, reason: orgTreasuryReason });
+    setOrgMsg(`Đã ${orgTreasuryMode === 'add' ? 'cộng' : 'trừ'} ${orgTreasuryAmount} ${CURRENCY_LABELS[orgTreasuryCurrency]} vào tổ chức.`);
+    setOrgTreasuryAdjustOrgId(null);
+    setOrgTreasuryAmount(0);
+    setOrgTreasuryReason('');
+    setOrgTreasuryMode('add');
+    setOrgTreasuryCurrency('HUA_TIEN');
+    setTimeout(() => setOrgMsg(''), 4000);
+    fetchAllData();
+  };
+
   const handleAddOrg = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newOrg.name.trim()) return;
@@ -5001,6 +5047,77 @@ export default function AdminDashboard() {
                               ))}
                             </div>
                           )}
+                        </div>
+
+                        {/* Treasury section */}
+                        <div className="border-t border-white/5 pt-3">
+                          <div className="flex items-center justify-between gap-2 mb-3">
+                            <p className="text-[10px] uppercase tracking-wider text-gray-500 flex items-center gap-1">
+                              <Coins className="w-3 h-3" /> Tài sản chung
+                            </p>
+                            <button
+                              onClick={() => setOrgTreasuryAdjustOrgId(orgTreasuryAdjustOrgId === org.id ? null : org.id)}
+                              className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-amber-300 transition-all"
+                            >
+                              {orgTreasuryAdjustOrgId === org.id ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />} {orgTreasuryAdjustOrgId === org.id ? 'Hủy' : 'Cộng/Trừ'}
+                            </button>
+                          </div>
+
+                          {(() => {
+                            const treas = orgTreasuries[org.id];
+                            const treasLogs = orgTreasuryLogs[org.id] || [];
+                            return (
+                              <>
+                                <div className="grid grid-cols-3 gap-2 mb-3">
+                                  {(['HUA_TIEN', 'CONG_DUC', 'AM_DUC'] as const).map(ct => {
+                                    const val = treas ? (treas as Record<string, number>)[ct.toLowerCase()] || 0 : 0;
+                                    return (
+                                      <div key={ct} className="rounded-lg bg-black/30 border border-white/5 p-2 text-center">
+                                        <p className="text-[10px] text-gray-500 uppercase tracking-wider">{CURRENCY_LABELS[ct]}</p>
+                                        <p className="text-sm font-bold text-amber-200/90 tabular-nums">{val.toLocaleString('vi-VN')}</p>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                {orgTreasuryAdjustOrgId === org.id && (
+                                  <div className="p-3 rounded-lg bg-black/30 border border-white/5 space-y-2 mb-3">
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                      <select value={orgTreasuryCurrency} onChange={e => setOrgTreasuryCurrency(e.target.value)} className={`${inputCls} flex-1`}>
+                                        <option value="HUA_TIEN">Hoa Tiền</option>
+                                        <option value="CONG_DUC">Công Đức</option>
+                                        <option value="AM_DUC">Âm Đức</option>
+                                      </select>
+                                      <select value={orgTreasuryMode} onChange={e => setOrgTreasuryMode(e.target.value as 'add' | 'subtract')} className={`${inputCls} sm:w-28`}>
+                                        <option value="add">Cộng</option>
+                                        <option value="subtract">Trừ</option>
+                                      </select>
+                                      <input type="number" min={1} value={orgTreasuryAmount || ''} onChange={e => setOrgTreasuryAmount(parseInt(e.target.value) || 0)} placeholder="Số lượng" className={`${inputCls} sm:w-28`} />
+                                    </div>
+                                    <input type="text" value={orgTreasuryReason} onChange={e => setOrgTreasuryReason(e.target.value)} placeholder="Lý do" className={inputCls} />
+                                    <button onClick={() => handleAdminAdjustOrgTreasury(org.id)} className="w-full px-3 py-2 rounded-lg bg-[#670201] hover:bg-[#a00404] text-amber-100 text-xs font-bold transition-all">
+                                      Xác nhận
+                                    </button>
+                                  </div>
+                                )}
+
+                                {treasLogs.length > 0 && (
+                                  <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                                    {treasLogs.slice(0, 10).map(log => (
+                                      <div key={log.id} className="flex items-center gap-2 p-2 rounded-lg bg-black/20 border border-white/5">
+                                        <span className={`text-xs font-bold flex-shrink-0 ${log.amount > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                          {log.amount > 0 ? '+' : ''}{log.amount.toLocaleString('vi-VN')}
+                                        </span>
+                                        <span className="text-[10px] text-gray-500 flex-shrink-0">{CURRENCY_LABELS[log.currency_type] || log.currency_type}</span>
+                                        <span className="text-xs text-gray-400 truncate flex-1">{log.reason}</span>
+                                        <span className="text-[10px] text-gray-600 flex-shrink-0">{log.actor_name || '—'}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}

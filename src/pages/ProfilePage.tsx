@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Transaction, InventoryItem, CURRENCY_LABELS, Organization, UserTitle, TITLE_COLORS } from '@/lib/supabase';
+import { supabase, Transaction, InventoryItem, CURRENCY_LABELS, Organization, UserTitle, TITLE_COLORS, OrgTreasury, OrgTreasuryLog } from '@/lib/supabase';
 import { StatCard, StatGrid } from '@/components/StatCard';
 import {
   UserCircle, Coins, Sparkles, Skull, Package, History, Edit3,
@@ -75,16 +75,42 @@ export default function ProfilePage() {
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [transactionsOpen, setTransactionsOpen] = useState(false);
 
+  // Org treasury contribution
+  const [orgTreasuries, setOrgTreasuries] = useState<Record<string, OrgTreasury>>({});
+  const [orgTreasuryLogs, setOrgTreasuryLogs] = useState<Record<string, OrgTreasuryLog[]>>({});
+  const [contribOrgId, setContribOrgId] = useState<string | null>(null);
+  const [contribCurrency, setContribCurrency] = useState('HUA_TIEN');
+  const [contribAmount, setContribAmount] = useState('');
+  const [contribReason, setContribReason] = useState('');
+  const [contribMode, setContribMode] = useState<'add' | 'subtract'>('add');
+  const [contributing, setContributing] = useState(false);
+  const [contribError, setContribError] = useState('');
+
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [txRes, invRes, orgRes, titlesRes, skillRes] = await Promise.all([
+    const [txRes, invRes, orgRes, titlesRes, skillRes, treasRes, treasLogRes] = await Promise.all([
       supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
       supabase.from('inventories').select('*, shop_items(*)').eq('user_id', user.id).order('acquired_at', { ascending: false }),
       supabase.from('organization_members').select('role, organization_id, organizations(id, name, category, leader_id)').eq('user_id', user.id),
       supabase.from('user_titles').select('*, titles(*)').eq('user_id', user.id).order('granted_at', { ascending: false }),
       supabase.from('character_skills').select('*').eq('user_id', user.id).order('slot', { ascending: true }),
+      supabase.from('organization_treasuries').select('*'),
+      supabase.from('organization_treasury_logs').select('*').order('created_at', { ascending: false }).limit(100),
     ]);
+    if (treasRes.data) {
+      const tMap: Record<string, OrgTreasury> = {};
+      (treasRes.data as OrgTreasury[]).forEach(t => { tMap[t.organization_id] = t; });
+      setOrgTreasuries(tMap);
+    }
+    if (treasLogRes.data) {
+      const lMap: Record<string, OrgTreasuryLog[]> = {};
+      (treasLogRes.data as OrgTreasuryLog[]).forEach(l => {
+        if (!lMap[l.organization_id]) lMap[l.organization_id] = [];
+        lMap[l.organization_id].push(l);
+      });
+      setOrgTreasuryLogs(lMap);
+    }
     if (txRes.error) {
       console.error('Lỗi tải giao dịch:', txRes.error.message);
     } else {
@@ -299,6 +325,50 @@ export default function ProfilePage() {
       setTransferError(err.message || 'Chuyển khoản thất bại. Vui lòng thử lại.');
     } finally {
       setTransferring(false);
+    }
+  };
+
+  const handleContributeOrg = async (orgId: string) => {
+    if (!user || !profile) return;
+    setContributing(true);
+    setContribError('');
+    try {
+      const rawAmount = parseInt(contribAmount, 10);
+      if (isNaN(rawAmount) || rawAmount <= 0) {
+        setContribError('Vui lòng nhập số lượng hợp lệ.');
+        setContributing(false);
+        return;
+      }
+      if (!contribReason.trim()) {
+        setContribError('Vui lòng nhập lý do.');
+        setContributing(false);
+        return;
+      }
+      const signedAmount = contribMode === 'subtract' ? -rawAmount : rawAmount;
+      const { data, error: rpcError } = await supabase.rpc('contribute_org_treasury', {
+        p_org_id: orgId,
+        p_currency_type: contribCurrency,
+        p_amount: signedAmount,
+        p_reason: contribReason.trim(),
+      });
+      if (rpcError) throw rpcError;
+      if (data && !data.success) {
+        setContribError(data.error || 'Thao tác thất bại.');
+        setContributing(false);
+        return;
+      }
+      setMessage('Giao dịch tài sản tổ chức thành công!');
+      setContribOrgId(null);
+      setContribAmount('');
+      setContribReason('');
+      setContribMode('add');
+      setContribCurrency('HUA_TIEN');
+      await refreshProfile();
+      await fetchData();
+    } catch (err: any) {
+      setContribError(err.message || 'Thao tác thất bại.');
+    } finally {
+      setContributing(false);
     }
   };
 
@@ -1030,6 +1100,100 @@ export default function ProfilePage() {
           <p className="text-xs text-gray-600 mt-3">Bấm nút để bật/tắt hiển thị. Chọn tối đa 3 danh hiệu để hiển thị trên hồ sơ, hoặc tắt tất cả nếu không muốn dùng.</p>
         )}
       </div>
+
+      {/* Organization Treasury */}
+      {myOrgs.length > 0 && (
+        <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
+          <div className="flex items-center gap-2 mb-4">
+            <Building2 className="w-5 h-5 text-amber-300/70" />
+            <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Tài Sản Tổ Chức</h3>
+          </div>
+          <div className="space-y-3">
+            {myOrgs.map(o => {
+              const treas = orgTreasuries[o.id];
+              const treasLogs = orgTreasuryLogs[o.id] || [];
+              const isLeader = o.leader_id === user?.id;
+              return (
+                <div key={o.id} className="p-3 rounded-lg bg-black/20 border border-white/5">
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-amber-300/60" />
+                      <span className="text-sm font-bold text-amber-100/90">{o.name}</span>
+                      {o.role && o.role !== 'Thành viên' && (
+                        <span className="text-[10px] text-amber-300/60">· {o.role}</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setContribOrgId(contribOrgId === o.id ? null : o.id)}
+                      className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-amber-300 transition-all"
+                    >
+                      {contribOrgId === o.id ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                      {contribOrgId === o.id ? 'Hủy' : 'Đóng góp / Rút'}
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 mb-3">
+                    {(['HUA_TIEN', 'CONG_DUC', 'AM_DUC'] as const).map(ct => {
+                      const val = treas ? (treas as Record<string, number>)[ct.toLowerCase()] || 0 : 0;
+                      return (
+                        <div key={ct} className="rounded-lg bg-black/30 border border-white/5 p-2 text-center">
+                          <p className="text-[10px] text-gray-500 uppercase tracking-wider">{CURRENCY_LABELS[ct]}</p>
+                          <p className="text-sm font-bold text-amber-200/90 tabular-nums">{val.toLocaleString('vi-VN')}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {contribOrgId === o.id && (
+                    <div className="p-3 rounded-lg bg-black/30 border border-white/5 space-y-2 mb-3">
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <select value={contribCurrency} onChange={e => setContribCurrency(e.target.value)} className="flex-1 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-[#670201]/50">
+                          <option value="HUA_TIEN">Hoa Tiền</option>
+                          <option value="CONG_DUC">Công Đức</option>
+                          <option value="AM_DUC">Âm Đức</option>
+                        </select>
+                        <select value={contribMode} onChange={e => setContribMode(e.target.value as 'add' | 'subtract')} className="sm:w-28 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-[#670201]/50">
+                          <option value="add">Đóng góp</option>
+                          <option value="subtract">Rút ra</option>
+                        </select>
+                        <input type="number" min={1} value={contribAmount} onChange={e => setContribAmount(e.target.value)} placeholder="Số lượng" className="sm:w-28 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-[#670201]/50" />
+                      </div>
+                      <input type="text" value={contribReason} onChange={e => setContribReason(e.target.value)} placeholder="Lý do" className="w-full px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-[#670201]/50" />
+                      {contribMode === 'subtract' && !isLeader && (
+                        <p className="text-xs text-amber-400">Chỉ người đứng đầu tổ chức mới được rút tài sản.</p>
+                      )}
+                      {contribError && <p className="text-xs text-red-400">{contribError}</p>}
+                      <button
+                        onClick={() => handleContributeOrg(o.id)}
+                        disabled={contributing || (contribMode === 'subtract' && !isLeader)}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#670201] hover:bg-[#a00404] text-amber-100 text-sm font-bold rounded-lg transition-all disabled:opacity-50"
+                      >
+                        {contributing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        Xác nhận
+                      </button>
+                    </div>
+                  )}
+
+                  {treasLogs.length > 0 && (
+                    <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                      {treasLogs.slice(0, 5).map(log => (
+                        <div key={log.id} className="flex items-center gap-2 p-2 rounded-lg bg-black/20 border border-white/5">
+                          <span className={`text-xs font-bold flex-shrink-0 ${log.amount > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                            {log.amount > 0 ? '+' : ''}{log.amount.toLocaleString('vi-VN')}
+                          </span>
+                          <span className="text-[10px] text-gray-500 flex-shrink-0">{CURRENCY_LABELS[log.currency_type] || log.currency_type}</span>
+                          <span className="text-xs text-gray-400 truncate flex-1">{log.reason}</span>
+                          <span className="text-[10px] text-gray-600 flex-shrink-0">{log.actor_name || '—'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Transaction History */}
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
