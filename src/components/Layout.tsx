@@ -92,7 +92,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </nav>
 
             {/* Search Bar */}
-            {profile && <div className="hidden xl:block w-44 xl:w-56"><SearchBar /></div>
+            {profile && <div className="hidden xl:block w-44 xl:w-56"><SearchBar /></div>}
 
             {/* Right side */}
             <div className="flex shrink-0 items-center gap-1 sm:gap-2">
