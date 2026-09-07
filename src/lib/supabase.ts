@@ -385,6 +385,28 @@ export interface Coupon {
   profiles?: { oc_name: string } | null;
 }
 
+export interface SkillTemplate {
+  id: string;
+  name: string;
+  usage_detail: string;
+  effect: string;
+  tradeoff: string;
+  cong_duc_cost: number;
+  am_duc_cost: number;
+  duration: string;
+  mental_effect: string;
+  mental_duration: number;
+  health_effect: string;
+  health_duration: number;
+  spiritual_effect: string;
+  spiritual_duration: number;
+  ghost_level_effect: string;
+  destruction_percent: number;
+  category: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export type WillStatus = 'pending' | 'approved' | 'revision_requested' | 'rejected';
 
 export interface Will {

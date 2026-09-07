@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote, Organization, OrganizationMember, Title, UserTitle, TITLE_COLORS, Coupon } from '@/lib/supabase';
+import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote, Organization, OrganizationMember, Title, UserTitle, TITLE_COLORS, Coupon, SkillTemplate } from '@/lib/supabase';
 import {
   Shield, Users, Coins, Store, BookOpen, Ghost, Check, X, Plus, Trash2,
   AlertCircle, CheckCircle2, History, Edit3, Eye, EyeOff, Dices, Package,
   Heart, Sparkle, Brain, Lock, Unlock, FileWarning, Crown, Save, ScrollText,
   Undo2, RotateCcw, Search, UserSearch, ArrowLeft, ChevronDown, ChevronUp, FileSignature, Info,
   Download, FileDown, Loader2, Archive, Settings, Clock, Building2, UserCog, Megaphone, Send, Award, Tag,
-  Zap, ToggleLeft, ToggleRight, Ticket,
+  Zap, ToggleLeft, ToggleRight, Ticket, Sparkles,
 } from 'lucide-react';
 import { LotusIcon } from '@/components/LotusIcon';
 import ConfirmDialog from '@/components/ConfirmDialog';
@@ -22,7 +22,7 @@ const STATUS_TAGS = [
   { value: 'Ngưỡng sinh tử', label: 'Thẻ tím đậm', badgeClass: 'bg-purple-700/20 text-purple-400', activeClass: 'bg-purple-700/30 border-purple-700/50 text-purple-300', idleClass: 'bg-purple-700/5 border-purple-700/15 text-purple-500/70' },
 ];
 
-type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wheel' | 'wills' | 'settings' | 'organizations' | 'broadcast' | 'titles' | 'coupons';
+type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wheel' | 'wills' | 'settings' | 'organizations' | 'broadcast' | 'titles' | 'coupons' | 'nghiepthuat';
 
 export default function AdminDashboard() {
   const { profile, isAdmin } = useAuth();
@@ -182,6 +182,16 @@ export default function AdminDashboard() {
   // Backup / export
   const [exporting, setExporting] = useState(false);
   const [exportMsg, setExportMsg] = useState('');
+
+  // Skill Templates (Nghiệp Thuật)
+  const [skillTemplates, setSkillTemplates] = useState<SkillTemplate[]>([]);
+  const [showAddTemplate, setShowAddTemplate] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [editTemplate, setEditTemplate] = useState<Partial<SkillTemplate>>({});
+  const [templateMsg, setTemplateMsg] = useState('');
+  const [assignTemplateId, setAssignTemplateId] = useState<string | null>(null);
+  const [assignTargetUserId, setAssignTargetUserId] = useState('');
+  const [assignSlot, setAssignSlot] = useState(1);
 
   // Coupons
   const [coupons, setCoupons] = useState<(Coupon & { profiles?: { oc_name: string } | null })[]>([]);
@@ -429,7 +439,7 @@ export default function AdminDashboard() {
   };
 
   const fetchAllData = useCallback(async () => {
-    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData, titlesData, couponData] = await Promise.all([
+    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData, titlesData, couponData, skillTemplateData] = await Promise.all([
       supabase.from('profiles').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').eq('is_approved', true).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
@@ -449,9 +459,11 @@ export default function AdminDashboard() {
       supabase.from('organization_members').select('*, profiles(oc_name)').order('created_at', { ascending: true }),
       supabase.from('titles').select('*').order('created_at', { ascending: false }),
       supabase.from('coupons').select('*, profiles(oc_name)').order('created_at', { ascending: false }),
+      supabase.from('skill_templates').select('*').order('created_at', { ascending: false }),
     ]);
     if (titlesData?.data) setTitles(titlesData.data as Title[]);
     if (couponData?.data) setCoupons(couponData.data as (Coupon & { profiles?: { oc_name: string } | null })[]);
+    if (skillTemplateData?.data) setSkillTemplates(skillTemplateData.data as SkillTemplate[]);
     if (willData?.data) setWills(willData.data as Will[]);
     if (bachHoaData?.data) setBachHoaEntries(bachHoaData.data as BachHoaEntry[]);
     if (orgData?.data) setOrganizations(orgData.data as (Organization & { leader?: { oc_name: string } | null })[]);
