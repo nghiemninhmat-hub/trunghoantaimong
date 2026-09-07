@@ -57,7 +57,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#170b09]/80 border-b border-[#b73720]/30">
         <div className="mx-auto w-full max-w-[1500px] px-3 sm:px-6">
-          <div className="flex min-h-14 items-center justify-between gap-2 py-1 sm:min-h-16">
+          <div className="flex min-h-14 items-center justify-between gap-3 py-1 sm:min-h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 group flex-shrink-0">
               <div className="relative flex h-8 w-8 items-center justify-center overflow-visible rounded-full border border-[#f6ca62]/70 bg-gradient-to-br from-[#c84a24] via-[#8f2418] to-[#4a120d] shadow-[0_0_0_3px_rgba(238,179,55,0.07),0_0_18px_rgba(183,55,32,0.38)] transition-all group-hover:shadow-[0_0_0_3px_rgba(238,179,55,0.14),0_0_26px_rgba(238,179,55,0.3)] before:pointer-events-none before:absolute before:inset-[3px] before:rounded-full before:border before:border-[#f6ca62]/25 before:content-[''] after:pointer-events-none after:absolute after:-inset-1 after:rounded-full after:border after:border-[#f6ca62]/20 after:rotate-[23deg] after:content-[''] sm:h-9 sm:w-9">
@@ -69,31 +69,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </Link>
 
-            {/* Desktop Nav */}
-            <nav className="hidden lg:flex min-w-0 flex-1 items-center justify-center gap-0.5 px-1 py-1">
-              {allNavItems.map(item => {
-                const Icon = item.icon;
-                const active = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    title={item.label}
-                    className={`flex flex-shrink-0 items-center justify-center gap-1 rounded-sm border-b px-1.5 py-2 text-[10px] font-medium whitespace-nowrap transition-colors duration-300 xl:px-2.5 xl:text-xs ${
-                      active
-                        ? 'border-[#eeb337]/70 bg-[#8f2418]/25 text-[#fff1cf] shadow-inner' 
-                        : 'border-transparent text-[#c9b493]/70 hover:border-[#eeb337]/35 hover:bg-[#eeb337]/10 hover:text-[#fff1cf]'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5 xl:w-4 xl:h-4 flex-shrink-0" />
-                    <span className="hidden 2xl:inline">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-
             {/* Search Bar */}
-            {profile && <div className="hidden xl:block w-44 xl:w-56"><SearchBar /></div>}
+            {profile && <div className="hidden md:block w-44 xl:w-56"><SearchBar /></div>}
 
             {/* Right side */}
             <div className="flex shrink-0 items-center gap-1 sm:gap-2">
@@ -166,7 +143,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
                 aria-label={mobileOpen ? 'Đóng menu' : 'Mở menu'}
-                className="lg:hidden flex items-center gap-1.5 p-1.5 rounded-sm text-[#c9b493] hover:text-[#fff1cf] hover:bg-[#eeb337]/10 transition-colors"
+                className="flex items-center gap-1.5 p-1.5 rounded-sm text-[#c9b493] hover:text-[#fff1cf] hover:bg-[#eeb337]/10 transition-colors"
               >
                 {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 <span className="hidden sm:inline text-xs font-medium">Menu</span>
@@ -175,11 +152,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* Mobile Nav */}
+        {/* Dropdown Nav (all screens) */}
         {mobileOpen && (
-          <nav className="lg:hidden border-t border-[#eeb337]/15 bg-[#170b09]/95 backdrop-blur-xl">
-            {profile && <div className="px-4 pt-3 pb-2 mb-1 border-b border-[#eeb337]/15"><SearchBar /></div>}
-            <div className="px-4 py-3 space-y-1 max-h-[calc(100vh-12rem)] overflow-y-auto">
+          <nav className="border-t border-[#eeb337]/15 bg-[#170b09]/95 backdrop-blur-xl">
+            {profile && <div className="md:hidden px-4 pt-3 pb-2 mb-1 border-b border-[#eeb337]/15"><SearchBar /></div>}
+            <div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1.5 max-h-[calc(100vh-12rem)] overflow-y-auto">
               {allNavItems.map(item => {
                 const Icon = item.icon;
                 const active = location.pathname === item.path;
@@ -188,14 +165,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     key={item.path}
                     to={item.path}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-all ${
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-sm text-sm font-medium transition-all ${
                       active
                         ? 'bg-[#8f2418]/30 text-[#fff1cf] border-l-2 border-[#eeb337]/60'
                         : 'text-[#c9b493]/70 hover:text-[#fff1cf] hover:bg-[#eeb337]/10'
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
-                    <span className="inline">{item.label}</span>
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{item.label}</span>
                   </Link>
                 );
               })}
