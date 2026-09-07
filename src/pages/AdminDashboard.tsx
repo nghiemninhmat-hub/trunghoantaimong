@@ -753,6 +753,19 @@ export default function AdminDashboard() {
     const feedback = reviewFeedback[userId]?.trim();
     const targetUser = pendingProfiles.find(p => p.id === userId);
     const name = targetUser?.oc_name || userId.slice(0, 8);
+
+    // Auto-save any skill being edited for this user before approving
+    if (editingSkillId) {
+      const userSkills = (allSkills[userId] || []) as Record<string, unknown>[];
+      const editingSkill = userSkills.find(sk => sk.id === editingSkillId);
+      if (editingSkill) {
+        await supabase.from('character_skills').update(editSkillDraft).eq('id', editingSkillId);
+        setEditingSkillId(null);
+        setEditSkillDraft({});
+        setAllSkills(prev => { const n = { ...prev }; delete n[userId]; return n; });
+      }
+    }
+
     const { error } = await supabase.rpc('admin_approve_user', {
       p_user_id: userId, p_admin_id: profile?.id,
     });
