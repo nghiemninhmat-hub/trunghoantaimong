@@ -13,6 +13,7 @@ import { LotusIcon } from '@/components/LotusIcon';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import PlayerDetailCard from '@/components/PlayerDetailCard';
 import StatusTagSelector from '@/components/StatusTagSelector';
+import NghiepThuatAdmin from '@/components/admin/NghiepThuatAdmin';
 
 const STATUS_TAGS = [
   { value: 'Bình Thường', label: 'Thẻ lá', badgeClass: 'bg-emerald-500/20 text-emerald-300', activeClass: 'bg-emerald-500/30 border-emerald-500/50 text-emerald-200', idleClass: 'bg-emerald-500/5 border-emerald-500/15 text-emerald-400/70' },
@@ -3815,367 +3816,35 @@ export default function AdminDashboard() {
 
       {/* Nghiep Thuat Tab */}
       {activeTab === 'nghiepthuat' && (
-        <div className="space-y-6">
-          {templateMsg && (
-            <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${templateMsg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
-              {templateMsg.startsWith('Lỗi') ? <AlertCircle className="w-4 h-4 flex-shrink-0" /> : <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
-              {templateMsg}
-            </div>
-          )}
-
-          {/* Assign template to player */}
-          <div className={cardCls}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/15 flex items-center justify-center flex-shrink-0">
-                <UserSearch className="w-5 h-5 text-cyan-300" />
-              </div>
-              <div>
-                <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80">Cấp Kỹ Năng Từ Mẫu</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Chọn mẫu từ thư viện, chọn người chơi và slot (1-4) để cấp hoặc ghi đè kỹ năng.</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <select value={assignTemplateId || ''} onChange={e => setAssignTemplateId(e.target.value || null)} className={inputCls}>
-                <option value="">Chọn mẫu kỹ năng...</option>
-                {skillTemplates.map(t => (
-                  <option key={t.id} value={t.id}>{t.name}{t.oc_name ? ` — ${t.oc_name}` : ''}{t.category ? ` (${t.category})` : ''}</option>
-                ))}
-              </select>
-              <select value={assignTargetUserId} onChange={e => { const userId = e.target.value; setAssignTargetUserId(userId); if (userId) fetchSkillsForUser(userId); }} className={inputCls}>
-                <option value="">Chọn người chơi...</option>
-                {allProfiles.map(p => (
-                  <option key={p.id} value={p.id}>{p.oc_name} · {p.email}</option>
-                ))}
-              </select>
-              <select value={assignSlot} onChange={e => setAssignSlot(Math.min(4, Math.max(1, parseInt(e.target.value) || 1)))} className={inputCls}>
-                <option value={1}>Slot 1</option>
-                <option value={2}>Slot 2</option>
-                <option value={3}>Slot 3</option>
-                <option value={4}>Slot 4</option>
-              </select>
-              <button onClick={handleAssignTemplate} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-200 text-sm font-bold rounded-lg border border-cyan-500/30 transition-all">
-                <Sparkles className="w-4 h-4" /> Cấp Kỹ Năng
-              </button>
-            </div>
-
-            {assignTargetUserId && (() => {
-              const target = allProfiles.find(p => p.id === assignTargetUserId);
-              const currentSkills = (allSkills[assignTargetUserId] || []) as Record<string, unknown>[];
-              return (
-                <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.03] p-3 sm:p-4">
-                  <div className="flex items-start justify-between gap-2 mb-3">
-                    <div className="min-w-0">
-                      <p className="text-xs uppercase tracking-wider text-cyan-300/70">Người chơi đang quản trị</p>
-                      <p className="text-sm font-bold text-amber-100/90 truncate">{target?.oc_name || 'Chưa có tên OC'}</p>
-                      <p className="text-xs text-gray-500 truncate">Tài khoản: {target?.email || assignTargetUserId}</p>
-                    </div>
-                    <span className="text-[10px] px-2 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 whitespace-nowrap flex-shrink-0">
-                      {currentSkills.length}/4 slot đã dùng
-                    </span>
-                  </div>
-                  {currentSkills.length === 0 ? (
-                    <p className="text-xs text-gray-500 italic">Tài khoản này chưa được cấp kỹ năng nào.</p>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-2">
-                      {currentSkills.map(skill => (
-                        <div key={String(skill.id)} className="rounded-lg bg-black/25 border border-white/5 p-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-bold text-amber-100/90 truncate">Slot {String(skill.slot)} · {String(skill.name || 'Chưa đặt tên')}</span>
-                            <button
-                              type="button"
-                              onClick={() => setAssignSlot(Number(skill.slot) || 1)}
-                              className="text-[10px] text-cyan-300 hover:text-cyan-100 transition-colors"
-                            >Chọn slot</button>
-                          </div>
-                          {skill.effect ? <p className="text-[11px] text-gray-400 mt-1 line-clamp-2">{String(skill.effect)}</p> : null}
-                          <div className="flex flex-wrap gap-2 mt-2 text-[10px] text-gray-600">
-                            {Number(skill.cong_duc_cost) > 0 && <span>Công đức: {String(skill.cong_duc_cost)}</span>}
-                            {Number(skill.am_duc_cost) > 0 && <span>Âm đức: {String(skill.am_duc_cost)}</span>}
-                            {Number(skill.destruction_percent) > 0 && <span>Tiêu diệt: {String(skill.destruction_percent)}%</span>}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-          </div>
-
-          {/* Add template form */}
-          <div className={cardCls}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-5 h-5 text-amber-300" />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80">Thư Viện Mẫu Kỹ Năng</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Tạo mẫu kỹ năng tái sử dụng để cấp nhanh cho người chơi.</p>
-                </div>
-              </div>
-              <button onClick={() => setShowAddTemplate(!showAddTemplate)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#670201]/20 hover:bg-[#670201]/30 text-amber-100 text-sm font-bold border border-[#670201]/30 transition-all">
-                <Plus className="w-4 h-4" /> Thêm Mẫu
-              </button>
-            </div>
-
-            {showAddTemplate && (
-              <form onSubmit={handleAddTemplate} className="mb-6 p-5 rounded-xl bg-black/30 border border-amber-500/20 space-y-5">
-                {/* Tên kỹ năng + Nhóm */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className={labelCls}>Tên kỹ năng</label>
-                    <input type="text" placeholder="vd: Đồng Sinh..." value={newTemplate.name} onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })} required className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Nhóm (tùy chọn)</label>
-                    <input type="text" placeholder="vd: Y sư, Đạo sĩ..." value={newTemplate.category} onChange={e => setNewTemplate({ ...newTemplate, category: e.target.value })} className={inputCls} />
-                  </div>
-                </div>
-
-                {/* Chi tiết cách sử dụng */}
-                <div>
-                  <label className={labelCls}>Chi tiết cách sử dụng</label>
-                  <textarea placeholder="Mô tả chi tiết cách sử dụng kỹ năng..." value={newTemplate.usage_detail} onChange={e => setNewTemplate({ ...newTemplate, usage_detail: e.target.value })} rows={3} className={inputCls} />
-                </div>
-
-                {/* Hiệu quả */}
-                <div>
-                  <label className={labelCls}>Hiệu quả</label>
-                  <textarea placeholder="Mô tả hiệu quả của kỹ năng..." value={newTemplate.effect} onChange={e => setNewTemplate({ ...newTemplate, effect: e.target.value })} rows={3} className={inputCls} />
-                </div>
-
-                {/* Đánh đổi */}
-                <div>
-                  <label className={labelCls}>Đánh đổi</label>
-                  <textarea placeholder="vd: Không thể sử dụng trong 2-3-4 dị sự liên tiếp..." value={newTemplate.tradeoff} onChange={e => setNewTemplate({ ...newTemplate, tradeoff: e.target.value })} rows={2} className={inputCls} />
-                </div>
-
-                {/* Tiêu hao công đức + âm đức */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className={labelCls}>Tiêu hao công đức</label>
-                    <input type="number" min={0} value={newTemplate.cong_duc_cost} onChange={e => setNewTemplate({ ...newTemplate, cong_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} className={inputCls} />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Tiêu hao âm đức</label>
-                    <input type="number" min={0} value={newTemplate.am_duc_cost} onChange={e => setNewTemplate({ ...newTemplate, am_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} className={inputCls} />
-                  </div>
-                </div>
-
-                {/* Thời gian duy trì */}
-                <div>
-                  <label className={labelCls}>Thời gian duy trì</label>
-                  <input type="text" placeholder="vd: 3 dị sự, 1 ngày..." value={newTemplate.duration} onChange={e => setNewTemplate({ ...newTemplate, duration: e.target.value })} className={inputCls} />
-                </div>
-
-                {/* Ảnh hưởng tinh thần */}
-                <div className="rounded-lg border border-white/10 p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Brain className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm font-semibold text-purple-300">Ảnh hưởng tinh thần</span>
-                    <span className="text-[10px] text-gray-500">(chọn tag phù hợp)</span>
-                  </div>
-                  <StatusTagSelector category="mental" value={newTemplate.mental_effect} onChange={v => setNewTemplate({ ...newTemplate, mental_effect: v })} />
-                  <div>
-                    <label className={labelCls}>Thời gian ảnh hưởng tinh thần (tính bình luận, tối đa 50)</label>
-                    <input type="number" min={0} max={50} value={newTemplate.mental_duration} onChange={e => setNewTemplate({ ...newTemplate, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
-                  </div>
-                </div>
-
-                {/* Ảnh hưởng sức khỏe */}
-                <div className="rounded-lg border border-white/10 p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Heart className="w-4 h-4 text-red-400" />
-                    <span className="text-sm font-semibold text-red-300">Ảnh hưởng sức khỏe</span>
-                    <span className="text-[10px] text-gray-500">(chọn tag phù hợp)</span>
-                  </div>
-                  <StatusTagSelector category="health" value={newTemplate.health_effect} onChange={v => setNewTemplate({ ...newTemplate, health_effect: v })} />
-                  <div>
-                    <label className={labelCls}>Thời gian ảnh hưởng sức khỏe (tính bình luận, tối đa 50)</label>
-                    <input type="number" min={0} max={50} value={newTemplate.health_duration} onChange={e => setNewTemplate({ ...newTemplate, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
-                  </div>
-                </div>
-
-                {/* Ảnh hưởng tâm linh */}
-                <div className="rounded-lg border border-white/10 p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkle className="w-4 h-4 text-amber-400" />
-                    <span className="text-sm font-semibold text-amber-300">Ảnh hưởng tâm linh</span>
-                    <span className="text-[10px] text-gray-500">(chọn tag phù hợp)</span>
-                  </div>
-                  <StatusTagSelector category="spiritual" value={newTemplate.spiritual_effect} onChange={v => setNewTemplate({ ...newTemplate, spiritual_effect: v })} />
-                  <div>
-                    <label className={labelCls}>Thời gian ảnh hưởng tâm linh (tính bình luận, tối đa 50)</label>
-                    <input type="number" min={0} max={50} value={newTemplate.spiritual_duration} onChange={e => setNewTemplate({ ...newTemplate, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
-                  </div>
-                </div>
-
-                {/* Ảnh hưởng lên từng cấp quỷ */}
-                <div>
-                  <label className={labelCls}>Ảnh hưởng lên từng cấp quỷ</label>
-                  <textarea placeholder="vd: Quỷ cấp 1: 100%, cấp 2: 80%, cấp 3: 50%..." value={newTemplate.ghost_level_effect} onChange={e => setNewTemplate({ ...newTemplate, ghost_level_effect: e.target.value })} rows={2} className={inputCls} />
-                </div>
-
-                {/* Gây bao nhiêu % tiêu diệt */}
-                <div>
-                  <label className={labelCls}>Gây bao nhiêu % tiêu diệt (0-100)</label>
-                  <input type="number" min={0} max={100} value={newTemplate.destruction_percent} onChange={e => setNewTemplate({ ...newTemplate, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button type="submit" className="flex items-center gap-2 px-5 py-2.5 bg-[#670201] hover:bg-[#a00404] text-amber-100 text-sm font-bold rounded-lg transition-all"><Save className="w-4 h-4" /> Lưu Mẫu</button>
-                  <button type="button" onClick={() => setShowAddTemplate(false)} className="px-5 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm font-bold">Hủy</button>
-                </div>
-              </form>
-            )}
-
-            {/* Template list */}
-            {skillTemplates.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-8">Chưa có mẫu kỹ năng nào. Bấm "Thêm Mẫu" để tạo.</p>
-            ) : (
-              <div className="space-y-2">
-                {skillTemplates.map(t => (
-                  <div key={t.id} className="p-3 rounded-lg bg-black/20 border border-white/5">
-                    {editingTemplateId === t.id ? (
-                      <div className="space-y-4 p-4 rounded-lg bg-black/30 border border-amber-500/20">
-                        {/* Tên kỹ năng + Nhóm */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className={labelCls}>Tên kỹ năng</label>
-                            <input type="text" value={editTemplate.name ?? ''} onChange={e => setEditTemplate({ ...editTemplate, name: e.target.value })} className={inputCls} />
-                          </div>
-                          <div>
-                            <label className={labelCls}>Nhóm (tùy chọn)</label>
-                            <input type="text" value={editTemplate.category ?? ''} onChange={e => setEditTemplate({ ...editTemplate, category: e.target.value })} className={inputCls} />
-                          </div>
-                        </div>
-
-                        {/* Chi tiết cách sử dụng */}
-                        <div>
-                          <label className={labelCls}>Chi tiết cách sử dụng</label>
-                          <textarea value={editTemplate.usage_detail ?? ''} onChange={e => setEditTemplate({ ...editTemplate, usage_detail: e.target.value })} rows={3} className={inputCls} />
-                        </div>
-
-                        {/* Hiệu quả */}
-                        <div>
-                          <label className={labelCls}>Hiệu quả</label>
-                          <textarea value={editTemplate.effect ?? ''} onChange={e => setEditTemplate({ ...editTemplate, effect: e.target.value })} rows={3} className={inputCls} />
-                        </div>
-
-                        {/* Đánh đổi */}
-                        <div>
-                          <label className={labelCls}>Đánh đổi</label>
-                          <textarea value={editTemplate.tradeoff ?? ''} onChange={e => setEditTemplate({ ...editTemplate, tradeoff: e.target.value })} rows={2} className={inputCls} />
-                        </div>
-
-                        {/* Tiêu hao công đức + âm đức */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className={labelCls}>Tiêu hao công đức</label>
-                            <input type="number" min={0} value={editTemplate.cong_duc_cost ?? 0} onChange={e => setEditTemplate({ ...editTemplate, cong_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} className={inputCls} />
-                          </div>
-                          <div>
-                            <label className={labelCls}>Tiêu hao âm đức</label>
-                            <input type="number" min={0} value={editTemplate.am_duc_cost ?? 0} onChange={e => setEditTemplate({ ...editTemplate, am_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} className={inputCls} />
-                          </div>
-                        </div>
-
-                        {/* Thời gian duy trì */}
-                        <div>
-                          <label className={labelCls}>Thời gian duy trì</label>
-                          <input type="text" value={editTemplate.duration ?? ''} onChange={e => setEditTemplate({ ...editTemplate, duration: e.target.value })} className={inputCls} />
-                        </div>
-
-                        {/* Ảnh hưởng tinh thần */}
-                        <div className="rounded-lg border border-white/10 p-3 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Brain className="w-4 h-4 text-purple-400" />
-                            <span className="text-sm font-semibold text-purple-300">Ảnh hưởng tinh thần</span>
-                          </div>
-                          <StatusTagSelector category="mental" value={editTemplate.mental_effect ?? ''} onChange={v => setEditTemplate({ ...editTemplate, mental_effect: v })} />
-                          <div>
-                            <label className={labelCls}>Thời gian ảnh hưởng tinh thần (tối đa 50)</label>
-                            <input type="number" min={0} max={50} value={editTemplate.mental_duration ?? 0} onChange={e => setEditTemplate({ ...editTemplate, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
-                          </div>
-                        </div>
-
-                        {/* Ảnh hưởng sức khỏe */}
-                        <div className="rounded-lg border border-white/10 p-3 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Heart className="w-4 h-4 text-red-400" />
-                            <span className="text-sm font-semibold text-red-300">Ảnh hưởng sức khỏe</span>
-                          </div>
-                          <StatusTagSelector category="health" value={editTemplate.health_effect ?? ''} onChange={v => setEditTemplate({ ...editTemplate, health_effect: v })} />
-                          <div>
-                            <label className={labelCls}>Thời gian ảnh hưởng sức khỏe (tối đa 50)</label>
-                            <input type="number" min={0} max={50} value={editTemplate.health_duration ?? 0} onChange={e => setEditTemplate({ ...editTemplate, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
-                          </div>
-                        </div>
-
-                        {/* Ảnh hưởng tâm linh */}
-                        <div className="rounded-lg border border-white/10 p-3 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Sparkle className="w-4 h-4 text-amber-400" />
-                            <span className="text-sm font-semibold text-amber-300">Ảnh hưởng tâm linh</span>
-                          </div>
-                          <StatusTagSelector category="spiritual" value={editTemplate.spiritual_effect ?? ''} onChange={v => setEditTemplate({ ...editTemplate, spiritual_effect: v })} />
-                          <div>
-                            <label className={labelCls}>Thời gian ảnh hưởng tâm linh (tối đa 50)</label>
-                            <input type="number" min={0} max={50} value={editTemplate.spiritual_duration ?? 0} onChange={e => setEditTemplate({ ...editTemplate, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
-                          </div>
-                        </div>
-
-                        {/* Ảnh hưởng lên từng cấp quỷ */}
-                        <div>
-                          <label className={labelCls}>Ảnh hưởng lên từng cấp quỷ</label>
-                          <textarea value={editTemplate.ghost_level_effect ?? ''} onChange={e => setEditTemplate({ ...editTemplate, ghost_level_effect: e.target.value })} rows={2} className={inputCls} />
-                        </div>
-
-                        {/* Gây bao nhiêu % tiêu diệt */}
-                        <div>
-                          <label className={labelCls}>Gây bao nhiêu % tiêu diệt (0-100)</label>
-                          <input type="number" min={0} max={100} value={editTemplate.destruction_percent ?? 0} onChange={e => setEditTemplate({ ...editTemplate, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} />
-                        </div>
-
-                        <div className="flex gap-2 pt-1">
-                          <button onClick={() => handleSaveEditTemplate(t.id)} className="flex items-center gap-1 px-4 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold"><Save className="w-3.5 h-3.5" /> Lưu</button>
-                          <button onClick={() => { setEditingTemplateId(null); setEditTemplate({}); }} className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold">Hủy</button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-bold text-amber-100/90">{t.name}</span>
-                            {t.category && <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300">{t.category}</span>}
-                            {t.destruction_percent > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300">{t.destruction_percent}% tiêu diệt</span>}
-                            {t.phe_duyet && (
-                              <span className={`text-[10px] px-1.5 py-0.5 rounded ${t.phe_duyet === 'Đã duyệt' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-orange-500/15 text-orange-300'}`}>{t.phe_duyet}</span>
-                            )}
-                          </div>
-                          {t.effect && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{t.effect}</p>}
-                          <div className="flex items-center gap-3 mt-1 text-[10px] text-gray-600">
-                            {t.oc_name && <span className="inline-flex items-center gap-0.5 text-amber-400/70"><User className="w-2.5 h-2.5" />OC: {t.oc_name}</span>}
-                            {t.account && <span>Tài khoản: {t.account}</span>}
-                            {t.nghe && <span>Nghề: {t.nghe}</span>}
-                            {(t.cong_duc_cost > 0 || t.am_duc_cost > 0) && <span>Chi phí: {t.cong_duc_cost > 0 ? `${t.cong_duc_cost} Công đức` : ''}{t.cong_duc_cost > 0 && t.am_duc_cost > 0 ? ' + ' : ''}{t.am_duc_cost > 0 ? `${t.am_duc_cost} Âm đức` : ''}</span>}
-                            {t.duration && <span>Thời gian: {t.duration}</span>}
-                            <span>{new Date(t.created_at).toLocaleDateString('vi-VN')}</span>
-                          </div>
-                        </div>
-                        <div className="flex gap-1.5 flex-shrink-0">
-                          <button onClick={() => handleEditTemplate(t)} className="p-2 text-gray-500 hover:text-amber-300 hover:bg-amber-500/10 rounded-lg transition-all" title="Sửa"><Edit3 className="w-4 h-4" /></button>
-                          <button onClick={() => handleDeleteTemplate(t.id, t.name)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Xóa"><Trash2 className="w-4 h-4" /></button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <NghiepThuatAdmin
+          skillTemplates={skillTemplates}
+          allProfiles={allProfiles}
+          allSkills={allSkills}
+          templateMsg={templateMsg}
+          showAddTemplate={showAddTemplate}
+          setShowAddTemplate={setShowAddTemplate}
+          editingTemplateId={editingTemplateId}
+          setEditingTemplateId={setEditingTemplateId}
+          editTemplate={editTemplate}
+          setEditTemplate={setEditTemplate}
+          newTemplate={newTemplate}
+          setNewTemplate={setNewTemplate}
+          assignTemplateId={assignTemplateId}
+          setAssignTemplateId={setAssignTemplateId}
+          assignTargetUserId={assignTargetUserId}
+          setAssignTargetUserId={setAssignTargetUserId}
+          assignSlot={assignSlot}
+          setAssignSlot={setAssignSlot}
+          onAdd={handleAddTemplate}
+          onEdit={handleEditTemplate}
+          onSaveEdit={handleSaveEditTemplate}
+          onDelete={handleDeleteTemplate}
+          onAssign={handleAssignTemplate}
+          fetchSkillsForUser={fetchSkillsForUser}
+          inputCls={inputCls}
+          labelCls={labelCls}
+          cardCls={cardCls}
+        />
       )}
 
       {/* Audit Log Tab */}
