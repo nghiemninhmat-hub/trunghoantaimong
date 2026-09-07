@@ -801,6 +801,28 @@ export default function AdminDashboard() {
     fetchAllData();
   };
 
+  const handleApproveSkill = async (skillId: string) => {
+    const { error } = await supabase.from('character_skills').update({
+      skill_status: 'approved',
+      skill_reviewed_at: new Date().toISOString(),
+      skill_reviewed_by: profile?.id,
+    }).eq('id', skillId);
+    if (error) { setReviewMsg(`Lỗi: ${error.message}`); return; }
+    setAllSkills({});
+    fetchAllData();
+  };
+
+  const handleRejectSkill = async (skillId: string) => {
+    const { error } = await supabase.from('character_skills').update({
+      skill_status: 'rejected',
+      skill_reviewed_at: new Date().toISOString(),
+      skill_reviewed_by: profile?.id,
+    }).eq('id', skillId);
+    if (error) { setReviewMsg(`Lỗi: ${error.message}`); return; }
+    setAllSkills({});
+    fetchAllData();
+  };
+
   const handleAddSkill = async (userId: string) => {
     const existing = allSkills[userId] || [];
     const nextSlot = existing.length + 1;
@@ -2127,7 +2149,12 @@ export default function AdminDashboard() {
                         ) : (
                           (allSkills[p.id] as Record<string, unknown>[]).map((sk) => (
                             <div key={sk.id as string} className="p-2.5 rounded-lg bg-black/20 border border-white/5">
-                              <p className="text-xs font-bold text-amber-100/80">{sk.name as string}</p>
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs font-bold text-amber-100/80">{sk.name as string}</p>
+                                {(sk.skill_status as string) === 'approved' && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold">Đã duyệt</span>}
+                                {(sk.skill_status as string) === 'rejected' && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-500/15 border border-red-500/30 text-red-300 font-bold">Từ chối</span>}
+                                {(!sk.skill_status || sk.skill_status === 'pending') && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 font-bold">Chưa duyệt</span>}
+                              </div>
                               <div className="mt-1 space-y-0.5 text-[10px] text-gray-500">
                                 {sk.usage_detail ? <p><span className="text-gray-600">Cách dùng:</span> {sk.usage_detail as string}</p> : null}
                                 {sk.effect ? <p><span className="text-gray-600">Hiệu quả:</span> {sk.effect as string}</p> : null}
@@ -2143,7 +2170,13 @@ export default function AdminDashboard() {
                                 {sk.spiritual_effect ? <p><span className="text-gray-600">Tâm linh:</span> {sk.spiritual_effect as string} ({sk.spiritual_duration as number}đv)</p> : null}
                                 {sk.ghost_level_effect ? <p><span className="text-gray-600">Cấp quỷ:</span> {sk.ghost_level_effect as string}</p> : null}
                               </div>
-                              <div className="flex gap-1.5 mt-1.5">
+                              <div className="flex gap-1.5 mt-1.5 flex-wrap">
+                                <button onClick={() => handleApproveSkill(sk.id as string)} className="flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-[10px] font-bold transition-all" title="Duyệt kỹ năng">
+                                  <Check className="w-3 h-3" /> Duyệt
+                                </button>
+                                <button onClick={() => handleRejectSkill(sk.id as string)} className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-bold transition-all" title="Từ chối kỹ năng">
+                                  <X className="w-3 h-3" /> Từ chối
+                                </button>
                                 <button onClick={() => { setEditingSkillId(sk.id as string); setEditSkillDraft({ ...sk }); }} className="flex items-center gap-1 px-2 py-1 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-[10px] font-bold transition-all">
                                   <Edit3 className="w-3 h-3" /> Sửa
                                 </button>
