@@ -29,6 +29,7 @@ type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'b
 export default function AdminDashboard() {
   const { profile, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('accounts');
+  const [tabMenuOpen, setTabMenuOpen] = useState(false);
 
   // Data states
   const [pendingProfiles, setPendingProfiles] = useState<Profile[]>([]);
@@ -2034,34 +2035,68 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Tab Bar — horizontal scroll on mobile, wrap on desktop */}
-      <div className="flex flex-wrap items-center gap-1 border-b border-white/10 pb-2 -mx-2 px-2 sm:mx-0 sm:px-0">
-        {tabs.map(tab => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
-                activeTab === tab.id
-                  ? 'bg-[#670201]/30 text-amber-100'
-                  : 'text-gray-400 hover:text-amber-100 hover:bg-white/5'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              {tab.label}
-              {tab.id === 'accounts' && pendingProfiles.length > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 text-xs">{pendingProfiles.length}</span>
-              )}
-              {tab.id === 'wanted' && pendingNotices.length > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 text-xs">{pendingNotices.length}</span>
-              )}
-              {tab.id === 'wills' && wills.filter(w => w.status === 'pending').length > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 text-xs">{wills.filter(w => w.status === 'pending').length}</span>
-              )}
-            </button>
-          );
-        })}
+      {/* Tab Bar — dropdown menu */}
+      <div className="relative border-b border-white/10 pb-2">
+        <button
+          onClick={() => setTabMenuOpen(o => !o)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#670201]/30 text-amber-100 text-sm font-medium transition-all w-full sm:w-auto justify-between sm:justify-start"
+        >
+          {(() => {
+            const activeTabDef = tabs.find(t => t.id === activeTab);
+            const Icon = activeTabDef?.icon;
+            return (
+              <>
+                {Icon && <Icon className="w-4 h-4 flex-shrink-0" />}
+                <span className="flex items-center gap-2">
+                  {activeTabDef?.label}
+                  {activeTab === 'accounts' && pendingProfiles.length > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 text-xs">{pendingProfiles.length}</span>
+                  )}
+                  {activeTab === 'wanted' && pendingNotices.length > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 text-xs">{pendingNotices.length}</span>
+                  )}
+                  {activeTab === 'wills' && wills.filter(w => w.status === 'pending').length > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 text-xs">{wills.filter(w => w.status === 'pending').length}</span>
+                  )}
+                </span>
+              </>
+            );
+          })()}
+          {tabMenuOpen ? <ChevronUp className="w-4 h-4 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 flex-shrink-0" />}
+        </button>
+        {tabMenuOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setTabMenuOpen(false)} />
+            <div className="absolute top-full left-0 right-0 sm:right-auto mt-1 z-50 rounded-xl bg-[#1a0c08] border border-amber-500/20 shadow-2xl shadow-black/50 overflow-hidden max-h-[70vh] overflow-y-auto">
+              {tabs.map(tab => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => { setActiveTab(tab.id); setTabMenuOpen(false); }}
+                    className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-all w-full text-left whitespace-nowrap ${
+                      activeTab === tab.id
+                        ? 'bg-[#670201]/30 text-amber-100'
+                        : 'text-gray-400 hover:text-amber-100 hover:bg-white/5'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    {tab.label}
+                    {tab.id === 'accounts' && pendingProfiles.length > 0 && (
+                      <span className="ml-auto px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 text-xs">{pendingProfiles.length}</span>
+                    )}
+                    {tab.id === 'wanted' && pendingNotices.length > 0 && (
+                      <span className="ml-auto px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 text-xs">{pendingNotices.length}</span>
+                    )}
+                    {tab.id === 'wills' && wills.filter(w => w.status === 'pending').length > 0 && (
+                      <span className="ml-auto px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 text-xs">{wills.filter(w => w.status === 'pending').length}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Accounts Tab */}
