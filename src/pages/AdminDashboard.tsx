@@ -1657,6 +1657,7 @@ export default function AdminDashboard() {
     { id: 'lookup', label: 'Tra Cứu', icon: UserSearch },
     { id: 'wheel', label: 'Vòng Quay', icon: Dices },
     { id: 'accounts', label: 'Phê Duyệt', icon: Users },
+    { id: 'nghiepthuat', label: 'Nghiệp Thuật', icon: Sparkles },
     { id: 'shop', label: 'Thương Thành', icon: Store },
     { id: 'pages', label: 'Bách Khoa', icon: BookOpen },
     { id: 'wanted', label: 'Truy Nã', icon: FileWarning },
@@ -1668,7 +1669,6 @@ export default function AdminDashboard() {
     { id: 'broadcast', label: 'Phát Thông Báo', icon: Megaphone },
     { id: 'titles', label: 'Danh Hiệu', icon: Award },
     { id: 'coupons', label: 'Phiếu Giảm Giá', icon: Ticket },
-    { id: 'nghiepthuat', label: 'Nghiệp Thuật', icon: Sparkles },
     { id: 'audit', label: 'Nhật Ký', icon: ScrollText },
     { id: 'settings', label: 'Cài Đặt & Sao Lưu', icon: Settings },
   ];
