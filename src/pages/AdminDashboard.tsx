@@ -3743,7 +3743,7 @@ export default function AdminDashboard() {
                 <p className="text-xs text-gray-500 mt-0.5">Chọn mẫu từ thư viện, chọn người chơi và slot (1-4) để cấp hoặc ghi đè kỹ năng.</p>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <select value={assignTemplateId || ''} onChange={e => setAssignTemplateId(e.target.value || null)} className={inputCls}>
                 <option value="">Chọn mẫu kỹ năng...</option>
                 {skillTemplates.map(t => (
@@ -3771,21 +3771,21 @@ export default function AdminDashboard() {
               const target = allProfiles.find(p => p.id === assignTargetUserId);
               const currentSkills = (allSkills[assignTargetUserId] || []) as Record<string, unknown>[];
               return (
-                <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.03] p-4">
-                  <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.03] p-3 sm:p-4">
+                  <div className="flex items-start justify-between gap-2 mb-3">
                     <div className="min-w-0">
                       <p className="text-xs uppercase tracking-wider text-cyan-300/70">Người chơi đang quản trị</p>
                       <p className="text-sm font-bold text-amber-100/90 truncate">{target?.oc_name || 'Chưa có tên OC'}</p>
                       <p className="text-xs text-gray-500 truncate">Tài khoản: {target?.email || assignTargetUserId}</p>
                     </div>
-                    <span className="text-[10px] px-2 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 whitespace-nowrap">
+                    <span className="text-[10px] px-2 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 whitespace-nowrap flex-shrink-0">
                       {currentSkills.length}/4 slot đã dùng
                     </span>
                   </div>
                   {currentSkills.length === 0 ? (
                     <p className="text-xs text-gray-500 italic">Tài khoản này chưa được cấp kỹ năng nào.</p>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 gap-2">
                       {currentSkills.map(skill => (
                         <div key={String(skill.id)} className="rounded-lg bg-black/25 border border-white/5 p-3">
                           <div className="flex items-center justify-between gap-2">
