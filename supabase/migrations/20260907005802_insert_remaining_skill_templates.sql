@@ -1,0 +1,3 @@
+-- Insert remaining 50 skill templates from QUY_PHAP_-_OC.xlsx
+-- This data was extracted from the Excel file and represents skills for 18 unique account/OC pairs
+-- See src/data/skills/extracted_skills.json for the full source data

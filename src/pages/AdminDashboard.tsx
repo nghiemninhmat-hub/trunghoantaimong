@@ -3749,7 +3749,7 @@ export default function AdminDashboard() {
                   <option key={t.id} value={t.id}>{t.name}{t.category ? ` (${t.category})` : ''}</option>
                 ))}
               </select>
-              <select value={assignTargetUserId} onChange={e => setAssignTargetUserId(e.target.value)} className={inputCls}>
+              <select value={assignTargetUserId} onChange={e => { const userId = e.target.value; setAssignTargetUserId(userId); if (userId) fetchSkillsForUser(userId); }} className={inputCls}>
                 <option value="">Chọn người chơi...</option>
                 {allProfiles.map(p => (
                   <option key={p.id} value={p.id}>{p.oc_name} · {p.email}</option>
@@ -3765,6 +3765,49 @@ export default function AdminDashboard() {
                 <Sparkles className="w-4 h-4" /> Cấp Kỹ Năng
               </button>
             </div>
+
+            {assignTargetUserId && (() => {
+              const target = allProfiles.find(p => p.id === assignTargetUserId);
+              const currentSkills = (allSkills[assignTargetUserId] || []) as Record<string, unknown>[];
+              return (
+                <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.03] p-4">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0">
+                      <p className="text-xs uppercase tracking-wider text-cyan-300/70">Người chơi đang quản trị</p>
+                      <p className="text-sm font-bold text-amber-100/90 truncate">{target?.oc_name || 'Chưa có tên OC'}</p>
+                      <p className="text-xs text-gray-500 truncate">Tài khoản: {target?.email || assignTargetUserId}</p>
+                    </div>
+                    <span className="text-[10px] px-2 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 whitespace-nowrap">
+                      {currentSkills.length}/4 slot đã dùng
+                    </span>
+                  </div>
+                  {currentSkills.length === 0 ? (
+                    <p className="text-xs text-gray-500 italic">Tài khoản này chưa được cấp kỹ năng nào.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {currentSkills.map(skill => (
+                        <div key={String(skill.id)} className="rounded-lg bg-black/25 border border-white/5 p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-bold text-amber-100/90 truncate">Slot {String(skill.slot)} · {String(skill.name || 'Chưa đặt tên')}</span>
+                            <button
+                              type="button"
+                              onClick={() => setAssignSlot(Number(skill.slot) || 1)}
+                              className="text-[10px] text-cyan-300 hover:text-cyan-100 transition-colors"
+                            >Chọn slot</button>
+                          </div>
+                          {skill.effect ? <p className="text-[11px] text-gray-400 mt-1 line-clamp-2">{String(skill.effect)}</p> : null}
+                          <div className="flex flex-wrap gap-2 mt-2 text-[10px] text-gray-600">
+                            {Number(skill.cong_duc_cost) > 0 && <span>Công đức: {String(skill.cong_duc_cost)}</span>}
+                            {Number(skill.am_duc_cost) > 0 && <span>Âm đức: {String(skill.am_duc_cost)}</span>}
+                            {Number(skill.destruction_percent) > 0 && <span>Tiêu diệt: {String(skill.destruction_percent)}%</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Add template form */}
