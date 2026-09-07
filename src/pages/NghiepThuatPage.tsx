@@ -285,19 +285,19 @@ function SkillCard({ skill, isAdmin }: { skill: SkillWithOc; isAdmin: boolean })
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-serif font-bold text-amber-200/90 truncate">{skill.name}</h4>
-            {skill.nghe && (
-              <p className="text-[10px] text-gray-500 mt-0.5">{skill.nghe}</p>
-            )}
+            <div className="flex items-center gap-2 mt-0.5">
+              {skill.nghe && (
+                <p className="text-[10px] text-gray-500">{skill.nghe}</p>
+              )}
+              {isAdmin && skill.oc_name && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                  <User className="w-2.5 h-2.5 flex-shrink-0" />
+                  <span className="truncate">{skill.oc_name}</span>
+                </span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {isAdmin && skill.oc_name && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-300">
-                <User className="w-2.5 h-2.5" />
-                {skill.oc_name}
-              </span>
-            )}
-            <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
-          </div>
+          <ChevronDown className={`flex-shrink-0 w-4 h-4 text-gray-500 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
         </div>
       </button>
 
@@ -407,7 +407,7 @@ function SkillListSection({ isAdmin }: { isAdmin: boolean }) {
 
   const grouped = new Map<string, SkillWithOc[]>();
   filtered.forEach(s => {
-    const key = s.oc_name || 'Không xác định';
+    const key = s.nghe || 'Không xác định';
     if (!grouped.has(key)) grouped.set(key, []);
     grouped.get(key)!.push(s);
   });
@@ -453,17 +453,15 @@ function SkillListSection({ isAdmin }: { isAdmin: boolean }) {
         </div>
       ) : (
         <div className="space-y-4">
-          {Array.from(grouped.entries()).map(([ocName, ocSkills]) => (
-            <div key={ocName} className="space-y-2">
-              {isAdmin && (
-                <div className="flex items-center gap-2 px-2">
-                  <User className="w-3 h-3 text-amber-400/60" />
-                  <span className="text-xs font-serif font-bold text-amber-300/60">{ocName}</span>
-                  <span className="text-[10px] text-gray-600">· {ocSkills.length} kỹ năng</span>
-                </div>
-              )}
+          {Array.from(grouped.entries()).map(([nghe, ngheSkills]) => (
+            <div key={nghe} className="space-y-2">
+              <div className="flex items-center gap-2 px-2 pt-1">
+                <BookOpen className="w-3 h-3 text-amber-400/60" />
+                <span className="text-xs font-serif font-bold text-amber-300/60">{nghe}</span>
+                <span className="text-[10px] text-gray-600">· {ngheSkills.length} kỹ năng</span>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {ocSkills.map(skill => (
+                {ngheSkills.map(skill => (
                   <SkillCard key={skill.id} skill={skill} isAdmin={isAdmin} />
                 ))}
               </div>
