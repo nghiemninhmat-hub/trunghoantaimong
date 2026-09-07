@@ -3747,7 +3747,7 @@ export default function AdminDashboard() {
               <select value={assignTemplateId || ''} onChange={e => setAssignTemplateId(e.target.value || null)} className={inputCls}>
                 <option value="">Chọn mẫu kỹ năng...</option>
                 {skillTemplates.map(t => (
-                  <option key={t.id} value={t.id}>{t.name}{t.category ? ` (${t.category})` : ''}</option>
+                  <option key={t.id} value={t.id}>{t.name}{t.oc_name ? ` — ${t.oc_name}` : ''}{t.category ? ` (${t.category})` : ''}</option>
                 ))}
               </select>
               <select value={assignTargetUserId} onChange={e => { const userId = e.target.value; setAssignTargetUserId(userId); if (userId) fetchSkillsForUser(userId); }} className={inputCls}>
@@ -4059,9 +4059,15 @@ export default function AdminDashboard() {
                             <span className="text-sm font-bold text-amber-100/90">{t.name}</span>
                             {t.category && <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300">{t.category}</span>}
                             {t.destruction_percent > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300">{t.destruction_percent}% tiêu diệt</span>}
+                            {t.phe_duyet && (
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded ${t.phe_duyet === 'Đã duyệt' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-orange-500/15 text-orange-300'}`}>{t.phe_duyet}</span>
+                            )}
                           </div>
                           {t.effect && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{t.effect}</p>}
                           <div className="flex items-center gap-3 mt-1 text-[10px] text-gray-600">
+                            {t.oc_name && <span className="inline-flex items-center gap-0.5 text-amber-400/70"><User className="w-2.5 h-2.5" />OC: {t.oc_name}</span>}
+                            {t.account && <span>Tài khoản: {t.account}</span>}
+                            {t.nghe && <span>Nghề: {t.nghe}</span>}
                             {(t.cong_duc_cost > 0 || t.am_duc_cost > 0) && <span>Chi phí: {t.cong_duc_cost > 0 ? `${t.cong_duc_cost} Công đức` : ''}{t.cong_duc_cost > 0 && t.am_duc_cost > 0 ? ' + ' : ''}{t.am_duc_cost > 0 ? `${t.am_duc_cost} Âm đức` : ''}</span>}
                             {t.duration && <span>Thời gian: {t.duration}</span>}
                             <span>{new Date(t.created_at).toLocaleDateString('vi-VN')}</span>
