@@ -192,6 +192,7 @@ export default function AdminDashboard() {
   const [assignTemplateId, setAssignTemplateId] = useState<string | null>(null);
   const [assignTargetUserId, setAssignTargetUserId] = useState('');
   const [assignSlot, setAssignSlot] = useState(1);
+  const [newTemplate, setNewTemplate] = useState({ name: '', usage_detail: '', effect: '', tradeoff: '', cong_duc_cost: 0, am_duc_cost: 0, duration: '', mental_effect: '', mental_duration: 0, health_effect: '', health_duration: 0, spiritual_effect: '', spiritual_duration: 0, ghost_level_effect: '', destruction_percent: 0, category: '' });
 
   // Coupons
   const [coupons, setCoupons] = useState<(Coupon & { profiles?: { oc_name: string } | null })[]>([]);
@@ -435,6 +436,104 @@ export default function AdminDashboard() {
     const { error } = await supabase.from('coupons').update({ is_active: !c.is_active }).eq('id', c.id);
     if (error) { setCouponMsg(`Lỗi: ${error.message}`); return; }
     setCouponMsg(c.is_active ? 'Đã vô hiệu hóa phiếu.' : 'Đã kích hoạt phiếu.');
+    fetchAllData();
+  };
+
+  // ===== Skill Template handlers =====
+  const handleAddTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const n = newTemplate;
+    if (!n.name.trim()) { setTemplateMsg('Lỗi: Tên kỹ năng không được để trống.'); return; }
+    const { error } = await supabase.from('skill_templates').insert([{
+      name: n.name.trim(), usage_detail: n.usage_detail, effect: n.effect, tradeoff: n.tradeoff,
+      cong_duc_cost: n.cong_duc_cost, am_duc_cost: n.am_duc_cost, duration: n.duration,
+      mental_effect: n.mental_effect, mental_duration: n.mental_duration,
+      health_effect: n.health_effect, health_duration: n.health_duration,
+      spiritual_effect: n.spiritual_effect, spiritual_duration: n.spiritual_duration,
+      ghost_level_effect: n.ghost_level_effect, destruction_percent: n.destruction_percent,
+      category: n.category,
+    }]);
+    if (error) { setTemplateMsg(`Lỗi: ${error.message}`); return; }
+    logAction('add_skill_template', undefined, `Thêm mẫu kỹ năng "${n.name.trim()}"`);
+    setNewTemplate({ name: '', usage_detail: '', effect: '', tradeoff: '', cong_duc_cost: 0, am_duc_cost: 0, duration: '', mental_effect: '', mental_duration: 0, health_effect: '', health_duration: 0, spiritual_effect: '', spiritual_duration: 0, ghost_level_effect: '', destruction_percent: 0, category: '' });
+    setShowAddTemplate(false);
+    setTemplateMsg(`Đã thêm mẫu kỹ năng "${n.name.trim()}".`);
+    setTimeout(() => setTemplateMsg(''), 3000);
+    fetchAllData();
+  };
+
+  const handleEditTemplate = (t: SkillTemplate) => {
+    setEditingTemplateId(t.id);
+    setEditTemplate({ ...t });
+  };
+
+  const handleSaveEditTemplate = async (templateId: string) => {
+    const { error } = await supabase.from('skill_templates').update({
+      name: editTemplate.name, usage_detail: editTemplate.usage_detail, effect: editTemplate.effect,
+      tradeoff: editTemplate.tradeoff, cong_duc_cost: editTemplate.cong_duc_cost, am_duc_cost: editTemplate.am_duc_cost,
+      duration: editTemplate.duration, mental_effect: editTemplate.mental_effect, mental_duration: editTemplate.mental_duration,
+      health_effect: editTemplate.health_effect, health_duration: editTemplate.health_duration,
+      spiritual_effect: editTemplate.spiritual_effect, spiritual_duration: editTemplate.spiritual_duration,
+      ghost_level_effect: editTemplate.ghost_level_effect, destruction_percent: editTemplate.destruction_percent,
+      category: editTemplate.category, updated_at: new Date().toISOString(),
+    }).eq('id', templateId);
+    if (error) { setTemplateMsg(`Lỗi: ${error.message}`); return; }
+    logAction('edit_skill_template', undefined, `Sửa mẫu kỹ năng "${editTemplate.name}"`, { template_id: templateId });
+    setEditingTemplateId(null);
+    setEditTemplate({});
+    setTemplateMsg('Đã cập nhật mẫu kỹ năng.');
+    setTimeout(() => setTemplateMsg(''), 3000);
+    fetchAllData();
+  };
+
+  const handleDeleteTemplate = (templateId: string, name: string) => {
+    requireConfirm(
+      'Xóa Mẫu Kỹ Năng',
+      `Bạn sắp xóa mẫu kỹ năng "${name}" khỏi thư viện. Hành động này không ảnh hưởng đến kỹ năng đã cấp cho người chơi.`,
+      async () => {
+        const { error } = await supabase.from('skill_templates').delete().eq('id', templateId);
+        if (error) { setTemplateMsg(`Lỗi: ${error.message}`); return; }
+        logAction('delete_skill_template', undefined, `Xóa mẫu kỹ năng "${name}"`, { template_id: templateId });
+        setTemplateMsg(`Đã xóa mẫu kỹ năng "${name}".`);
+        setTimeout(() => setTemplateMsg(''), 3000);
+        fetchAllData();
+      },
+      [{ label: 'Mẫu kỹ năng', value: name }],
+      'Xóa mẫu',
+    );
+  };
+
+  const handleAssignTemplate = async () => {
+    if (!assignTemplateId) { setTemplateMsg('Lỗi: Vui lòng chọn mẫu kỹ năng.'); return; }
+    if (!assignTargetUserId) { setTemplateMsg('Lỗi: Vui lòng chọn người chơi.'); return; }
+    const tpl = skillTemplates.find(t => t.id === assignTemplateId);
+    if (!tpl) { setTemplateMsg('Lỗi: Không tìm thấy mẫu.'); return; }
+    const target = allProfiles.find(p => p.id === assignTargetUserId);
+    const { data: existing } = await supabase.from('character_skills').select('id, slot').eq('user_id', assignTargetUserId).eq('slot', assignSlot).maybeSingle();
+    const payload = {
+      user_id: assignTargetUserId,
+      slot: assignSlot,
+      name: tpl.name, usage_detail: tpl.usage_detail, effect: tpl.effect, tradeoff: tpl.tradeoff,
+      cong_duc_cost: tpl.cong_duc_cost, am_duc_cost: tpl.am_duc_cost, duration: tpl.duration,
+      mental_effect: tpl.mental_effect, mental_duration: tpl.mental_duration,
+      health_effect: tpl.health_effect, health_duration: tpl.health_duration,
+      spiritual_effect: tpl.spiritual_effect, spiritual_duration: tpl.spiritual_duration,
+      ghost_level_effect: tpl.ghost_level_effect, destruction_percent: tpl.destruction_percent,
+    };
+    let error;
+    if (existing) {
+      ({ error } = await supabase.from('character_skills').update(payload).eq('id', (existing as { id: string }).id));
+    } else {
+      ({ error } = await supabase.from('character_skills').insert([payload]));
+    }
+    if (error) { setTemplateMsg(`Lỗi: ${error.message}`); return; }
+    logAction('assign_skill_template', assignTargetUserId, `Cấp mẫu kỹ năng "${tpl.name}" cho ${target?.oc_name || assignTargetUserId.slice(0, 8)} (slot ${assignSlot})`, { template_id: assignTemplateId, slot: assignSlot });
+    setTemplateMsg(`Đã cấp kỹ năng "${tpl.name}" vào slot ${assignSlot} cho ${target?.oc_name || 'người chơi'}.`);
+    setAssignTemplateId(null);
+    setAssignTargetUserId('');
+    setAssignSlot(1);
+    setAllSkills({});
+    setTimeout(() => setTemplateMsg(''), 4000);
     fetchAllData();
   };
 
@@ -1568,6 +1667,7 @@ export default function AdminDashboard() {
     { id: 'broadcast', label: 'Phát Thông Báo', icon: Megaphone },
     { id: 'titles', label: 'Danh Hiệu', icon: Award },
     { id: 'coupons', label: 'Phiếu Giảm Giá', icon: Ticket },
+    { id: 'nghiepthuat', label: 'Nghiệp Thuật', icon: Sparkles },
     { id: 'audit', label: 'Nhật Ký', icon: ScrollText },
     { id: 'settings', label: 'Cài Đặt & Sao Lưu', icon: Settings },
   ];
@@ -3610,6 +3710,157 @@ export default function AdminDashboard() {
                           <button onClick={() => handleDeleteCoupon(c.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Xóa">
                             <Trash2 className="w-4 h-4" />
                           </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Nghiep Thuat Tab */}
+      {activeTab === 'nghiepthuat' && (
+        <div className="space-y-6">
+          {templateMsg && (
+            <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${templateMsg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
+              {templateMsg.startsWith('Lỗi') ? <AlertCircle className="w-4 h-4 flex-shrink-0" /> : <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
+              {templateMsg}
+            </div>
+          )}
+
+          {/* Assign template to player */}
+          <div className={cardCls}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/15 flex items-center justify-center flex-shrink-0">
+                <UserSearch className="w-5 h-5 text-cyan-300" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80">Cấp Kỹ Năng Từ Mẫu</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Chọn mẫu từ thư viện, chọn người chơi và slot (1-4) để cấp hoặc ghi đè kỹ năng.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <select value={assignTemplateId || ''} onChange={e => setAssignTemplateId(e.target.value || null)} className={inputCls}>
+                <option value="">Chọn mẫu kỹ năng...</option>
+                {skillTemplates.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}{t.category ? ` (${t.category})` : ''}</option>
+                ))}
+              </select>
+              <select value={assignTargetUserId} onChange={e => setAssignTargetUserId(e.target.value)} className={inputCls}>
+                <option value="">Chọn người chơi...</option>
+                {allProfiles.map(p => (
+                  <option key={p.id} value={p.id}>{p.oc_name} · {p.email}</option>
+                ))}
+              </select>
+              <select value={assignSlot} onChange={e => setAssignSlot(Math.min(4, Math.max(1, parseInt(e.target.value) || 1)))} className={inputCls}>
+                <option value={1}>Slot 1</option>
+                <option value={2}>Slot 2</option>
+                <option value={3}>Slot 3</option>
+                <option value={4}>Slot 4</option>
+              </select>
+              <button onClick={handleAssignTemplate} className="flex items-center justify-center gap-2 px-5 py-2.5 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-200 text-sm font-bold rounded-lg border border-cyan-500/30 transition-all">
+                <Sparkles className="w-4 h-4" /> Cấp Kỹ Năng
+              </button>
+            </div>
+          </div>
+
+          {/* Add template form */}
+          <div className={cardCls}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-5 h-5 text-amber-300" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/80">Thư Viện Mẫu Kỹ Năng</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Tạo mẫu kỹ năng tái sử dụng để cấp nhanh cho người chơi.</p>
+                </div>
+              </div>
+              <button onClick={() => setShowAddTemplate(!showAddTemplate)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#670201]/20 hover:bg-[#670201]/30 text-amber-100 text-sm font-bold border border-[#670201]/30 transition-all">
+                <Plus className="w-4 h-4" /> Thêm Mẫu
+              </button>
+            </div>
+
+            {showAddTemplate && (
+              <form onSubmit={handleAddTemplate} className="mb-6 p-4 rounded-xl bg-black/30 border border-amber-500/20 space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input type="text" placeholder="Tên kỹ năng" value={newTemplate.name} onChange={e => setNewTemplate({ ...newTemplate, name: e.target.value })} required className={inputCls} />
+                  <input type="text" placeholder="Nhóm (tùy chọn)" value={newTemplate.category} onChange={e => setNewTemplate({ ...newTemplate, category: e.target.value })} className={inputCls} />
+                  <textarea placeholder="Chi tiết cách sử dụng" value={newTemplate.usage_detail} onChange={e => setNewTemplate({ ...newTemplate, usage_detail: e.target.value })} rows={2} className={`md:col-span-2 ${inputCls}`} />
+                  <textarea placeholder="Hiệu quả" value={newTemplate.effect} onChange={e => setNewTemplate({ ...newTemplate, effect: e.target.value })} rows={2} className={`md:col-span-2 ${inputCls}`} />
+                  <textarea placeholder="Đánh đổi" value={newTemplate.tradeoff} onChange={e => setNewTemplate({ ...newTemplate, tradeoff: e.target.value })} rows={2} className={`md:col-span-2 ${inputCls}`} />
+                  <div className="flex items-center gap-2"><label className="text-xs text-gray-500 whitespace-nowrap">Công đức</label><input type="number" min={0} value={newTemplate.cong_duc_cost} onChange={e => setNewTemplate({ ...newTemplate, cong_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} className={inputCls} /></div>
+                  <div className="flex items-center gap-2"><label className="text-xs text-gray-500 whitespace-nowrap">Âm đức</label><input type="number" min={0} value={newTemplate.am_duc_cost} onChange={e => setNewTemplate({ ...newTemplate, am_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} className={inputCls} /></div>
+                  <input type="text" placeholder="Thời gian duy trì" value={newTemplate.duration} onChange={e => setNewTemplate({ ...newTemplate, duration: e.target.value })} className={inputCls} />
+                  <input type="text" placeholder="Ảnh hưởng tinh thần" value={newTemplate.mental_effect} onChange={e => setNewTemplate({ ...newTemplate, mental_effect: e.target.value })} className={inputCls} />
+                  <div className="flex items-center gap-2"><label className="text-xs text-gray-500 whitespace-nowrap">TG tinh thần (tối đa 50)</label><input type="number" min={0} max={50} value={newTemplate.mental_duration} onChange={e => setNewTemplate({ ...newTemplate, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} /></div>
+                  <input type="text" placeholder="Ảnh hưởng sức khỏe" value={newTemplate.health_effect} onChange={e => setNewTemplate({ ...newTemplate, health_effect: e.target.value })} className={inputCls} />
+                  <div className="flex items-center gap-2"><label className="text-xs text-gray-500 whitespace-nowrap">TG sức khỏe (tối đa 50)</label><input type="number" min={0} max={50} value={newTemplate.health_duration} onChange={e => setNewTemplate({ ...newTemplate, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} /></div>
+                  <input type="text" placeholder="Ảnh hưởng tâm linh" value={newTemplate.spiritual_effect} onChange={e => setNewTemplate({ ...newTemplate, spiritual_effect: e.target.value })} className={inputCls} />
+                  <div className="flex items-center gap-2"><label className="text-xs text-gray-500 whitespace-nowrap">TG tâm linh (tối đa 50)</label><input type="number" min={0} max={50} value={newTemplate.spiritual_duration} onChange={e => setNewTemplate({ ...newTemplate, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} /></div>
+                  <textarea placeholder="Ảnh hưởng lên từng cấp quỷ" value={newTemplate.ghost_level_effect} onChange={e => setNewTemplate({ ...newTemplate, ghost_level_effect: e.target.value })} rows={2} className={inputCls} />
+                  <div className="flex items-center gap-2"><label className="text-xs text-gray-500 whitespace-nowrap">% Tiêu diệt (0-100)</label><input type="number" min={0} max={100} value={newTemplate.destruction_percent} onChange={e => setNewTemplate({ ...newTemplate, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })} className={inputCls} /></div>
+                </div>
+                <div className="flex gap-2">
+                  <button type="submit" className="flex items-center gap-2 px-5 py-2.5 bg-[#670201] hover:bg-[#a00404] text-amber-100 text-sm font-bold rounded-lg transition-all"><Save className="w-4 h-4" /> Lưu Mẫu</button>
+                  <button type="button" onClick={() => setShowAddTemplate(false)} className="px-5 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-sm font-bold">Hủy</button>
+                </div>
+              </form>
+            )}
+
+            {/* Template list */}
+            {skillTemplates.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-8">Chưa có mẫu kỹ năng nào. Bấm "Thêm Mẫu" để tạo.</p>
+            ) : (
+              <div className="space-y-2">
+                {skillTemplates.map(t => (
+                  <div key={t.id} className="p-3 rounded-lg bg-black/20 border border-white/5">
+                    {editingTemplateId === t.id ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <input type="text" value={editTemplate.name ?? ''} onChange={e => setEditTemplate({ ...editTemplate, name: e.target.value })} placeholder="Tên" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <input type="text" value={editTemplate.category ?? ''} onChange={e => setEditTemplate({ ...editTemplate, category: e.target.value })} placeholder="Nhóm" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <textarea value={editTemplate.usage_detail ?? ''} onChange={e => setEditTemplate({ ...editTemplate, usage_detail: e.target.value })} placeholder="Cách sử dụng" rows={2} className="sm:col-span-2 px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <textarea value={editTemplate.effect ?? ''} onChange={e => setEditTemplate({ ...editTemplate, effect: e.target.value })} placeholder="Hiệu quả" rows={2} className="sm:col-span-2 px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <textarea value={editTemplate.tradeoff ?? ''} onChange={e => setEditTemplate({ ...editTemplate, tradeoff: e.target.value })} placeholder="Đánh đổi" rows={2} className="sm:col-span-2 px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <input type="number" min={0} value={editTemplate.cong_duc_cost ?? 0} onChange={e => setEditTemplate({ ...editTemplate, cong_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} placeholder="Công đức" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <input type="number" min={0} value={editTemplate.am_duc_cost ?? 0} onChange={e => setEditTemplate({ ...editTemplate, am_duc_cost: Math.max(0, parseInt(e.target.value) || 0) })} placeholder="Âm đức" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <input type="text" value={editTemplate.duration ?? ''} onChange={e => setEditTemplate({ ...editTemplate, duration: e.target.value })} placeholder="Thời gian" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <input type="text" value={editTemplate.mental_effect ?? ''} onChange={e => setEditTemplate({ ...editTemplate, mental_effect: e.target.value })} placeholder="Tinh thần" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <input type="number" min={0} max={50} value={editTemplate.mental_duration ?? 0} onChange={e => setEditTemplate({ ...editTemplate, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} placeholder="TG tinh thần" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <input type="text" value={editTemplate.health_effect ?? ''} onChange={e => setEditTemplate({ ...editTemplate, health_effect: e.target.value })} placeholder="Sức khỏe" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <input type="number" min={0} max={50} value={editTemplate.health_duration ?? 0} onChange={e => setEditTemplate({ ...editTemplate, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} placeholder="TG sức khỏe" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <input type="text" value={editTemplate.spiritual_effect ?? ''} onChange={e => setEditTemplate({ ...editTemplate, spiritual_effect: e.target.value })} placeholder="Tâm linh" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <input type="number" min={0} max={50} value={editTemplate.spiritual_duration ?? 0} onChange={e => setEditTemplate({ ...editTemplate, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) })} placeholder="TG tâm linh" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <textarea value={editTemplate.ghost_level_effect ?? ''} onChange={e => setEditTemplate({ ...editTemplate, ghost_level_effect: e.target.value })} placeholder="Cấp quỷ" rows={2} className="sm:col-span-2 px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                          <input type="number" min={0} max={100} value={editTemplate.destruction_percent ?? 0} onChange={e => setEditTemplate({ ...editTemplate, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })} placeholder="% Tiêu diệt" className="px-2 py-1.5 bg-black/40 border border-amber-500/30 rounded text-xs text-amber-200 focus:outline-none focus:border-amber-500/60" />
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={() => handleSaveEditTemplate(t.id)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold"><Save className="w-3.5 h-3.5" /> Lưu</button>
+                          <button onClick={() => { setEditingTemplateId(null); setEditTemplate({}); }} className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold">Hủy</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-bold text-amber-100/90">{t.name}</span>
+                            {t.category && <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-300">{t.category}</span>}
+                            {t.destruction_percent > 0 && <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300">{t.destruction_percent}% tiêu diệt</span>}
+                          </div>
+                          {t.effect && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{t.effect}</p>}
+                          <div className="flex items-center gap-3 mt-1 text-[10px] text-gray-600">
+                            {(t.cong_duc_cost > 0 || t.am_duc_cost > 0) && <span>Chi phí: {t.cong_duc_cost > 0 ? `${t.cong_duc_cost} Công đức` : ''}{t.cong_duc_cost > 0 && t.am_duc_cost > 0 ? ' + ' : ''}{t.am_duc_cost > 0 ? `${t.am_duc_cost} Âm đức` : ''}</span>}
+                            {t.duration && <span>Thời gian: {t.duration}</span>}
+                            <span>{new Date(t.created_at).toLocaleDateString('vi-VN')}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          <button onClick={() => handleEditTemplate(t)} className="p-2 text-gray-500 hover:text-amber-300 hover:bg-amber-500/10 rounded-lg transition-all" title="Sửa"><Edit3 className="w-4 h-4" /></button>
+                          <button onClick={() => handleDeleteTemplate(t.id, t.name)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Xóa"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </div>
                     )}
