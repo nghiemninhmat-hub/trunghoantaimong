@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { StatCard, StatGrid } from '@/components/StatCard';
+import { supabase, type SkillTemplate } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+import { STATUS_TAGS, parseMultiValue } from '@/lib/skillTags';
 import {
   BookOpen, Sparkles, Flame, ChevronDown, Swords, TrendingUp,
-  Eye, Zap, Scroll, AlertTriangle, Crown, Ghost, Target, Layers
+  Eye, Zap, Scroll, AlertTriangle, Crown, Ghost, Target, Layers,
+  User, Search, Loader2
 } from 'lucide-react';
 
 type LevelKey = 'LV1' | 'LV2' | 'LV3' | 'LV4';
@@ -258,7 +262,222 @@ function LevelCard({ levelKey }: { levelKey: LevelKey }) {
   );
 }
 
+type SkillWithOc = SkillTemplate;
+
+function getTagBadgeClass(tag: string): string {
+  const found = STATUS_TAGS.find(t => t.value === tag);
+  return found?.badgeClass ?? 'bg-white/10 text-gray-300';
+}
+
+function SkillCard({ skill, isAdmin }: { skill: SkillWithOc; isAdmin: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const mentalTags = parseMultiValue(skill.mental_effect);
+  const healthTags = parseMultiValue(skill.health_effect);
+  const spiritualTags = parseMultiValue(skill.spiritual_effect);
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-gradient-to-b from-[#0d0606] to-[#0a0404] overflow-hidden transition-all hover:border-[#670201]/30">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full p-4 text-left transition-colors hover:bg-white/[0.02]"
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-serif font-bold text-amber-200/90 truncate">{skill.name}</h4>
+            {skill.nghe && (
+              <p className="text-[10px] text-gray-500 mt-0.5">{skill.nghe}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {isAdmin && skill.oc_name && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                <User className="w-2.5 h-2.5" />
+                {skill.oc_name}
+              </span>
+            )}
+            <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
+          </div>
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-4 border-t border-white/5 pt-3 space-y-3">
+          {skill.usage_detail && (
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-amber-300/50 font-semibold">Chi tiết sử dụng</span>
+              <p className="text-xs text-gray-400 leading-relaxed mt-1 whitespace-pre-wrap">{skill.usage_detail}</p>
+            </div>
+          )}
+          {skill.effect && (
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-amber-300/50 font-semibold">Hiệu quả</span>
+              <p className="text-xs text-gray-400 leading-relaxed mt-1 whitespace-pre-wrap">{skill.effect}</p>
+            </div>
+          )}
+          {skill.ghost_level_effect && (
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-red-300/50 font-semibold">Tác động lên quỷ</span>
+              <p className="text-xs text-gray-400 leading-relaxed mt-1 whitespace-pre-wrap">{skill.ghost_level_effect}</p>
+            </div>
+          )}
+          {skill.tradeoff && (
+            <div>
+              <span className="text-[10px] uppercase tracking-wider text-orange-300/50 font-semibold">Đánh đổi</span>
+              <p className="text-xs text-gray-400 leading-relaxed mt-1 whitespace-pre-wrap">{skill.tradeoff}</p>
+            </div>
+          )}
+
+          {(mentalTags.length > 0 || healthTags.length > 0 || spiritualTags.length > 0) && (
+            <div className="space-y-2 pt-1">
+              {mentalTags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] uppercase tracking-wider text-purple-400/50 font-semibold mr-1">Tinh thần:</span>
+                  {mentalTags.map(tag => (
+                    <span key={tag} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${getTagBadgeClass(tag)}`}>{tag}</span>
+                  ))}
+                  {skill.mental_duration > 0 && <span className="text-[10px] text-gray-500">· {skill.mental_duration} cmt</span>}
+                </div>
+              )}
+              {healthTags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] uppercase tracking-wider text-red-400/50 font-semibold mr-1">Thể chất:</span>
+                  {healthTags.map(tag => (
+                    <span key={tag} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${getTagBadgeClass(tag)}`}>{tag}</span>
+                  ))}
+                  {skill.health_duration > 0 && <span className="text-[10px] text-gray-500">· {skill.health_duration} cmt</span>}
+                </div>
+              )}
+              {spiritualTags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] uppercase tracking-wider text-amber-400/50 font-semibold mr-1">Tâm Linh:</span>
+                  {spiritualTags.map(tag => (
+                    <span key={tag} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${getTagBadgeClass(tag)}`}>{tag}</span>
+                  ))}
+                  {skill.spiritual_duration > 0 && <span className="text-[10px] text-gray-500">· {skill.spiritual_duration} cmt</span>}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-3 pt-1 text-[10px] text-gray-500">
+            {skill.duration && <span>Thời gian duy trì: <span className="text-gray-400">{skill.duration}</span></span>}
+            {skill.cong_duc_cost > 0 && <span>Công đức: <span className="text-amber-300/70">{skill.cong_duc_cost}</span></span>}
+            {skill.am_duc_cost > 0 && <span>Âm đức: <span className="text-amber-300/70">{skill.am_duc_cost}</span></span>}
+            {skill.destruction_percent > 0 && <span>Tiêu diệt: <span className="text-red-300/70">{skill.destruction_percent}%</span></span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SkillListSection({ isAdmin }: { isAdmin: boolean }) {
+  const [skills, setSkills] = useState<SkillWithOc[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [filterNghe, setFilterNghe] = useState<string>('');
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase
+        .from('skill_templates')
+        .select('*')
+        .eq('phe_duyet', 'Đã duyệt')
+        .order('oc_name', { ascending: true })
+        .order('name', { ascending: true });
+
+      if (!error && data) {
+        setSkills(data as SkillWithOc[]);
+      }
+      setLoading(false);
+    })();
+  }, []);
+
+  const ngheList = Array.from(new Set(skills.map(s => s.nghe).filter(Boolean))) as string[];
+
+  const filtered = skills.filter(s => {
+    const matchesSearch = !search ||
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      (s.oc_name?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
+      (s.effect?.toLowerCase().includes(search.toLowerCase()) ?? false);
+    const matchesNghe = !filterNghe || s.nghe === filterNghe;
+    return matchesSearch && matchesNghe;
+  });
+
+  const grouped = new Map<string, SkillWithOc[]>();
+  filtered.forEach(s => {
+    const key = s.oc_name || 'Không xác định';
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(s);
+  });
+
+  return (
+    <section className="space-y-3">
+      <div className="sticky top-20 z-10 flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
+        <BookOpen className="w-4 h-4 text-amber-300/70" />
+        <h3 className="text-sm font-serif font-bold tracking-wide uppercase text-amber-300/70">Kỹ Năng Đã Đăng Ký</h3>
+        <span className="ml-auto text-xs text-gray-600">{filtered.length} kỹ năng</span>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Tìm kỹ năng, OC, hiệu quả..."
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-black/40 border border-white/10 text-sm text-gray-300 placeholder-gray-600 focus:border-amber-500/30 focus:outline-none transition-colors"
+          />
+        </div>
+        {ngheList.length > 0 && (
+          <select
+            value={filterNghe}
+            onChange={e => setFilterNghe(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-black/40 border border-white/10 text-sm text-gray-300 focus:border-amber-500/30 focus:outline-none transition-colors"
+          >
+            <option value="">Tất cả nghề</option>
+            {ngheList.map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-6 h-6 text-amber-500/50 animate-spin" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-12 text-sm text-gray-600">
+          {search || filterNghe ? 'Không tìm thấy kỹ năng phù hợp.' : 'Chưa có kỹ năng nào được duyệt.'}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {Array.from(grouped.entries()).map(([ocName, ocSkills]) => (
+            <div key={ocName} className="space-y-2">
+              {isAdmin && (
+                <div className="flex items-center gap-2 px-2">
+                  <User className="w-3 h-3 text-amber-400/60" />
+                  <span className="text-xs font-serif font-bold text-amber-300/60">{ocName}</span>
+                  <span className="text-[10px] text-gray-600">· {ocSkills.length} kỹ năng</span>
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {ocSkills.map(skill => (
+                  <SkillCard key={skill.id} skill={skill} isAdmin={isAdmin} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function NghiepThuatPage() {
+  const { isAdmin } = useAuth();
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Breadcrumb */}
@@ -439,6 +658,9 @@ export default function NghiepThuatPage() {
           </div>
         </div>
       </section>
+
+      {/* Skill Listing */}
+      <SkillListSection isAdmin={isAdmin} />
 
       {/* Footer */}
       <div className="text-center pt-4 pb-2">

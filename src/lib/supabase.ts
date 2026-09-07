@@ -405,6 +405,10 @@ export interface SkillTemplate {
   category: string;
   created_at: string;
   updated_at: string;
+  account: string | null;
+  oc_name: string | null;
+  nghe: string | null;
+  phe_duyet: string | null;
 }
 
 export type WillStatus = 'pending' | 'approved' | 'revision_requested' | 'rejected';
