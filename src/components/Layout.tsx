@@ -70,7 +70,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden lg:flex min-w-0 flex-1 flex-wrap items-center justify-center gap-0.5 px-1 py-1 lg:overflow-x-auto lg:scrollbar-hide">
+            <nav className="hidden lg:flex min-w-0 flex-1 items-center justify-center gap-0.5 px-1 py-1">
               {allNavItems.map(item => {
                 const Icon = item.icon;
                 const active = location.pathname === item.path;
@@ -86,7 +86,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5 xl:w-4 xl:h-4 flex-shrink-0" />
-                    <span className="hidden xl:inline">{item.label}</span>
+                    <span className="hidden 2xl:inline">{item.label}</span>
                   </Link>
                 );
               })}
