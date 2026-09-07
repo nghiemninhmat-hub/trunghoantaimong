@@ -508,9 +508,9 @@ function TemplateRow({
           {t.am_duc_cost > 0 && <span>{t.am_duc_cost} ÂD</span>}
           {t.cong_duc_cost === 0 && t.am_duc_cost === 0 && <span className="text-gray-600">—</span>}
         </td>
-        <td className="px-3 py-2.5 border-b border-white/5">
+        <td className="px-3 py-2.5 border-b border-white/5 whitespace-nowrap">
           {t.phe_duyet ? (
-            <span className={`text-[10px] px-2 py-0.5 rounded-full ${t.phe_duyet === 'Đã duyệt' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-orange-500/15 text-orange-300'}`}>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full inline-block ${t.phe_duyet === 'Đã duyệt' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-orange-500/15 text-orange-300'}`}>
               {t.phe_duyet}
             </span>
           ) : <span className="text-gray-600 text-xs">—</span>}
