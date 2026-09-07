@@ -9,7 +9,7 @@ import MusicPlayer from '@/components/MusicPlayer';
 import PageTransition from '@/components/PageTransition';
 import {
   Home, Store, MessageSquare, Users, Shield, Moon, Sun, LogOut, LogIn,
-  BookOpen, Scroll, Menu, X, UserCircle, MapPinned, Dices, ShieldAlert, Ghost, Crown, ScrollText, Sparkles
+  BookOpen, Scroll, Menu, X, UserCircle, MapPinned, Dices, ShieldAlert, Ghost, Crown, ScrollText, Sparkles, Heart
 } from 'lucide-react';
 import { LotusIcon } from '@/components/LotusIcon';
 
@@ -42,6 +42,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   const allNavItems = [...navItems];
   if (isAdmin) {
+    allNavItems.push({ path: '/hiep-luu', label: 'Hiệp Lữ', icon: Heart });
     allNavItems.push({ path: '/admin', label: 'Quản Trị', icon: Shield });
   }
 

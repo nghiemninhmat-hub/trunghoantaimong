@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote, Organization, OrganizationMember, Title, UserTitle, TITLE_COLORS, Coupon, SkillTemplate, OrgTreasury, OrgTreasuryLog } from '@/lib/supabase';
+import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote, Organization, OrganizationMember, Title, UserTitle, TITLE_COLORS, Coupon, SkillTemplate, OrgTreasury, OrgTreasuryLog, HiepLuuRegistration } from '@/lib/supabase';
 import {
   Shield, Users, Coins, Store, BookOpen, Ghost, Check, X, Plus, Trash2,
   AlertCircle, CheckCircle2, History, Edit3, Eye, EyeOff, Dices, Package,
@@ -23,7 +23,7 @@ const STATUS_TAGS = [
   { value: 'Ngưỡng sinh tử', label: 'Thẻ tím đậm', badgeClass: 'bg-purple-700/20 text-purple-400', activeClass: 'bg-purple-700/30 border-purple-700/50 text-purple-300', idleClass: 'bg-purple-700/5 border-purple-700/15 text-purple-500/70' },
 ];
 
-type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wheel' | 'wills' | 'settings' | 'organizations' | 'broadcast' | 'titles' | 'coupons' | 'nghiepthuat';
+type Tab = 'accounts' | 'archive' | 'shop' | 'pages' | 'wanted' | 'kimbang' | 'bachhoa' | 'audit' | 'lookup' | 'wheel' | 'wills' | 'settings' | 'organizations' | 'broadcast' | 'titles' | 'coupons' | 'nghiepthuat' | 'hiepluu';
 
 export default function AdminDashboard() {
   const { profile, isAdmin } = useAuth();
@@ -208,6 +208,12 @@ export default function AdminDashboard() {
   const [couponMsg, setCouponMsg] = useState('');
   const [editingCouponId, setEditingCouponId] = useState<string | null>(null);
   const [editCoupon, setEditCoupon] = useState<Partial<Coupon>>({});
+
+  // Hiep Luu (Companionship) approval
+  const [hiepLuuRegs, setHiepLuuRegs] = useState<HiepLuuRegistration[]>([]);
+  const [hiepLuuFilter, setHiepLuuFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
+  const [hiepLuuMsg, setHiepLuuMsg] = useState('');
+  const [hiepLuuBondMsg, setHiepLuuBondMsg] = useState<Record<string, string>>({});
 
   // Generic confirm dialog
   const [confirmState, setConfirmState] = useState<{
@@ -546,7 +552,7 @@ export default function AdminDashboard() {
   };
 
   const fetchAllData = useCallback(async () => {
-    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData, titlesData, couponData, skillTemplateData, orgTreasData, orgTreasLogData] = await Promise.all([
+    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData, titlesData, couponData, skillTemplateData, orgTreasData, orgTreasLogData, hiepLuuData] = await Promise.all([
       supabase.from('profiles').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').eq('is_approved', true).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
@@ -569,6 +575,7 @@ export default function AdminDashboard() {
       supabase.from('skill_templates').select('*').order('created_at', { ascending: false }),
       supabase.from('organization_treasuries').select('*'),
       supabase.from('organization_treasury_logs').select('*').order('created_at', { ascending: false }).limit(200),
+      supabase.from('hiep_luu_registrations').select('*, profiles:profiles!hiep_luu_registrations_user_id_fkey(oc_name, anonymous_name, avatar_url)').order('created_at', { ascending: false }),
     ]);
     if (titlesData?.data) setTitles(titlesData.data as Title[]);
     if (couponData?.data) setCoupons(couponData.data as (Coupon & { profiles?: { oc_name: string } | null })[]);
@@ -610,6 +617,7 @@ export default function AdminDashboard() {
     if (activeWanted?.data) setActiveNotices(activeWanted.data as WantedNotice[]);
     if (audit?.data) setAuditLogs(audit.data as AuditLog[]);
     if (spins?.data) setSpinLog(spins.data as WheelSpinLog[]);
+    if (hiepLuuData?.data) setHiepLuuRegs(hiepLuuData.data as HiepLuuRegistration[]);
   }, []);
 
   const handleReviewWill = async (willId: string, newStatus: WillStatus) => {
@@ -631,6 +639,42 @@ export default function AdminDashboard() {
     setWillNoteDraft(prev => { const n = { ...prev }; delete n[willId]; return n; });
     setWillMsg(`Đã ${statusLabel} Di Chúc.`);
     setTimeout(() => setWillMsg(''), 3000);
+    fetchAllData();
+  };
+
+  const handleApproveHiepLuu = async (regId: string) => {
+    setHiepLuuMsg('');
+    const bondMsg = hiepLuuBondMsg[regId]?.trim() || null;
+    const { data, error } = await supabase.rpc('approve_hiep_luu', {
+      p_registration_id: regId,
+      p_admin_id: profile?.id,
+      p_bond_message: bondMsg,
+    });
+    if (error) { setHiepLuuMsg(`Lỗi: ${error.message}`); return; }
+    if (data && !data.success) { setHiepLuuMsg(`Lỗi: ${data.error}`); return; }
+    const reg = hiepLuuRegs.find(r => r.id === regId);
+    logAction('approve_hiep_luu', reg?.user_id, `Phê duyệt Hiệp Lữ ${reg?.relationship_type} — ${reg?.partner_name}`);
+    setHiepLuuBondMsg(prev => { const n = { ...prev }; delete n[regId]; return n; });
+    setHiepLuuMsg('Đã phê duyệt hiệp lữ. Thông báo đã gửi đến người chơi.');
+    setTimeout(() => setHiepLuuMsg(''), 4000);
+    fetchAllData();
+  };
+
+  const handleRejectHiepLuu = async (regId: string) => {
+    setHiepLuuMsg('');
+    const note = hiepLuuBondMsg[regId]?.trim() || null;
+    const { data, error } = await supabase.rpc('reject_hiep_luu', {
+      p_registration_id: regId,
+      p_admin_id: profile?.id,
+      p_note: note,
+    });
+    if (error) { setHiepLuuMsg(`Lỗi: ${error.message}`); return; }
+    if (data && !data.success) { setHiepLuuMsg(`Lỗi: ${data.error}`); return; }
+    const reg = hiepLuuRegs.find(r => r.id === regId);
+    logAction('reject_hiep_luu', reg?.user_id, `Từ chối Hiệp Lữ — ${reg?.partner_name}`);
+    setHiepLuuBondMsg(prev => { const n = { ...prev }; delete n[regId]; return n; });
+    setHiepLuuMsg('Đã từ chối hiệp lữ.');
+    setTimeout(() => setHiepLuuMsg(''), 3000);
     fetchAllData();
   };
 
@@ -1691,6 +1735,7 @@ export default function AdminDashboard() {
     { id: 'broadcast', label: 'Phát Thông Báo', icon: Megaphone },
     { id: 'titles', label: 'Danh Hiệu', icon: Award },
     { id: 'coupons', label: 'Phiếu Giảm Giá', icon: Ticket },
+    { id: 'hiepluu', label: 'Hiệp Lữ', icon: Heart },
     { id: 'audit', label: 'Nhật Ký', icon: ScrollText },
     { id: 'settings', label: 'Cài Đặt & Sao Lưu', icon: Settings },
   ];
@@ -5124,6 +5169,128 @@ export default function AdminDashboard() {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Hiep Luu Approval Tab */}
+      {activeTab === 'hiepluu' && (
+        <div className="space-y-6">
+          {hiepLuuMsg && (
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <p className="text-sm text-emerald-300">{hiepLuuMsg}</p>
+            </div>
+          )}
+
+          {/* Filter */}
+          <div className="flex items-center gap-2">
+            {(['pending', 'approved', 'rejected', 'all'] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => setHiepLuuFilter(f)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  hiepLuuFilter === f
+                    ? 'bg-[#670201]/30 text-amber-100'
+                    : 'text-gray-400 hover:text-amber-100 hover:bg-white/5'
+                }`}
+              >
+                {f === 'pending' ? 'Chờ duyệt' : f === 'approved' ? 'Đã duyệt' : f === 'rejected' ? 'Từ chối' : 'Tất cả'}
+                <span className="ml-1.5 text-gray-600">
+                  ({hiepLuuRegs.filter(r => f === 'all' || r.status === f).length})
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {/* Registrations list */}
+          {hiepLuuRegs.filter(r => hiepLuuFilter === 'all' || r.status === hiepLuuFilter).length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <Heart className="w-10 h-10 mx-auto mb-3 opacity-20" />
+              <p className="text-sm">Không có đăng ký hiệp lữ nào.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {hiepLuuRegs
+                .filter(r => hiepLuuFilter === 'all' || r.status === hiepLuuFilter)
+                .map(reg => {
+                  const relLabel = reg.relationship_type === 'NHAN_DUYEN' ? 'Nhân Duyên' : reg.relationship_type === 'TRI_KY' ? 'Tri Kỷ' : 'Thân Hữu';
+                  const submitterName = reg.profiles?.oc_name || reg.profiles?.anonymous_name || reg.user_id.slice(0, 8);
+                  return (
+                    <div key={reg.id} className="p-4 rounded-xl bg-black/30 border border-white/10">
+                      <div className="flex items-start gap-3">
+                        {reg.theme_image_url && (
+                          <div className="w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 border border-white/10">
+                            <img src={reg.theme_image_url} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }} />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-bold text-amber-100/90">{relLabel}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              reg.status === 'pending' ? 'bg-amber-500/15 text-amber-300 border border-amber-500/25' :
+                              reg.status === 'approved' ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25' :
+                              'bg-red-500/15 text-red-300 border border-red-500/25'
+                            }`}>
+                              {reg.status === 'pending' ? 'Chờ duyệt' : reg.status === 'approved' ? 'Đã duyệt' : 'Từ chối'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            Người đăng ký: <span className="text-amber-300/70">{submitterName}</span>
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Danh tính bản thân: <span className="text-amber-200/80">{reg.self_identity}</span>
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            Đối tượng kết duyên: <span className="text-amber-200/80">{reg.partner_name}</span>
+                          </p>
+                          {reg.theme_image_url && (
+                            <p className="text-xs text-gray-600 truncate">Ảnh: {reg.theme_image_url}</p>
+                          )}
+                          <p className="text-[10px] text-gray-600">
+                            Đăng ký: {new Date(reg.created_at).toLocaleDateString('vi-VN')}
+                            {reg.reviewed_at && ` · Duyệt: ${new Date(reg.reviewed_at).toLocaleDateString('vi-VN')}`}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Action area for pending */}
+                      {reg.status === 'pending' && (
+                        <div className="mt-3 pt-3 border-t border-white/5 space-y-2">
+                          <input
+                            type="text"
+                            value={hiepLuuBondMsg[reg.id] || ''}
+                            onChange={e => setHiepLuuBondMsg(prev => ({ ...prev, [reg.id]: e.target.value }))}
+                            placeholder="Lời chúc kết duyên (tùy chọn khi duyệt, hoặc lý do khi từ chối)..."
+                            className={inputCls}
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleApproveHiepLuu(reg.id)}
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-bold transition-all"
+                            >
+                              <Check className="w-3.5 h-3.5" /> Phê duyệt
+                            </button>
+                            <button
+                              onClick={() => handleRejectHiepLuu(reg.id)}
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-300 text-xs font-bold transition-all"
+                            >
+                              <X className="w-3.5 h-3.5" /> Từ chối
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Admin note for rejected */}
+                      {reg.status === 'rejected' && reg.admin_note && (
+                        <div className="mt-2 pt-2 border-t border-white/5">
+                          <p className="text-xs text-red-300/70">Lý do từ chối: {reg.admin_note}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Transaction, InventoryItem, CURRENCY_LABELS, Organization, UserTitle, TITLE_COLORS, OrgTreasury, OrgTreasuryLog } from '@/lib/supabase';
+import { supabase, Transaction, InventoryItem, CURRENCY_LABELS, Organization, UserTitle, TITLE_COLORS, OrgTreasury, OrgTreasuryLog, HiepLuuRegistration } from '@/lib/supabase';
 import { StatCard, StatGrid } from '@/components/StatCard';
 import {
   UserCircle, Coins, Sparkles, Skull, Package, History, Edit3,
@@ -86,10 +86,13 @@ export default function ProfilePage() {
   const [contributing, setContributing] = useState(false);
   const [contribError, setContribError] = useState('');
 
+  // Hiep Luu (relationships)
+  const [hiepLuuBonds, setHiepLuuBonds] = useState<HiepLuuRegistration[]>([]);
+
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [txRes, invRes, orgRes, titlesRes, skillRes, treasRes, treasLogRes] = await Promise.all([
+    const [txRes, invRes, orgRes, titlesRes, skillRes, treasRes, treasLogRes, hiepLuuRes] = await Promise.all([
       supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
       supabase.from('inventories').select('*, shop_items(*)').eq('user_id', user.id).order('acquired_at', { ascending: false }),
       supabase.from('organization_members').select('role, organization_id, organizations(id, name, category, leader_id)').eq('user_id', user.id),
@@ -97,7 +100,9 @@ export default function ProfilePage() {
       supabase.from('character_skills').select('*').eq('user_id', user.id).order('slot', { ascending: true }),
       supabase.from('organization_treasuries').select('*'),
       supabase.from('organization_treasury_logs').select('*').order('created_at', { ascending: false }).limit(100),
+      supabase.from('hiep_luu_registrations').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
     ]);
+    if (hiepLuuRes?.data) setHiepLuuBonds(hiepLuuRes.data as HiepLuuRegistration[]);
     if (treasRes.data) {
       const tMap: Record<string, OrgTreasury> = {};
       (treasRes.data as OrgTreasury[]).forEach(t => { tMap[t.organization_id] = t; });
@@ -723,6 +728,57 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Quan Hệ — Hiệp Lữ bonds */}
+      {hiepLuuBonds.length > 0 && (
+        <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
+          <div className="flex items-center gap-2 mb-4">
+            <Heart className="w-5 h-5 text-[#b73720]" />
+            <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Quan Hệ — Hiệp Lữ</h3>
+          </div>
+          <div className="space-y-2">
+            {hiepLuuBonds.map(bond => {
+              const relLabel = bond.relationship_type === 'NHAN_DUYEN' ? 'Nhân Duyên' : bond.relationship_type === 'TRI_KY' ? 'Tri Kỷ' : 'Thân Hữu';
+              const isApproved = bond.status === 'approved';
+              const isPending = bond.status === 'pending';
+              return (
+                <div key={bond.id} className={`p-3 rounded-lg border flex items-center gap-3 ${
+                  isApproved ? 'bg-[#670201]/5 border-[#670201]/20' :
+                  isPending ? 'bg-amber-500/5 border-amber-500/20' :
+                  'bg-red-500/5 border-red-500/15'
+                }`}>
+                  <Heart className={`w-4 h-4 flex-shrink-0 ${
+                    isApproved ? 'text-[#b73720]' : isPending ? 'text-amber-400/60' : 'text-red-400/40'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-amber-100/90">{relLabel}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                        isApproved ? 'bg-[#670201]/20 text-[#eeb337]/80' :
+                        isPending ? 'bg-amber-500/15 text-amber-300' :
+                        'bg-red-500/15 text-red-300'
+                      }`}>
+                        {isApproved ? 'Đã kết' : isPending ? 'Chờ duyệt' : 'Bị từ chối'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      <span className="text-amber-200/70">{bond.self_identity}</span>
+                      {' '}—{' '}
+                      <span className="text-amber-200/70">{bond.partner_name}</span>
+                    </p>
+                  </div>
+                  <RouterLink
+                    to="/hiep-luu"
+                    className="flex-shrink-0 text-[10px] text-gray-500 hover:text-amber-300 transition-colors"
+                  >
+                    Xem
+                  </RouterLink>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Character Status */}
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">

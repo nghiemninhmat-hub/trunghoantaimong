@@ -413,6 +413,27 @@ export interface SkillTemplate {
 
 export type WillStatus = 'pending' | 'approved' | 'revision_requested' | 'rejected';
 
+export type HiepLuuStatus = 'pending' | 'approved' | 'rejected';
+export type HiepLuuRelationship = 'NHAN_DUYEN' | 'TRI_KY' | 'THAN_HUU';
+
+export interface HiepLuuRegistration {
+  id: string;
+  user_id: string;
+  relationship_type: HiepLuuRelationship;
+  partner_name: string;
+  self_identity: string;
+  theme_image_url: string | null;
+  status: HiepLuuStatus;
+  reviewer_id: string | null;
+  reviewer_name: string | null;
+  reviewed_at: string | null;
+  admin_note: string | null;
+  bond_message: string | null;
+  created_at: string;
+  updated_at: string;
+  profiles?: { oc_name: string | null; anonymous_name: string | null; avatar_url: string | null } | null;
+}
+
 export interface Will {
   id: string;
   user_id: string;

@@ -18,6 +18,7 @@ import BachQuyAmPage from '@/pages/BachQuyAmPage';
 import DiChucPage from '@/pages/DiChucPage';
 import BachHoaTrieuPhungPage from '@/pages/BachHoaTrieuPhungPage';
 import NghiepThuatPage from '@/pages/NghiepThuatPage';
+import HiepLuPage from '@/pages/HiepLuPage';
 import ProfilePage from '@/pages/ProfilePage';
 import AdminDashboard from '@/pages/AdminDashboard';
 
@@ -45,7 +46,8 @@ function App() {
               <Route path="/nghiep-thuat" element={<NghiepThuatPage />} />
               <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
               <Route path="/profile/:id" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-              <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/hiep-luu" element={<ProtectedRoute><HiepLuPage /></ProtectedRoute>} />
+      <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             </Routes>
           </Layout>
         </BrowserRouter>
