@@ -285,21 +285,24 @@ function SkillCard({ skill, isAdmin }: { skill: SkillWithOc; isAdmin: boolean })
         <div className="flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
             <h4 className="text-sm font-serif font-bold text-amber-200/90 truncate">{skill.name}</h4>
-            <div className="flex items-center gap-2 mt-0.5">
-              {skill.nghe && (
-                <p className="text-[10px] text-gray-500">{skill.nghe}</p>
-              )}
-              {isAdmin && skill.oc_name && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-300">
-                  <User className="w-2.5 h-2.5 flex-shrink-0" />
-                  <span className="truncate">{skill.oc_name}</span>
-                </span>
-              )}
-            </div>
+            {skill.nghe && (
+              <p className="text-[10px] text-gray-500 mt-0.5">{skill.nghe}</p>
+            )}
           </div>
           <ChevronDown className={`flex-shrink-0 w-4 h-4 text-gray-500 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
         </div>
       </button>
+
+      {isAdmin && skill.oc_name && (
+        <div className="px-4 py-2 border-b border-white/5 bg-amber-500/[0.03] flex items-center gap-2">
+          <User className="w-3 h-3 text-amber-400/60 flex-shrink-0" />
+          <span className="text-[10px] uppercase tracking-wider text-amber-400/50 font-semibold flex-shrink-0">OC</span>
+          <span className="text-xs text-amber-200/80 font-medium truncate">{skill.oc_name}</span>
+          {skill.account && (
+            <span className="text-[10px] text-gray-600 truncate ml-auto">Tài khoản: {skill.account}</span>
+          )}
+        </div>
+      )}
 
       {expanded && (
         <div className="px-4 pb-4 border-t border-white/5 pt-3 space-y-3">
