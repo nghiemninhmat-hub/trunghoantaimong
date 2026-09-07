@@ -59,6 +59,37 @@ export const MENTAL_SUB_TAGS: MentalSubTag[] = [
   { value: 'Cuồng loạn', parent: 'Ngưỡng sinh tử' },
 ];
 
+export const HEALTH_SUB_TAGS: string[] = [
+  'Khỏe mạnh',
+  'Hoa mắt, choáng váng',
+  'Đau nhức',
+  'Đau đầu',
+  'Buồn nôn',
+  'Ù tai',
+  'Chóng mặt',
+  'Mệt mỏi',
+  'Suy nhược',
+  'Khó thở',
+  'Tê buốt kinh mạch',
+  'Bỏng rát',
+  'Mất máu',
+  'Xuất huyết nặng',
+  'Kiệt sức',
+  'Suy giảm nặng các giác quan',
+  'Tê liệt',
+  'Mất thính giác',
+];
+
+export const SPIRITUAL_SUB_TAGS: string[] = [
+  'Thanh khiết',
+  'Bất tịnh',
+  'Âm khí xâm nhập',
+  'Tà khí nhập thể',
+  'Oán khí quấn thân',
+  'Linh hồn chịu áp lực lớn',
+  'Suy giảm khả năng phân biệt âm dương',
+];
+
 export const MENTAL_TAG_DESCRIPTIONS: Record<string, string> = {
   'Bình Thường': 'Trạng thái khỏe mạnh.',
   'Ảnh hưởng nhẹ': 'Trạng thái bị ảnh hưởng nhẹ — có thể hoạt động, phát huy năng lực bình thường hoặc hạn chế ít.',
@@ -67,6 +98,21 @@ export const MENTAL_TAG_DESCRIPTIONS: Record<string, string> = {
   'Suy kiệt': 'Trạng thái gần như mất nhận thức, suy kiệt, có thể cố gắng gắng gượng nhưng không di chuyển nhiều. Đã qua thời khắc vàng để chữa trị.',
   'Ngưỡng sinh tử': 'Trạng thái gần như không thể phục hồi, mất khả năng kiểm soát, nhân vật không còn khả năng hoạt động, nhịp sống mong manh.',
 };
+
+export function parseMultiValue(raw: string): string[] {
+  if (!raw || !raw.trim()) return [];
+  return raw.split(/[,;]+/).map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+}
+
+export function joinMultiValue(tags: string[]): string {
+  return tags.join(', ');
+}
+
+export function toggleTag(currentTags: string[], tag: string): string[] {
+  return currentTags.includes(tag)
+    ? currentTags.filter(t => t !== tag)
+    : [...currentTags, tag];
+}
 
 export type SkillFormData = {
   name: string;
