@@ -129,7 +129,7 @@ export default function WorldPage() {
 
           return (
             <section key={category} className="space-y-3">
-              <div className="sticky top-20 z-10 flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
+              <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
                 <CatIcon className={`w-4 h-4 ${textClass}`} />
                 <h3 className={`text-sm font-serif font-bold tracking-wide uppercase ${textClass}`}>{category}</h3>
                 <span className="ml-auto text-xs text-gray-600">{catPages.length} trang</span>

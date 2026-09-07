@@ -69,7 +69,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden 2xl:flex min-w-0 flex-1 flex-wrap items-center justify-center gap-0.5 px-2 py-1">
+            <nav className="hidden lg:flex min-w-0 flex-1 flex-wrap items-center justify-center gap-0.5 px-1 py-1 lg:overflow-x-auto lg:scrollbar-hide">
               {allNavItems.map(item => {
                 const Icon = item.icon;
                 const active = location.pathname === item.path;
@@ -78,21 +78,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     key={item.path}
                     to={item.path}
                     title={item.label}
-                    className={`flex flex-shrink-0 items-center justify-center gap-1 rounded-sm border-b px-2 py-2 text-[10px] font-medium whitespace-nowrap transition-colors duration-300 2xl:px-2.5 2xl:text-xs ${
+                    className={`flex flex-shrink-0 items-center justify-center gap-1 rounded-sm border-b px-1.5 py-2 text-[10px] font-medium whitespace-nowrap transition-colors duration-300 xl:px-2.5 xl:text-xs ${
                       active
                         ? 'border-[#eeb337]/70 bg-[#8f2418]/25 text-[#fff1cf] shadow-inner' 
                         : 'border-transparent text-[#c9b493]/70 hover:border-[#eeb337]/35 hover:bg-[#eeb337]/10 hover:text-[#fff1cf]'
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5 xl:w-4 xl:h-4" />
-                    <span className="inline">{item.label}</span>
+                    <Icon className="w-3.5 h-3.5 xl:w-4 xl:h-4 flex-shrink-0" />
+                    <span className="hidden xl:inline">{item.label}</span>
                   </Link>
                 );
               })}
             </nav>
 
             {/* Search Bar */}
-            {profile && <div className="hidden 2xl:block w-48 2xl:w-56"><SearchBar /></div>}
+            {profile && <div className="hidden xl:block w-44 xl:w-56"><SearchBar /></div>
 
             {/* Right side */}
             <div className="flex shrink-0 items-center gap-1 sm:gap-2">
@@ -165,7 +165,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
                 aria-label={mobileOpen ? 'Đóng menu' : 'Mở menu'}
-                className="2xl:hidden flex items-center gap-1.5 p-1.5 rounded-sm text-[#c9b493] hover:text-[#fff1cf] hover:bg-[#eeb337]/10 transition-colors"
+                className="lg:hidden flex items-center gap-1.5 p-1.5 rounded-sm text-[#c9b493] hover:text-[#fff1cf] hover:bg-[#eeb337]/10 transition-colors"
               >
                 {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 <span className="hidden sm:inline text-xs font-medium">Menu</span>
@@ -176,7 +176,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Mobile Nav */}
         {mobileOpen && (
-          <nav className="2xl:hidden border-t border-[#eeb337]/15 bg-[#170b09]/95 backdrop-blur-xl">
+          <nav className="lg:hidden border-t border-[#eeb337]/15 bg-[#170b09]/95 backdrop-blur-xl">
             {profile && <div className="px-4 pt-3 pb-2 mb-1 border-b border-[#eeb337]/15"><SearchBar /></div>}
             <div className="px-4 py-3 space-y-1 max-h-[calc(100vh-12rem)] overflow-y-auto">
               {allNavItems.map(item => {
@@ -204,7 +204,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main content */}
-      <main className="relative z-10 mx-auto max-w-[1500px] px-4 sm:px-6 py-8 min-h-[calc(100vh-4rem)]">
+      <main className="relative z-10 mx-auto max-w-[1500px] px-4 sm:px-6 py-6 sm:py-8 min-h-[calc(100vh-4rem)]">
         {children}
       </main>
 

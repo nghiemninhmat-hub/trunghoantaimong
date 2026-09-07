@@ -417,7 +417,7 @@ function SkillListSection({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <section className="space-y-3">
-      <div className="sticky top-20 z-10 flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
+      <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
         <BookOpen className="w-4 h-4 text-amber-300/70" />
         <h3 className="text-sm font-serif font-bold tracking-wide uppercase text-amber-300/70">Kỹ Năng Đã Đăng Ký</h3>
         <span className="ml-auto text-xs text-gray-600">{filtered.length} kỹ năng</span>
@@ -514,7 +514,7 @@ export default function NghiepThuatPage() {
 
       {/* Section: Nghiệp Thuật */}
       <section className="space-y-3">
-        <div className="sticky top-20 z-10 flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
           <BookOpen className="w-4 h-4 text-amber-300/70" />
           <h3 className="text-sm font-serif font-bold tracking-wide uppercase text-amber-300/70">Nghiệp Thuật</h3>
         </div>
@@ -530,7 +530,7 @@ export default function NghiepThuatPage() {
 
       {/* Section: Mức Độ Nghiệp Thuật */}
       <section className="space-y-3">
-        <div className="sticky top-20 z-10 flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
           <TrendingUp className="w-4 h-4 text-amber-300/70" />
           <h3 className="text-sm font-serif font-bold tracking-wide uppercase text-amber-300/70">Mức Độ Nghiệp Thuật</h3>
         </div>
@@ -556,7 +556,7 @@ export default function NghiepThuatPage() {
 
       {/* Section: Ý Nghĩa */}
       <section className="space-y-3">
-        <div className="sticky top-20 z-10 flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
           <Eye className="w-4 h-4 text-amber-300/70" />
           <h3 className="text-sm font-serif font-bold tracking-wide uppercase text-amber-300/70">Ý Nghĩa</h3>
         </div>
@@ -577,7 +577,7 @@ export default function NghiepThuatPage() {
 
       {/* Section: Cơ Chế Thăng Cấp */}
       <section className="space-y-3">
-        <div className="sticky top-20 z-10 flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
           <TrendingUp className="w-4 h-4 text-amber-300/70" />
           <h3 className="text-sm font-serif font-bold tracking-wide uppercase text-amber-300/70">Cơ Chế Thăng Cấp</h3>
         </div>
@@ -602,7 +602,7 @@ export default function NghiepThuatPage() {
 
       {/* Section: Cập Nhật Thanh Tiến Độ Tiêu Diệt Quỷ */}
       <section className="space-y-3">
-        <div className="sticky top-20 z-10 flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#170707]/95 border border-[#670201]/30 backdrop-blur-md">
           <Target className="w-4 h-4 text-amber-300/70" />
           <h3 className="text-sm font-serif font-bold tracking-wide uppercase text-amber-300/70">Cập Nhật Thanh Tiến Độ Tiêu Diệt Quỷ</h3>
         </div>
