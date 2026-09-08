@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Transaction, InventoryItem, CURRENCY_LABELS, Organization, UserTitle, TITLE_COLORS, OrgTreasury, OrgTreasuryLog, HiepLuuRegistration } from '@/lib/supabase';
 import {
-  UserCircle, Coins, Sparkles, Package, History, Edit3,
+  UserCircle, Coins, Sparkles, Skull, Package, History, Edit3,
   CheckCircle2, Clock, AlertCircle, Ghost, Plus, Minus, Send,
   Heart, Sparkle, Brain, ShieldCheck, Camera, X, Loader2, Upload, Link,
   ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronDown, Building2, Award, ToggleLeft, ToggleRight,
@@ -430,7 +430,7 @@ export default function ProfilePage() {
               {/* Thin decorative ring */}
               <div className="absolute -inset-1.5 rounded-full border border-[#670201]/30" />
               {/* Avatar frame — circular, blood-moon style */}
-              <div className="relative w-28 h-28 sm:w-40 sm:h-40 lg:w-44 lg:h-44 rounded-full overflow-hidden border-[3px] border-[#670201]/50 shadow-xl shadow-black/50 bg-gradient-to-br from-[#670201] to-[#a00404]">
+              <div className="relative w-36 h-36 sm:w-40 sm:h-40 lg:w-44 lg:h-44 rounded-full overflow-hidden border-[3px] border-[#670201]/50 shadow-xl shadow-black/50 bg-gradient-to-br from-[#670201] to-[#a00404]">
                 {/* Inner rim highlight */}
                 <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-amber-200/10 pointer-events-none z-10" />
                 {avatarEditing ? (
@@ -691,6 +691,26 @@ export default function ProfilePage() {
             <p className="text-xs text-emerald-300">{message}</p>
           </div>
         )}
+      </div>
+
+      {/* Profile stats */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+        {[
+          { label: 'Hoa Tiền', value: profile.hua_tien, icon: Coins },
+          { label: 'Công Đức', value: profile.cong_duc, icon: Sparkles },
+          { label: 'Âm Đức', value: profile.am_duc, icon: Skull },
+          { label: 'Vật Phẩm', value: inventory.reduce((sum, item) => sum + (item.quantity || 1), 0), icon: Package },
+        ].map(({ label, value, icon: Icon }) => (
+          <div key={label} className="flex min-w-0 items-center gap-2.5 rounded-xl border border-[#eeb337]/20 bg-black/25 px-3 py-2.5 sm:px-3.5">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#eeb337]/10 text-[#eeb337]">
+              <Icon className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-[10px] uppercase tracking-wider text-[#c9b493]/65">{label}</p>
+              <p className="truncate text-base font-bold tabular-nums text-[#f6ca62]">{value.toLocaleString('vi-VN')}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Kỹ năng nhân vật (chỉ xem) */}
