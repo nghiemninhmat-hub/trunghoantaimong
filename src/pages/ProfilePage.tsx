@@ -61,6 +61,7 @@ export default function ProfilePage() {
   const [avatarMode, setAvatarMode] = useState<'upload' | 'url'>('upload');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [emailVisible, setEmailVisible] = useState(false);
+  const [anonymousVisible, setAnonymousVisible] = useState(false);
   const [statusDescOpen, setStatusDescOpen] = useState(false);
   const [skillsOpen, setSkillsOpen] = useState(false);
   const [titlesOpen, setTitlesOpen] = useState(false);
@@ -463,42 +464,41 @@ export default function ProfilePage() {
           </div>
 
           {/* Info */}
-          <div className="flex-1 min-w-0 w-full space-y-3 text-center sm:text-left">
+          <div className="flex-1 min-w-0 w-full space-y-2 text-center sm:text-left">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <h2 className="text-xl sm:text-2xl font-serif font-bold text-amber-100/90 break-words">
                   {editing ? ocName : profile.oc_name}
                 </h2>
-                <div className="flex flex-col gap-2 mt-2 items-center sm:items-start">
+                <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 sm:justify-start">
                   {profile.danh_vong && profile.danh_vong !== 'Vô Danh' && (
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#670201]/30 to-[#a00404]/20 border border-amber-500/30 text-xs font-bold text-amber-200 tracking-wider">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#670201]/30 to-[#a00404]/20 border border-amber-500/30 px-2 py-1 text-[11px] font-bold text-amber-200">
                       <Crown className="w-3 h-3 text-amber-300" />
                       {profile.danh_vong}
                     </span>
                   )}
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-bold text-cyan-300 tracking-wider">
-                    <Zap className="w-3 h-3" />
-                    Chức Nghiệp: Lv.{profile.chuc_nghiep_level ?? 1}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 px-2 py-1 text-[11px] font-bold text-cyan-300">
+                    <Zap className="w-3 h-3" /> Lv.{profile.chuc_nghiep_level ?? 1}
                   </span>
                   {userTitles.filter(ut => ut.is_displayed).map(ut => {
                     const t = ut.titles;
                     const colorCfg = t ? (TITLE_COLORS[t.color] || TITLE_COLORS.amber) : TITLE_COLORS.amber;
                     return (
-                      <span key={ut.id} className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-xs font-bold whitespace-nowrap ${colorCfg.activeClass}`}>
+                      <span key={ut.id} className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-bold ${colorCfg.activeClass}`}>
                         <Award className="w-3 h-3" />
                         {t?.name || '(?)'}
                       </span>
                     );
                   })}
                   {myOrgs.map(o => (
-                    <span key={o.id} className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-black/30 border border-white/10 text-xs text-gray-300">
+                    <span key={o.id} className="inline-flex items-center gap-1 rounded-full bg-black/30 border border-white/10 px-2 py-1 text-[11px] text-gray-300">
                       <Building2 className="w-3 h-3 text-amber-300/70" />
                       {o.name}
-                      {o.role && o.role !== 'Thành viên' && (
-                        <span className="text-[10px] text-amber-300/70">· {o.role}</span>
-                      )}
+                      {o.role && o.role !== 'Thành viên' && <span className="text-[10px] text-amber-300/70">· {o.role}</span>}
                     </span>
                   ))}
+                </div>
+                <div className="mt-1 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 sm:justify-start">
                   <button
                     type="button"
                     onClick={() => setEmailVisible(v => !v)}
@@ -584,11 +584,17 @@ export default function ProfilePage() {
               </div>
             ) : (
               <>
-                <div className="flex items-center justify-center sm:justify-start gap-2 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setAnonymousVisible(v => !v)}
+                  className="flex w-fit items-center justify-center gap-2 mx-auto text-sm text-gray-400 transition-colors hover:text-amber-200/80 sm:mx-0 sm:justify-start"
+                  aria-label={anonymousVisible ? 'Ẩn danh tính ẩn danh' : 'Hiện danh tính ẩn danh'}
+                >
                   <Ghost className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-400">Ẩn danh:</span>
-                  <span className="text-amber-200/80">{profile.anonymous_name || 'Vô Danh'}</span>
-                </div>
+                  <span>Ẩn danh:</span>
+                  <span className="text-amber-200/80">{anonymousVisible ? (profile.anonymous_name || 'Vô Danh') : '••••••••'}</span>
+                  {anonymousVisible ? <EyeOff className="h-3.5 w-3.5 text-gray-600" /> : <Eye className="h-3.5 w-3.5 text-gray-600" />}
+                </button>
                 <div className="flex items-center justify-center sm:justify-start gap-2 text-sm">
                   <span className="text-gray-400">Giới tính:</span>
                   <span className="text-gray-300">{profile.gender}</span>
