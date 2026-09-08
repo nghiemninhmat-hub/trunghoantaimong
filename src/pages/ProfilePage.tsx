@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Transaction, InventoryItem, CURRENCY_LABELS, Organization, UserTitle, TITLE_COLORS, OrgTreasury, OrgTreasuryLog, HiepLuuRegistration } from '@/lib/supabase';
-import { StatCard, StatGrid } from '@/components/StatCard';
 import {
-  UserCircle, Coins, Sparkles, Skull, Package, History, Edit3,
+  UserCircle, Coins, Sparkles, Package, History, Edit3,
   CheckCircle2, Clock, AlertCircle, Ghost, Plus, Minus, Send,
   Heart, Sparkle, Brain, ShieldCheck, Camera, X, Loader2, Upload, Link,
-  ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronRight, ChevronDown, Building2, Award, ToggleLeft, ToggleRight,
+  ArrowRight, Shield, Crown, Mail, Eye, EyeOff, ChevronDown, Building2, Award, ToggleLeft, ToggleRight,
   Zap,
 } from 'lucide-react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
@@ -63,6 +62,8 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [emailVisible, setEmailVisible] = useState(false);
   const [statusDescOpen, setStatusDescOpen] = useState(false);
+  const [skillsOpen, setSkillsOpen] = useState(false);
+  const [titlesOpen, setTitlesOpen] = useState(false);
 
   // Titles (Bộ Sưu Tầm)
   const [userTitles, setUserTitles] = useState<UserTitle[]>([]);
@@ -686,21 +687,20 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Currencies + counts */}
-      <StatGrid cols={4}>
-        <StatCard label="Hoa Tiền" value={profile.hua_tien} icon={Coins} accent="gold" />
-        <StatCard label="Công Đức" value={profile.cong_duc} icon={Sparkles} accent="gold" />
-        <StatCard label="Âm Đức" value={profile.am_duc} icon={Skull} accent="gold" />
-        <StatCard label="Vật Phẩm" value={inventory.reduce((sum, i) => sum + (i.quantity || 1), 0)} icon={Package} accent="gold" hint="Trong kho" />
-      </StatGrid>
-
       {/* Kỹ năng nhân vật (chỉ xem) */}
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
-        <div className="flex items-center gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => setSkillsOpen(o => !o)}
+          aria-expanded={skillsOpen}
+          className="flex items-center gap-2 w-full text-left group"
+        >
           <Zap className="w-5 h-5 text-amber-300/70" />
-          <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Kỹ Năng Nhân Vật</h3>
-          <span className="ml-auto text-[10px] text-gray-600 uppercase tracking-wider">Quản trị viên thay đổi</span>
-        </div>
+          <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90 flex-1">Kỹ Năng Nhân Vật</h3>
+          <span className="text-[10px] text-gray-600 uppercase tracking-wider mr-1">Quản trị viên thay đổi</span>
+          <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${skillsOpen ? 'rotate-180' : ''} group-hover:text-gray-300`} />
+        </button>
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${skillsOpen ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
         {mySkills.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-4">Chưa có kỹ năng nào.</p>
         ) : (
@@ -727,6 +727,7 @@ export default function ProfilePage() {
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {/* Quan Hệ — Hiệp Lữ bonds */}
@@ -782,12 +783,19 @@ export default function ProfilePage() {
 
       {/* Character Status */}
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
-        <div className="flex items-center gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => setStatusDescOpen(o => !o)}
+          aria-expanded={statusDescOpen}
+          className="flex items-center gap-2 w-full text-left group"
+        >
           <ShieldCheck className="w-5 h-5 text-amber-300/70" />
-          <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Thanh Trạng Thái Nhân Vật</h3>
-          <span className="ml-auto text-[10px] text-gray-600 uppercase tracking-wider">Quản trị viên thay đổi</span>
-        </div>
+          <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90 flex-1">Thanh Trạng Thái Nhân Vật</h3>
+          <span className="text-[10px] text-gray-600 uppercase tracking-wider mr-1">Quản trị viên thay đổi</span>
+          <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${statusDescOpen ? 'rotate-180' : ''} group-hover:text-gray-300`} />
+        </button>
 
+        {statusDescOpen && <div className="mt-4">
         <p className="text-xs sm:text-sm text-gray-400 leading-relaxed mb-4">
           Trùng Hoan Tái sử dụng Thanh Trạng Thái để quy ước. Hệ thống trạng thái bao gồm — Trạng thái thể chất, tinh thần và tâm linh. Nhằm đảm bảo trong việc kiểm soát trạng thái, Trùng Hoan Tái sẽ cập nhật những trạng thái khác nhau của từng mục dưới dạng tag.
         </p>
@@ -818,20 +826,6 @@ export default function ProfilePage() {
           })}
         </div>
 
-        <button
-          onClick={() => setStatusDescOpen(!statusDescOpen)}
-          className="flex items-center gap-2 text-xs font-semibold text-amber-300/70 hover:text-amber-200 transition-colors w-full text-left group"
-        >
-          <span className="flex items-center gap-1.5">
-            {statusDescOpen ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            {statusDescOpen ? 'Thu gọn' : 'Đọc chi tiết các mức độ tag'}
-          </span>
-          <span className={`inline-block transition-transform duration-300 ${statusDescOpen ? 'rotate-90' : ''}`}>
-            <ChevronRight className="w-3.5 h-3.5 text-amber-300/50 group-hover:text-amber-200/70" />
-          </span>
-        </button>
-
-        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${statusDescOpen ? 'max-h-[2000px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
           <h4 className="text-xs sm:text-sm font-serif font-bold text-amber-100/70 mb-3">Cập Nhật Các Mức Độ Của Trạng Thái Thể Chất — Tinh Thần</h4>
           <p className="text-xs text-gray-500 leading-relaxed mb-3">
             Dưới đây là định hướng chung của Trùng Hoan Tái với từng mức độ, người chơi có thể linh hoạt thay đổi tùy theo tình huống và loại trạng thái nhận được. Cần đảm bảo tính hợp lý.
@@ -862,7 +856,7 @@ export default function ProfilePage() {
               <p className="text-xs sm:text-sm text-gray-400 leading-relaxed"><span className="font-semibold text-purple-500">Thẻ tag tím đậm:</span> Trạng thái gần như không thể phục hồi, mất khả năng kiểm soát, nhân vật không còn khả năng hoạt động kỹ năng hay gắng gượng điều chỉnh, nhịp sống mong manh.</p>
             </div>
           </div>
-        </div>
+        </div>}
       </div>
 
       {/* Self-Currency Adjustment */}
@@ -1116,11 +1110,18 @@ export default function ProfilePage() {
 
       {/* Titles (Bộ Sưu Tầm) */}
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
-        <div className="flex items-center gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => setTitlesOpen(o => !o)}
+          aria-expanded={titlesOpen}
+          className="flex items-center gap-2 w-full text-left group"
+        >
           <Award className="w-5 h-5 text-amber-300/70" />
-          <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Bộ Sưu Tầm Danh Hiệu</h3>
-          <span className="ml-auto text-[10px] text-gray-600 uppercase tracking-wider">Tối đa 3 hiển thị</span>
-        </div>
+          <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90 flex-1">Bộ Sưu Tầm Danh Hiệu</h3>
+          <span className="text-[10px] text-gray-600 uppercase tracking-wider mr-1">Tối đa 3 hiển thị</span>
+          <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${titlesOpen ? 'rotate-180' : ''} group-hover:text-gray-300`} />
+        </button>
+        {titlesOpen && <div className="mt-4">
         {titleMsg && (
           <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 mb-3">
             <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
@@ -1155,6 +1156,7 @@ export default function ProfilePage() {
         {userTitles.length > 0 && (
           <p className="text-xs text-gray-600 mt-3">Bấm nút để bật/tắt hiển thị. Chọn tối đa 3 danh hiệu để hiển thị trên hồ sơ, hoặc tắt tất cả nếu không muốn dùng.</p>
         )}
+        </div>}
       </div>
 
       {/* Organization Treasury */}
