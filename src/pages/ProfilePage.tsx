@@ -423,7 +423,7 @@ export default function ProfilePage() {
       <div className="p-5 sm:p-6 lg:p-8 rounded-2xl bg-black/30 border border-white/10 backdrop-blur-sm">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
           {/* Avatar — larger on mobile, centered; side-by-side on desktop */}
-          <div className="flex-shrink-0 flex flex-col items-center gap-3 sm:pt-2"
+          <div className="flex-shrink-0 flex flex-col items-center gap-3 sm:pt-2">
             <div className="relative group">
               {/* Outer ornamental glow ring */}
               <div className="absolute -inset-7 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(214,65,46,0.38),rgba(140,17,17,0.18)_45%,transparent_75%)] blur-xl" />
