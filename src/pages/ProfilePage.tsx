@@ -423,14 +423,15 @@ export default function ProfilePage() {
       <div className="p-5 sm:p-6 lg:p-8 rounded-2xl bg-black/30 border border-white/10 backdrop-blur-sm">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
           {/* Avatar — larger on mobile, centered; side-by-side on desktop */}
-          <div className="flex-shrink-0 flex flex-col items-center gap-3">
+          <div className="flex-shrink-0 flex flex-col items-center gap-3 sm:pt-2"
             <div className="relative group">
               {/* Outer ornamental glow ring */}
-              <div className="absolute -inset-2 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(214,65,46,0.25),rgba(140,17,17,0.1)_50%,transparent_75%)] blur-md" />
-              {/* Thin decorative ring */}
-              <div className="absolute -inset-1.5 rounded-full border border-[#670201]/30" />
+              <div className="absolute -inset-7 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(214,65,46,0.38),rgba(140,17,17,0.18)_45%,transparent_75%)] blur-xl" />
+              {/* Thin decorative rings */}
+              <div className="absolute -inset-3 rounded-full border border-[#b73720]/35 shadow-[0_0_28px_rgba(183,55,32,0.24)]" />
+              <div className="absolute -inset-1.5 rounded-full border border-[#670201]/50" />
               {/* Avatar frame — circular, blood-moon style */}
-              <div className="relative w-36 h-36 sm:w-40 sm:h-40 lg:w-44 lg:h-44 rounded-full overflow-hidden border-[3px] border-[#670201]/50 shadow-xl shadow-black/50 bg-gradient-to-br from-[#670201] to-[#a00404]">
+              <div className="relative w-44 h-44 sm:w-48 sm:h-48 lg:w-52 lg:h-52 rounded-full overflow-hidden border-[3px] border-[#b73720]/65 shadow-[0_0_42px_rgba(183,55,32,0.28)] border-[#670201]/50 shadow-xl shadow-black/50 bg-gradient-to-br from-[#670201] to-[#a00404]">
                 {/* Inner rim highlight */}
                 <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-amber-200/10 pointer-events-none z-10" />
                 {avatarEditing ? (
