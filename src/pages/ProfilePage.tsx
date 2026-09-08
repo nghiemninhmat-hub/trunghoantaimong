@@ -206,7 +206,6 @@ export default function ProfilePage() {
     setAvatarInput('');
     setAvatarPreviewOk(true);
     setMessage('Đổi ảnh đại diện thành công!');
-    refreshProfile();
     setTimeout(() => setMessage(''), 4000);
   };
 
@@ -248,7 +247,6 @@ export default function ProfilePage() {
     setAvatarEditing(false);
     setAvatarInput('');
     setMessage('Đổi ảnh đại diện thành công!');
-    refreshProfile();
     setTimeout(() => setMessage(''), 4000);
   };
 
@@ -439,8 +437,8 @@ export default function ProfilePage() {
                       <Camera className="w-10 h-10 sm:w-12 sm:h-12 text-amber-100/80" />
                     </div>
                   )
-                ) : profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt={profile.oc_name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                ) : avatarUrl ? (
+                  <img src={avatarUrl} alt={profile.oc_name} className="w-full h-full object-cover transition-opacity duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <UserCircle className="w-16 h-16 sm:w-20 sm:h-20 text-amber-100/80" />
