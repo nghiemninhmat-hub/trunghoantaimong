@@ -17,8 +17,8 @@ const PROFILE_STATUS_TAGS = [
   { value: 'Ảnh hưởng nhẹ', cardClass: 'border-yellow-500/20 bg-yellow-500/5', iconClass: 'text-yellow-400', dotClass: 'bg-yellow-400', textClass: 'text-yellow-300' },
   { value: 'Nghiêm trọng', cardClass: 'border-red-400/25 bg-red-400/5', iconClass: 'text-red-400', dotClass: 'bg-red-300', textClass: 'text-red-300' },
   { value: 'Cực kỳ nghiêm trọng', cardClass: 'border-red-700/25 bg-red-700/5', iconClass: 'text-red-500', dotClass: 'bg-red-600', textClass: 'text-red-400' },
-  { value: 'Suy kiệt', cardClass: 'border-purple-400/25 bg-purple-400/5', iconClass: 'text-purple-400', dotClass: 'bg-purple-300', textClass: 'text-purple-300' },
-  { value: 'Ngưỡng sinh tử', cardClass: 'border-purple-800/25 bg-purple-800/5', iconClass: 'text-purple-500', dotClass: 'bg-purple-600', textClass: 'text-purple-400' },
+  { value: 'Suy kiệt', cardClass: 'border-orange-400/25 bg-orange-400/5', iconClass: 'text-orange-400', dotClass: 'bg-orange-300', textClass: 'text-orange-300' },
+  { value: 'Ngưỡng sinh tử', cardClass: 'border-red-800/25 bg-red-800/5', iconClass: 'text-red-500', dotClass: 'bg-red-600', textClass: 'text-red-400' },
 ];
 
 export default function ProfilePage() {
@@ -416,10 +416,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
+    <div className="relative max-w-6xl mx-auto space-y-5 sm:space-y-7 pb-8">
       {/* Profile Card */}
-      <div className="p-5 sm:p-6 lg:p-8 rounded-2xl bg-black/30 border border-white/10 backdrop-blur-sm">
-        <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
+      <div className="relative overflow-hidden p-5 sm:p-7 lg:p-10 rounded-[1.75rem] bg-gradient-to-br from-[#321610] via-[#1b0d0a] to-[#100807] border border-[#eeb337]/25 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
+        <div className="relative flex flex-col items-center gap-7 sm:flex-row sm:items-start sm:gap-10">
           {/* Avatar — larger on mobile, centered; side-by-side on desktop */}
           <div className="flex-shrink-0 flex flex-col items-center gap-3">
             <div className="relative group">
@@ -428,7 +428,7 @@ export default function ProfilePage() {
               {/* Thin decorative ring */}
               <div className="absolute -inset-1.5 rounded-full border border-[#670201]/30" />
               {/* Avatar frame — circular, blood-moon style */}
-              <div className="relative w-28 h-28 sm:w-40 sm:h-40 lg:w-44 lg:h-44 rounded-full overflow-hidden border-[3px] border-[#670201]/50 shadow-xl shadow-black/50 bg-gradient-to-br from-[#670201] to-[#a00404]">
+              <div className="relative w-32 h-32 sm:w-44 sm:h-44 lg:w-52 lg:h-52 rounded-[2rem] overflow-hidden border-[3px] border-[#eeb337]/50 shadow-2xl shadow-black/60 bg-gradient-to-br from-[#670201] to-[#a00404] rotate-[-2deg]">
                 {/* Inner rim highlight */}
                 <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-amber-200/10 pointer-events-none z-10" />
                 {avatarEditing ? (
@@ -462,13 +462,13 @@ export default function ProfilePage() {
           </div>
 
           {/* Info */}
-          <div className="flex-1 min-w-0 w-full space-y-3 text-center sm:text-left">
+          <div className="flex-1 min-w-0 w-full space-y-4 text-center sm:text-left sm:pt-2">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <h2 className="text-xl sm:text-2xl font-serif font-bold text-amber-100/90 break-words">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold tracking-wide text-[#fff1cf] break-words">
                   {editing ? ocName : profile.oc_name}
                 </h2>
-                <div className="flex flex-col gap-2 mt-2 items-center sm:items-start">
+                <div className="flex flex-wrap gap-2 mt-3 items-center justify-center sm:justify-start">
                   {profile.danh_vong && profile.danh_vong !== 'Vô Danh' && (
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#670201]/30 to-[#a00404]/20 border border-amber-500/30 text-xs font-bold text-amber-200 tracking-wider">
                       <Crown className="w-3 h-3 text-amber-300" />
@@ -593,7 +593,7 @@ export default function ProfilePage() {
                   <span className="text-gray-300">{profile.gender}</span>
                 </div>
                 {profile.bio && (
-                  <div className="p-3 rounded-lg bg-black/20 border border-white/5">
+                  <div className="p-3 rounded-xl bg-[#0d0807]/45 border border-[#eeb337]/15 shadow-inner">
                     <p className="text-sm text-gray-400 italic">"{profile.bio}"</p>
                   </div>
                 )}
@@ -687,16 +687,18 @@ export default function ProfilePage() {
       </div>
 
       {/* Currencies + counts */}
-      <StatGrid cols={4}>
-        <StatCard label="Hoa Tiền" value={profile.hua_tien} icon={Coins} accent="gold" />
-        <StatCard label="Công Đức" value={profile.cong_duc} icon={Sparkles} accent="gold" />
-        <StatCard label="Âm Đức" value={profile.am_duc} icon={Skull} accent="gold" />
-        <StatCard label="Vật Phẩm" value={inventory.reduce((sum, i) => sum + (i.quantity || 1), 0)} icon={Package} accent="gold" hint="Trong kho" />
-      </StatGrid>
+      <div className="relative rounded-2xl border border-[#eeb337]/15 bg-[#100807]/60 p-2 sm:p-3 shadow-xl shadow-black/20">
+        <StatGrid cols={4}>
+          <StatCard label="Hoa Tiền" value={profile.hua_tien} icon={Coins} accent="gold" />
+          <StatCard label="Công Đức" value={profile.cong_duc} icon={Sparkles} accent="gold" />
+          <StatCard label="Âm Đức" value={profile.am_duc} icon={Skull} accent="gold" />
+          <StatCard label="Vật Phẩm" value={inventory.reduce((sum, i) => sum + (i.quantity || 1), 0)} icon={Package} accent="gold" hint="Trong kho" />
+        </StatGrid>
+      </div>
 
       {/* Kỹ năng nhân vật (chỉ xem) */}
-      <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="relative overflow-hidden p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#2a120e]/90 via-[#1a0c0a]/95 to-[#100807]/95 border border-[#eeb337]/15 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
+        <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[#eeb337]/15">
           <Zap className="w-5 h-5 text-amber-300/70" />
           <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Kỹ Năng Nhân Vật</h3>
           <span className="ml-auto text-[10px] text-gray-600 uppercase tracking-wider">Quản trị viên thay đổi</span>
@@ -731,8 +733,8 @@ export default function ProfilePage() {
 
       {/* Quan Hệ — Hiệp Lữ bonds */}
       {hiepLuuBonds.length > 0 && (
-        <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="relative overflow-hidden p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#2a120e]/90 via-[#1a0c0a]/95 to-[#100807]/95 border border-[#eeb337]/15 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
+          <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[#eeb337]/15">
             <Heart className="w-5 h-5 text-[#b73720]" />
             <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Quan Hệ — Hiệp Lữ</h3>
           </div>
@@ -781,8 +783,8 @@ export default function ProfilePage() {
       )}
 
       {/* Character Status */}
-      <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="relative overflow-hidden p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#2a120e]/90 via-[#1a0c0a]/95 to-[#100807]/95 border border-[#eeb337]/15 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
+        <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[#eeb337]/15">
           <ShieldCheck className="w-5 h-5 text-amber-300/70" />
           <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Thanh Trạng Thái Nhân Vật</h3>
           <span className="ml-auto text-[10px] text-gray-600 uppercase tracking-wider">Quản trị viên thay đổi</span>
@@ -866,7 +868,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Self-Currency Adjustment */}
-      <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
+      <div className="relative overflow-hidden p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#2a120e]/90 via-[#1a0c0a]/95 to-[#100807]/95 border border-[#eeb337]/15 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
           <div className="flex items-center gap-2">
             <Coins className="w-5 h-5 text-amber-300/70" />
@@ -983,7 +985,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Transfer Hoa Tiền */}
-      <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
+      <div className="relative overflow-hidden p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#2a120e]/90 via-[#1a0c0a]/95 to-[#100807]/95 border border-[#eeb337]/15 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
           <div className="flex items-center gap-2">
             <Send className="w-5 h-5 text-amber-300/70" />
@@ -1078,10 +1080,10 @@ export default function ProfilePage() {
       </div>
 
       {/* Inventory */}
-      <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
+      <div className="relative overflow-hidden p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#2a120e]/90 via-[#1a0c0a]/95 to-[#100807]/95 border border-[#eeb337]/15 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
         <button
           onClick={() => setInventoryOpen(o => !o)}
-          className="flex items-center gap-2 w-full text-left group"
+          className="flex items-center gap-3 w-full text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#eeb337]/60 rounded-lg"
         >
           <Package className="w-5 h-5 text-amber-300/70 flex-shrink-0" />
           <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90 flex-1">Kho Vật Phẩm</h3>
@@ -1115,8 +1117,8 @@ export default function ProfilePage() {
       </div>
 
       {/* Titles (Bộ Sưu Tầm) */}
-      <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
-        <div className="flex items-center gap-2 mb-4">
+      <div className="relative overflow-hidden p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#2a120e]/90 via-[#1a0c0a]/95 to-[#100807]/95 border border-[#eeb337]/15 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
+        <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[#eeb337]/15">
           <Award className="w-5 h-5 text-amber-300/70" />
           <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Bộ Sưu Tầm Danh Hiệu</h3>
           <span className="ml-auto text-[10px] text-gray-600 uppercase tracking-wider">Tối đa 3 hiển thị</span>
@@ -1159,8 +1161,8 @@ export default function ProfilePage() {
 
       {/* Organization Treasury */}
       {myOrgs.length > 0 && (
-        <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="relative overflow-hidden p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#2a120e]/90 via-[#1a0c0a]/95 to-[#100807]/95 border border-[#eeb337]/15 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
+          <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[#eeb337]/15">
             <Building2 className="w-5 h-5 text-amber-300/70" />
             <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90">Tài Sản Tổ Chức</h3>
           </div>
@@ -1252,10 +1254,10 @@ export default function ProfilePage() {
       )}
 
       {/* Transaction History */}
-      <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-white/10">
+      <div className="relative overflow-hidden p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-[#2a120e]/90 via-[#1a0c0a]/95 to-[#100807]/95 border border-[#eeb337]/15 shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
         <button
           onClick={() => setTransactionsOpen(o => !o)}
-          className="flex items-center gap-2 w-full text-left group"
+          className="flex items-center gap-3 w-full text-left group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#eeb337]/60 rounded-lg"
         >
           <History className="w-5 h-5 text-amber-300/70 flex-shrink-0" />
           <h3 className="text-base sm:text-lg font-serif font-bold text-amber-100/90 flex-1">Lịch Sử Giao Dịch</h3>
