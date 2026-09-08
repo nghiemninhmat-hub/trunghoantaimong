@@ -416,7 +416,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="relative max-w-6xl mx-auto space-y-5 sm:space-y-7 pb-8">
+    <div className="profile-paper relative max-w-6xl mx-auto space-y-5 sm:space-y-7 pb-8">
       {/* Profile Card */}
       <div className="relative overflow-hidden p-5 sm:p-7 lg:p-10 rounded-[1.75rem] bg-gradient-to-br from-[#321610] via-[#1b0d0a] to-[#100807] border border-[#eeb337]/25 shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
         <div className="relative flex flex-col items-center gap-7 sm:flex-row sm:items-start sm:gap-10">
@@ -428,7 +428,7 @@ export default function ProfilePage() {
               {/* Thin decorative ring */}
               <div className="absolute -inset-1.5 rounded-full border border-[#670201]/30" />
               {/* Avatar frame — circular, blood-moon style */}
-              <div className="relative w-32 h-32 sm:w-44 sm:h-44 lg:w-52 lg:h-52 rounded-[2rem] overflow-hidden border-[3px] border-[#eeb337]/50 shadow-2xl shadow-black/60 bg-gradient-to-br from-[#670201] to-[#a00404] rotate-[-2deg]">
+              <div className="profile-avatar-frame relative w-32 h-32 sm:w-44 sm:h-44 lg:w-52 lg:h-52 rounded-[2rem] overflow-hidden border-[3px] border-[#eeb337]/50 shadow-2xl shadow-black/60 bg-gradient-to-br from-[#670201] to-[#a00404] rotate-[-2deg]">
                 {/* Inner rim highlight */}
                 <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-amber-200/10 pointer-events-none z-10" />
                 {avatarEditing ? (
