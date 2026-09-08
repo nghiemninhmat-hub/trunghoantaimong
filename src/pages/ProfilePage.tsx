@@ -421,7 +421,7 @@ export default function ProfilePage() {
     <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
       {/* Profile Card */}
       <div className="p-5 sm:p-6 lg:p-8 rounded-2xl bg-black/30 border border-white/10 backdrop-blur-sm">
-        <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-8">
+        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-5">
           {/* Avatar — larger on mobile, centered; side-by-side on desktop */}
           <div className="flex-shrink-0 flex flex-col items-center gap-3 sm:pt-2">
             <div className="relative group">
@@ -465,7 +465,7 @@ export default function ProfilePage() {
           <div className="flex-1 min-w-0 w-full space-y-2 text-center sm:text-left">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                <h2 className="text-xl sm:text-2xl font-serif font-bold text-amber-100/90 break-words">
+                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-amber-100/90 break-words">
                   {editing ? ocName : profile.oc_name}
                 </h2>
                 <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5 sm:justify-start">
