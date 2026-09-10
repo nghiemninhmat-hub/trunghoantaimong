@@ -61,6 +61,7 @@ export interface Profile {
   password: string | null;
   is_disabled: boolean;
   chuc_nghiep_level: number;
+  referred_by: string | null;
 }
 
 export interface AuditLog {

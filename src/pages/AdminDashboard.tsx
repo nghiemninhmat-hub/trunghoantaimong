@@ -2143,6 +2143,12 @@ export default function AdminDashboard() {
                             <span className="text-[9px] text-orange-400/70 font-normal">(chưa có MK)</span>
                           )}
                         </div>
+                        {p.referred_by && (
+                          <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1.5">
+                            <UserSearch className="w-3 h-3 text-amber-300/60" />
+                            <span>Người giới thiệu: <span className="text-amber-300/80 font-semibold">{p.referred_by}</span></span>
+                          </p>
+                        )}
                         {p.bio && <p className="text-xs text-gray-500 mt-2 italic line-clamp-3">"{p.bio}"</p>}
                         {p.review_status === 'request_edit' && p.review_feedback && (
                           <div className="mt-2 p-2 rounded-lg bg-yellow-500/10 border border-yellow-500/20">

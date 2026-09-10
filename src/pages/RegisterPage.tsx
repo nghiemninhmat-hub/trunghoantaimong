@@ -24,6 +24,7 @@ export default function RegisterPage() {
   const [gender, setGender] = useState('Nam');
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [referredBy, setReferredBy] = useState('');
   const [skills, setSkills] = useState<SkillFormData[]>([emptySkill, emptySkill, emptySkill, emptySkill]);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -80,6 +81,7 @@ export default function RegisterPage() {
           gender,
           bio,
           avatar_url: avatarUrl || null,
+          referred_by: referredBy.trim() || null,
           hua_tien: 300,
           cong_duc: 30,
           am_duc: 0,
@@ -336,6 +338,10 @@ export default function RegisterPage() {
                 <div>
                   <label className={labelClass}>Link ảnh đại diện</label>
                   <input type="text" name="avatar-url" autoComplete="url" placeholder="https://…" value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Mã giới thiệu (tên OC người giới thiệu)</label>
+                  <input type="text" name="referred-by" autoComplete="off" placeholder="Tên OC người giới thiệu (không bắt buộc)…" value={referredBy} onChange={e => setReferredBy(e.target.value)} className={inputClass} />
                 </div>
               </div>
             )}
