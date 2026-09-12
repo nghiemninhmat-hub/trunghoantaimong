@@ -88,6 +88,16 @@ export default function ProfilePage() {
   const [contributing, setContributing] = useState(false);
   const [contribError, setContribError] = useState('');
 
+  // Leader transfer treasury to member
+  const [orgMembers, setOrgMembers] = useState<Record<string, { user_id: string; oc_name: string }[]>>({});
+  const [leaderTransferOrgId, setLeaderTransferOrgId] = useState<string | null>(null);
+  const [leaderTransferMemberId, setLeaderTransferMemberId] = useState('');
+  const [leaderTransferCurrency, setLeaderTransferCurrency] = useState('HUA_TIEN');
+  const [leaderTransferAmount, setLeaderTransferAmount] = useState('');
+  const [leaderTransferReason, setLeaderTransferReason] = useState('');
+  const [leaderTransferring, setLeaderTransferring] = useState(false);
+  const [leaderTransferError, setLeaderTransferError] = useState('');
+
   // Hiep Luu (relationships)
   const [hiepLuuBonds, setHiepLuuBonds] = useState<HiepLuuRegistration[]>([]);
 
@@ -134,6 +144,23 @@ export default function ProfilePage() {
         role: m.role,
       })).filter(o => o?.id);
       setMyOrgs(orgList);
+
+      // Fetch members for orgs where user is leader
+      const leaderOrgIds = orgList.filter(o => o.leader_id === user.id).map(o => o.id);
+      if (leaderOrgIds.length > 0) {
+        const membersRes = await supabase
+          .from('organization_members')
+          .select('organization_id, user_id, profiles(oc_name)')
+          .in('organization_id', leaderOrgIds);
+        if (membersRes.data) {
+          const mMap: Record<string, { user_id: string; oc_name: string }[]> = {};
+          (membersRes.data as any[]).forEach(m => {
+            if (!mMap[m.organization_id]) mMap[m.organization_id] = [];
+            mMap[m.organization_id].push({ user_id: m.user_id, oc_name: m.profiles?.oc_name || 'Vô Danh' });
+          });
+          setOrgMembers(mMap);
+        }
+      }
     }
     if (titlesRes.data) {
       setUserTitles(titlesRes.data as UserTitle[]);
@@ -374,6 +401,55 @@ export default function ProfilePage() {
       setContribError(err.message || 'Thao tác thất bại.');
     } finally {
       setContributing(false);
+    }
+  };
+
+  const handleLeaderTransfer = async (orgId: string) => {
+    if (!user || !profile) return;
+    setLeaderTransferring(true);
+    setLeaderTransferError('');
+    try {
+      const rawAmount = parseInt(leaderTransferAmount, 10);
+      if (isNaN(rawAmount) || rawAmount <= 0) {
+        setLeaderTransferError('Vui lòng nhập số lượng hợp lệ.');
+        setLeaderTransferring(false);
+        return;
+      }
+      if (!leaderTransferMemberId) {
+        setLeaderTransferError('Vui lòng chọn thành viên nhận.');
+        setLeaderTransferring(false);
+        return;
+      }
+      if (!leaderTransferReason.trim()) {
+        setLeaderTransferError('Vui lòng nhập lý do.');
+        setLeaderTransferring(false);
+        return;
+      }
+      const { data, error: rpcError } = await supabase.rpc('leader_transfer_treasury_to_member', {
+        p_org_id: orgId,
+        p_member_user_id: leaderTransferMemberId,
+        p_currency_type: leaderTransferCurrency,
+        p_amount: rawAmount,
+        p_reason: leaderTransferReason.trim(),
+      });
+      if (rpcError) throw rpcError;
+      if (data && !data.success) {
+        setLeaderTransferError(data.error || 'Thao tác thất bại.');
+        setLeaderTransferring(false);
+        return;
+      }
+      setMessage('Chuyển tài sản cho thành viên thành công!');
+      setLeaderTransferOrgId(null);
+      setLeaderTransferMemberId('');
+      setLeaderTransferAmount('');
+      setLeaderTransferReason('');
+      setLeaderTransferCurrency('HUA_TIEN');
+      await refreshProfile();
+      await fetchData();
+    } catch (err: any) {
+      setLeaderTransferError(err.message || 'Thao tác thất bại.');
+    } finally {
+      setLeaderTransferring(false);
     }
   };
 
@@ -1203,13 +1279,24 @@ export default function ProfilePage() {
                         <span className="text-[10px] text-amber-300/60">· {o.role}</span>
                       )}
                     </div>
-                    <button
-                      onClick={() => setContribOrgId(contribOrgId === o.id ? null : o.id)}
-                      className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-amber-300 transition-all"
-                    >
-                      {contribOrgId === o.id ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                      {contribOrgId === o.id ? 'Hủy' : 'Đóng góp / Rút'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setContribOrgId(contribOrgId === o.id ? null : o.id)}
+                        className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-amber-300 transition-all"
+                      >
+                        {contribOrgId === o.id ? <X className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
+                        {contribOrgId === o.id ? 'Hủy' : 'Đóng góp / Rút'}
+                      </button>
+                      {isLeader && (orgMembers[o.id]?.length ?? 0) > 0 && (
+                        <button
+                          onClick={() => setLeaderTransferOrgId(leaderTransferOrgId === o.id ? null : o.id)}
+                          className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-cyan-300 transition-all"
+                        >
+                          {leaderTransferOrgId === o.id ? <X className="w-3 h-3" /> : <ArrowRight className="w-3 h-3" />}
+                          {leaderTransferOrgId === o.id ? 'Hủy' : 'Chuyển cho thành viên'}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 mb-3">
@@ -1250,6 +1337,38 @@ export default function ProfilePage() {
                       >
                         {contributing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         Xác nhận
+                      </button>
+                    </div>
+                  )}
+
+                  {isLeader && leaderTransferOrgId === o.id && (
+                    <div className="p-3 rounded-lg bg-black/30 border border-cyan-500/10 space-y-2 mb-3">
+                      <p className="text-[10px] text-cyan-300/70 font-bold flex items-center gap-1">
+                        <Crown className="w-3 h-3" /> Chuyển tài sản từ quỹ tổ chức cho thành viên
+                      </p>
+                      <select value={leaderTransferMemberId} onChange={e => setLeaderTransferMemberId(e.target.value)} className="w-full px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50">
+                        <option value="">Chọn thành viên…</option>
+                        {(orgMembers[o.id] || []).filter(m => m.user_id !== user?.id).map(m => (
+                          <option key={m.user_id} value={m.user_id}>{m.oc_name}</option>
+                        ))}
+                      </select>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <select value={leaderTransferCurrency} onChange={e => setLeaderTransferCurrency(e.target.value)} className="flex-1 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50">
+                          <option value="HUA_TIEN">Hoa Tiền</option>
+                          <option value="CONG_DUC">Công Đức</option>
+                          <option value="AM_DUC">Âm Đức</option>
+                        </select>
+                        <input type="number" min={1} value={leaderTransferAmount} onChange={e => setLeaderTransferAmount(e.target.value)} placeholder="Số lượng" className="sm:w-28 px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50" />
+                      </div>
+                      <input type="text" value={leaderTransferReason} onChange={e => setLeaderTransferReason(e.target.value)} placeholder="Lý do" className="w-full px-3 py-2 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 focus:outline-none focus:border-cyan-500/50" />
+                      {leaderTransferError && <p className="text-xs text-red-400">{leaderTransferError}</p>}
+                      <button
+                        onClick={() => handleLeaderTransfer(o.id)}
+                        disabled={leaderTransferring}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-700/80 hover:bg-cyan-600 text-cyan-50 text-sm font-bold rounded-lg transition-all disabled:opacity-50"
+                      >
+                        {leaderTransferring ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        Chuyển cho thành viên
                       </button>
                     </div>
                   )}
