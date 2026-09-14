@@ -373,6 +373,28 @@ export default function AdminDashboard() {
     );
   };
 
+  const handleDeleteUser = (userId: string) => {
+    const targetUser = allProfiles.find(p => p.id === userId);
+    const name = targetUser?.oc_name || userId.slice(0, 8);
+    const email = targetUser?.email || '';
+    requireConfirm(
+      'Xóa Vĩnh Viễn Tài Khoản',
+      `Bạn sắp XÓA VĨNH VIỄN tài khoản "${name}". Tài khoản sẽ bị xóa khỏi danh sách thành viên và không thể đăng nhập nữa. Hành động này KHÔNG THỂ HOÀN TÁC.`,
+      async () => {
+        const { error } = await supabase.rpc('admin_delete_user', { p_user_id: userId });
+        if (error) { alert(`Lỗi: ${error.message}`); return; }
+        logAction('delete_user', userId, `Xóa vĩnh viễn tài khoản ${name} (${email})`, { user_id: userId });
+        alert(`Đã xóa vĩnh viễn tài khoản "${name}".`);
+        fetchAllData();
+      },
+      [
+        { label: 'Người chơi', value: name },
+        { label: 'Email', value: email },
+      ],
+      'Xóa vĩnh viễn',
+    );
+  };
+
   const handleEnableUser = async (userId: string) => {
     const targetUser = allProfiles.find(p => p.id === userId);
     const name = targetUser?.oc_name || userId.slice(0, 8);
@@ -3748,12 +3770,20 @@ export default function AdminDashboard() {
                       {p.is_disabled && (
                         <div className="mt-2 flex items-center justify-between gap-2">
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold border border-red-500/30">Vô hiệu hóa</span>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleEnableUser(p.id); }}
-                            className="text-[10px] px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/20 transition-all"
-                          >
-                            Mở khóa
-                          </button>
+                          <div className="flex gap-1.5">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleEnableUser(p.id); }}
+                              className="text-[10px] px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/20 transition-all"
+                            >
+                              Mở khóa
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDeleteUser(p.id); }}
+                              className="text-[10px] px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold border border-red-500/20 transition-all"
+                            >
+                              Xóa vĩnh viễn
+                            </button>
+                          </div>
                         </div>
                       )}
                     </button>
