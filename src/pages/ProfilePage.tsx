@@ -50,6 +50,10 @@ export default function ProfilePage() {
   const [transferReason, setTransferReason] = useState('');
   const [transferring, setTransferring] = useState(false);
   const [transferError, setTransferError] = useState('');
+  const [transferSearchResults, setTransferSearchResults] = useState<{ id: string; oc_name: string; avatar_url: string | null }[]>([]);
+  const [transferSearching, setTransferSearching] = useState(false);
+  const [transferSelected, setTransferSelected] = useState<{ id: string; oc_name: string; avatar_url: string | null } | null>(null);
+  const transferSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Avatar quick-change state
   const [avatarEditing, setAvatarEditing] = useState(false);
@@ -317,6 +321,32 @@ export default function ProfilePage() {
     }
   };
 
+  const searchPlayers = (query: string) => {
+    setTransferRecipient(query);
+    setTransferSelected(null);
+    if (transferSearchTimer.current) clearTimeout(transferSearchTimer.current);
+    if (query.trim().length < 1) {
+      setTransferSearchResults([]);
+      return;
+    }
+    setTransferSearching(true);
+    transferSearchTimer.current = setTimeout(async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, oc_name, avatar_url')
+        .ilike('oc_name', `%${query.trim()}%`)
+        .eq('is_approved', true)
+        .neq('id', user?.id || '')
+        .limit(8);
+      if (!error && data) {
+        setTransferSearchResults(data as { id: string; oc_name: string; avatar_url: string | null }[]);
+      } else {
+        setTransferSearchResults([]);
+      }
+      setTransferSearching(false);
+    }, 300);
+  };
+
   const handleTransfer = async () => {
     if (!user || !profile) return;
     setTransferring(true);
@@ -328,18 +358,19 @@ export default function ProfilePage() {
         setTransferring(false);
         return;
       }
-      if (!transferRecipient.trim()) {
+      if (!transferSelected && !transferRecipient.trim()) {
         setTransferError('Vui lòng nhập tên OC của người nhận.');
         setTransferring(false);
         return;
       }
+      const recipientName = transferSelected ? transferSelected.oc_name : transferRecipient.trim();
       if (!transferReason.trim()) {
         setTransferError('Vui lòng nhập lý do chuyển khoản.');
         setTransferring(false);
         return;
       }
       const { data, error: rpcError } = await supabase.rpc('transfer_hua_tien', {
-        p_recipient_name: transferRecipient.trim(),
+        p_recipient_name: recipientName,
         p_amount: rawAmount,
         p_reason: transferReason.trim(),
       });
@@ -350,6 +381,8 @@ export default function ProfilePage() {
         setTransferRecipient('');
         setTransferAmount('');
         setTransferReason('');
+        setTransferSearchResults([]);
+        setTransferSelected(null);
         await refreshProfile();
         await fetchData();
       }
@@ -1094,16 +1127,89 @@ export default function ProfilePage() {
         {transferOpen && (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Recipient name */}
+              {/* Recipient name — live search */}
               <div className="space-y-2">
                 <label className="text-xs text-gray-500 uppercase tracking-wider">Tên OC người nhận</label>
-                <input
-                  type="text"
-                  value={transferRecipient}
-                  onChange={e => setTransferRecipient(e.target.value)}
-                  placeholder="Nhập chính xác danh tính OC..."
-                  className="w-full px-3 py-2.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#670201]/50 transition-all"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={transferRecipient}
+                    onChange={e => searchPlayers(e.target.value)}
+                    placeholder="Nhập tên OC để tìm kiếm..."
+                    className="w-full px-3 py-2.5 bg-black/30 border border-white/10 rounded-lg text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-[#670201]/50 transition-all"
+                    autoComplete="off"
+                  />
+                  {transferSearching && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 animate-spin" />
+                  )}
+                  {transferSelected && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-emerald-500/15 border border-emerald-500/30 rounded-md px-2 py-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      <span className="text-[10px] text-emerald-300 font-bold">Đã chọn</span>
+                    </div>
+                  )}
+                  {/* Search results dropdown */}
+                  {!transferSelected && (transferSearchResults.length > 0 || (transferRecipient.trim().length > 0 && !transferSearching)) && (
+                    <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto rounded-lg bg-[#1a0606] border border-[#670201]/40 shadow-xl">
+                      {transferSearchResults.length === 0 ? (
+                        <div className="px-3 py-4 text-center">
+                          <p className="text-xs text-gray-500">Không tìm thấy người chơi phù hợp.</p>
+                          {transferRecipient.trim().length > 0 && (
+                            <p className="text-[10px] text-gray-600 mt-1">Bạn vẫn có thể xác nhận với tên đã nhập.</p>
+                          )}
+                        </div>
+                      ) : (
+                        transferSearchResults.map(p => (
+                          <button
+                            key={p.id}
+                            onClick={() => {
+                              setTransferSelected(p);
+                              setTransferRecipient(p.oc_name);
+                              setTransferSearchResults([]);
+                              setTransferError('');
+                            }}
+                            className="flex items-center gap-2.5 w-full px-3 py-2.5 hover:bg-[#670201]/30 transition-all text-left border-b border-white/5 last:border-0"
+                          >
+                            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#670201]/30 border border-white/10">
+                              {p.avatar_url ? (
+                                <img src={p.avatar_url} alt={p.oc_name} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <UserCircle className="w-4 h-4 text-gray-500" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-amber-100/90 font-semibold truncate">{p.oc_name}</p>
+                              <p className="text-[10px] text-gray-500">Bấm để chọn người nhận</p>
+                            </div>
+                            <ArrowRight className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+                {transferSelected && (
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 bg-[#670201]/30 border border-white/10">
+                      {transferSelected.avatar_url ? (
+                        <img src={transferSelected.avatar_url} alt={transferSelected.oc_name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <UserCircle className="w-3.5 h-3.5 text-gray-500" />
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-sm text-emerald-200 font-bold flex-1 truncate">{transferSelected.oc_name}</span>
+                    <button
+                      onClick={() => { setTransferSelected(null); setTransferRecipient(''); setTransferSearchResults([]); }}
+                      className="p-1 rounded-md hover:bg-white/10 text-gray-400 hover:text-red-400 transition-all"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
               {/* Amount */}
               <div className="space-y-2">
@@ -1153,7 +1259,7 @@ export default function ProfilePage() {
                 {transferring ? 'Đang xử lý...' : 'Xác Nhận Chuyển Khoản'}
               </button>
               <button
-                onClick={() => { setTransferOpen(false); setTransferError(''); }}
+                onClick={() => { setTransferOpen(false); setTransferError(''); setTransferRecipient(''); setTransferSearchResults([]); setTransferSelected(null); }}
                 className="px-4 py-2.5 bg-white/5 hover:bg-white/10 text-gray-400 text-sm font-bold rounded-lg transition-all"
               >
                 Hủy
