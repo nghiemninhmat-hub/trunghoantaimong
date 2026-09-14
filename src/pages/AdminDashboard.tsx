@@ -2217,24 +2217,69 @@ export default function AdminDashboard() {
                                 </button>
                               </div>
                               {editingSkillId === sk.id && (
-                                <div className="mt-2 p-2 rounded-lg bg-black/30 border border-amber-500/10 space-y-2">
-                                  <input type="text" value={editSkillDraft.name as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, name: e.target.value }))} placeholder="Tên kỹ năng" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
-                                  <textarea value={editSkillDraft.usage_detail as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, usage_detail: e.target.value }))} placeholder="Cách dùng" rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
-                                  <textarea value={editSkillDraft.effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, effect: e.target.value }))} placeholder="Hiệu quả" rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
-                                  <textarea value={editSkillDraft.tradeoff as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, tradeoff: e.target.value }))} placeholder="Đánh đổi" rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <input type="number" value={editSkillDraft.cong_duc_cost as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, cong_duc_cost: parseInt(e.target.value) || 0 }))} placeholder="Tiêu hao CD" className="px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
-                                    <input type="number" value={editSkillDraft.am_duc_cost as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, am_duc_cost: parseInt(e.target.value) || 0 }))} placeholder="Tiêu hao AD" className="px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                <div className="mt-2 p-2 rounded-lg bg-black/30 border border-amber-500/10 space-y-2.5">
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Tên kỹ năng</label>
+                                    <input type="text" value={editSkillDraft.name as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, name: e.target.value }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
                                   </div>
-                                  <input type="text" value={editSkillDraft.duration as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, duration: e.target.value }))} placeholder="Thời gian duy trì" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
-                                  <StatusTagSelector category="mental" value={editSkillDraft.mental_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, mental_effect: v }))} compact />
-                                  <input type="number" max={50} value={editSkillDraft.mental_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} placeholder="Thời gian tinh thần (max 50)" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
-                                  <StatusTagSelector category="health" value={editSkillDraft.health_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, health_effect: v }))} compact />
-                                  <input type="number" max={50} value={editSkillDraft.health_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} placeholder="Thời gian sức khỏe (max 50)" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
-                                  <StatusTagSelector category="spiritual" value={editSkillDraft.spiritual_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, spiritual_effect: v }))} compact />
-                                  <input type="number" max={50} value={editSkillDraft.spiritual_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} placeholder="Thời gian tâm linh (max 50)" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
-                                  <textarea value={editSkillDraft.ghost_level_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, ghost_level_effect: e.target.value }))} placeholder="Ảnh hưởng lên từng cấp quỷ" rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
-                                  <input type="number" max={100} value={editSkillDraft.destruction_percent as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) }))} placeholder="% tiêu diệt" className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Cách dùng</label>
+                                    <textarea value={editSkillDraft.usage_detail as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, usage_detail: e.target.value }))} rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Hiệu quả</label>
+                                    <textarea value={editSkillDraft.effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, effect: e.target.value }))} rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Đánh đổi</label>
+                                    <textarea value={editSkillDraft.tradeoff as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, tradeoff: e.target.value }))} rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Tiêu hao CD</label>
+                                      <input type="number" value={editSkillDraft.cong_duc_cost as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, cong_duc_cost: parseInt(e.target.value) || 0 }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                    </div>
+                                    <div>
+                                      <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Tiêu hao AD</label>
+                                      <input type="number" value={editSkillDraft.am_duc_cost as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, am_duc_cost: parseInt(e.target.value) || 0 }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian duy trì</label>
+                                    <input type="text" value={editSkillDraft.duration as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, duration: e.target.value }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng tinh thần</label>
+                                    <StatusTagSelector category="mental" value={editSkillDraft.mental_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, mental_effect: v }))} compact />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian tinh thần (cmt, tối đa 50)</label>
+                                    <input type="number" max={50} value={editSkillDraft.mental_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng sức khỏe</label>
+                                    <StatusTagSelector category="health" value={editSkillDraft.health_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, health_effect: v }))} compact />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian sức khỏe (cmt, tối đa 50)</label>
+                                    <input type="number" max={50} value={editSkillDraft.health_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng tâm linh</label>
+                                    <StatusTagSelector category="spiritual" value={editSkillDraft.spiritual_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, spiritual_effect: v }))} compact />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian tâm linh (cmt, tối đa 50)</label>
+                                    <input type="number" max={50} value={editSkillDraft.spiritual_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng lên từng cấp quỷ</label>
+                                    <textarea value={editSkillDraft.ghost_level_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, ghost_level_effect: e.target.value }))} rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">% tiêu diệt</label>
+                                    <input type="number" max={100} value={editSkillDraft.destruction_percent as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                                  </div>
                                   <div className="flex gap-2">
                                     <button onClick={() => handleSaveSkill(sk.id as string)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold transition-all">
                                       <Save className="w-3.5 h-3.5" /> Lưu
