@@ -142,10 +142,11 @@ export default function NghiepThuatAdmin(props: Props) {
               <option value="">Chọn mẫu...</option>
               {skillTemplates.map(t => {
                 const userSkills = (allSkills[assignTargetUserId] || []) as { name: string }[];
- const alreadyHas = assignTargetUserId && userSkills.some(s => s.name === t.name);
+                const alreadyHas = assignTargetUserId && userSkills.some(s => s.name === t.name);
+                if (alreadyHas) return null;
                 return (
-                  <option key={t.id} value={t.id} disabled={alreadyHas || undefined}>
-                    {t.name}{t.oc_name ? ` — ${t.oc_name}` : ''}{t.category ? ` (${t.category})` : ''}{alreadyHas ? ' (đã cấp)' : ''}
+                  <option key={t.id} value={t.id}>
+                    {t.name}{t.oc_name ? ` — ${t.oc_name}` : ''}{t.category ? ` (${t.category})` : ''}
                   </option>
                 );
               })}
