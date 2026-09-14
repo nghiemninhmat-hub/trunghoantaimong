@@ -351,57 +351,39 @@ export default function AdminDashboard() {
     fetchAllData();
   };
 
-  const handleDisableUser = (userId: string) => {
+  const handleDeleteUser = (userId: string, isSecondConfirm = false) => {
     const targetUser = allProfiles.find(p => p.id === userId);
     const name = targetUser?.oc_name || userId.slice(0, 8);
     const email = targetUser?.email || '';
-    requireConfirm(
-      'Vô Hiệu Hóa Tài Khoản',
-      `Bạn sắp vô hiệu hóa tài khoản "${name}". Người chơi sẽ không thể đăng nhập nữa và sẽ thấy thông báo "tài khoản vô hiệu". Hành động này có thể khôi phục bằng nút "Mở Khóa" sau khi vô hiệu hóa.`,
-      async () => {
-        const { error } = await supabase.rpc('admin_disable_user', { p_user_id: userId });
-        if (error) { alert(`Lỗi: ${error.message}`); return; }
-        logAction('disable_user', userId, `Vô hiệu hóa tài khoản ${name} (${email})`, { user_id: userId });
-        alert(`Đã vô hiệu hóa tài khoản "${name}". Người chơi sẽ không thể đăng nhập.`);
-        fetchAllData();
-      },
-      [
-        { label: 'Người chơi', value: name },
-        { label: 'Email', value: email },
-      ],
-      'Vô hiệu hóa',
-    );
-  };
-
-  const handleDeleteUser = (userId: string) => {
-    const targetUser = allProfiles.find(p => p.id === userId);
-    const name = targetUser?.oc_name || userId.slice(0, 8);
-    const email = targetUser?.email || '';
-    requireConfirm(
-      'Xóa Vĩnh Viễn Tài Khoản',
-      `Bạn sắp XÓA VĨNH VIỄN tài khoản "${name}". Tài khoản sẽ bị xóa khỏi danh sách thành viên và không thể đăng nhập nữa. Hành động này KHÔNG THỂ HOÀN TÁC.`,
-      async () => {
-        const { error } = await supabase.rpc('admin_delete_user', { p_user_id: userId });
-        if (error) { alert(`Lỗi: ${error.message}`); return; }
-        logAction('delete_user', userId, `Xóa vĩnh viễn tài khoản ${name} (${email})`, { user_id: userId });
-        alert(`Đã xóa vĩnh viễn tài khoản "${name}".`);
-        fetchAllData();
-      },
-      [
-        { label: 'Người chơi', value: name },
-        { label: 'Email', value: email },
-      ],
-      'Xóa vĩnh viễn',
-    );
-  };
-
-  const handleEnableUser = async (userId: string) => {
-    const targetUser = allProfiles.find(p => p.id === userId);
-    const name = targetUser?.oc_name || userId.slice(0, 8);
-    const { error } = await supabase.rpc('admin_enable_user', { p_user_id: userId });
-    if (error) { alert(`Lỗi: ${error.message}`); return; }
-    logAction('enable_user', userId, `Mở khóa tài khoản ${name}`, { user_id: userId });
-    fetchAllData();
+    if (!isSecondConfirm) {
+      requireConfirm(
+        'Xóa Tài Khoản — Bước 1/2',
+        `Bạn sắp XÓA tài khoản "${name}". Tài khoản sẽ bị xóa khỏi danh sách thành viên và không thể đăng nhập nữa. Hành động này KHÔNG THỂ HOÀN TÁC. Vui lòng xác nhận lần thứ hai ở bước tiếp theo.`,
+        () => { handleDeleteUser(userId, true); },
+        [
+          { label: 'Người chơi', value: name },
+          { label: 'Email', value: email },
+        ],
+        'Tiếp tục',
+      );
+    } else {
+      requireConfirm(
+        'Xóa Tài Khoản — Xác Nhận Cuối Cùng (Bước 2/2)',
+        `XÁC NHẬN XÓA "${name}". Đây là xác nhận cuối cùng. Sau khi nhấn nút bên dưới, tài khoản sẽ bị xóa vĩnh viễn và không thể khôi phục.`,
+        async () => {
+          const { error } = await supabase.rpc('admin_delete_user', { p_user_id: userId });
+          if (error) { alert(`Lỗi: ${error.message}`); return; }
+          logAction('delete_user', userId, `Xóa vĩnh viễn tài khoản ${name} (${email})`, { user_id: userId });
+          alert(`Đã xóa vĩnh viễn tài khoản "${name}".`);
+          fetchAllData();
+        },
+        [
+          { label: 'Người chơi', value: name },
+          { label: 'Email', value: email },
+        ],
+        'Xóa vĩnh viễn',
+      );
+    }
   };
 
   // ===== Coupon handlers =====
@@ -2444,6 +2426,12 @@ export default function AdminDashboard() {
                   >
                     <History className="w-3 h-3" /> {pwdHistoryIds.has(p.id) ? 'Ẩn lịch sử' : 'Xem lịch sử mật khẩu'}
                   </button>
+                  <button
+                    onClick={() => handleDeleteUser(p.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/20 transition-all w-full justify-center mt-2"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Xóa Tài Khoản
+                  </button>
                 </div>
               ))}
             </div>
@@ -3715,7 +3703,7 @@ export default function AdminDashboard() {
               onStatusUpdate={handleStatusUpdate}
               onRefresh={fetchAllData}
               onLogAction={logAction}
-              onDisableUser={handleDisableUser}
+              onDeleteUser={handleDeleteUser}
             />
           ) : (
             <div className="space-y-4">
@@ -3767,25 +3755,17 @@ export default function AdminDashboard() {
                         <span className="text-cyan-300">✨ {p.cong_duc}</span>
                         <span className="text-amber-300">🌑 {p.am_duc}</span>
                       </div>
-                      {p.is_disabled && (
-                        <div className="mt-2 flex items-center justify-between gap-2">
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold border border-red-500/30">Vô hiệu hóa</span>
-                          <div className="flex gap-1.5">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleEnableUser(p.id); }}
-                              className="text-[10px] px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/20 transition-all"
-                            >
-                              Mở khóa
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); handleDeleteUser(p.id); }}
-                              className="text-[10px] px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold border border-red-500/20 transition-all"
-                            >
-                              Xóa vĩnh viễn
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                      <div className="mt-2 pt-2 border-t border-white/5">
+                        {p.is_disabled && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold border border-red-500/30 mb-1.5 inline-block">Vô hiệu hóa</span>
+                        )}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDeleteUser(p.id); }}
+                          className="text-[10px] px-2 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold border border-red-500/20 transition-all w-full"
+                        >
+                          Xóa tài khoản
+                        </button>
+                      </div>
                     </button>
                   ))}
                 {approvedProfiles.filter(p => {

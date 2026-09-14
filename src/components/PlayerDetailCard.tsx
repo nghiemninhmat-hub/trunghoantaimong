@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import {
   ArrowLeft, Users, Package, History, Mail, Lock, Eye, EyeOff,
   Heart, Sparkle, Brain, Coins, Gift, Plus, Minus, Dices, Loader2,
-  CheckCircle2, AlertCircle, Trash2, UserCircle, Ban, Award,
+  CheckCircle2, AlertCircle, Trash2, UserCircle, Award,
   Zap, Save, X, Edit3,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
@@ -27,10 +27,10 @@ interface Props {
   onStatusUpdate?: (userId: string, field: 'status_physical' | 'status_spiritual' | 'status_mental', value: string) => Promise<void>;
   onRefresh?: () => void;
   onLogAction?: (action: string, targetUserId?: string, targetDesc?: string, details?: Record<string, unknown>) => Promise<void>;
-  onDisableUser?: (userId: string) => Promise<void>;
+  onDeleteUser?: (userId: string) => void;
 }
 
-export default function PlayerDetailCard({ profile, transactions: initialTx, inventory: initialInv, shopItems, onBack, onStatusUpdate, onRefresh, onLogAction, onDisableUser }: Props) {
+export default function PlayerDetailCard({ profile, transactions: initialTx, inventory: initialInv, shopItems, onBack, onStatusUpdate, onRefresh, onLogAction, onDeleteUser }: Props) {
   const [revealPwd, setRevealPwd] = useState(false);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>(initialTx);
   const [allInventory, setAllInventory] = useState(initialInv);
@@ -320,15 +320,15 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
         </div>
       </div>
 
-      {/* Disable member button */}
-      {onDisableUser && (
+      {/* Delete account button */}
+      {onDeleteUser && (
         <button
-          onClick={() => onDisableUser(profile.id)}
+          onClick={() => onDeleteUser(profile.id)}
           disabled={actionLoading}
           className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-bold border border-red-500/20 transition-all disabled:opacity-50 w-full justify-center"
         >
-          <Ban className="w-4 h-4" />
-          Vô Hiệu Hóa Tài Khoản
+          <Trash2 className="w-4 h-4" />
+          Xóa Tài Khoản
         </button>
       )}
 
