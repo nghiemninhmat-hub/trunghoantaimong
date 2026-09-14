@@ -528,9 +528,9 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                         {sk.duration ? <span className="text-gray-400">Duy trì: {sk.duration as string}</span> : null}
                         {Number(sk.destruction_percent) > 0 && <span className="text-red-400">Tiêu diệt: {sk.destruction_percent}%</span>}
                       </div>
-                      {sk.mental_effect ? <p className="mt-0.5"><span className="text-gray-600">Tinh thần:</span> {sk.mental_effect as string} ({sk.mental_duration as number}đv)</p> : null}
-                      {sk.health_effect ? <p><span className="text-gray-600">Sức khỏe:</span> {sk.health_effect as string} ({sk.health_duration as number}đv)</p> : null}
-                      {sk.spiritual_effect ? <p><span className="text-gray-600">Tâm linh:</span> {sk.spiritual_effect as string} ({sk.spiritual_duration as number}đv)</p> : null}
+                      {sk.mental_effect ? <p className="mt-0.5"><span className="text-gray-600">Tinh thần:</span> {sk.mental_effect as string} ({sk.mental_duration as number}cmt)</p> : null}
+                      {sk.health_effect ? <p><span className="text-gray-600">Sức khỏe:</span> {sk.health_effect as string} ({sk.health_duration as number}cmt)</p> : null}
+                      {sk.spiritual_effect ? <p><span className="text-gray-600">Tâm linh:</span> {sk.spiritual_effect as string} ({sk.spiritual_duration as number}cmt)</p> : null}
                       {sk.ghost_level_effect ? <p><span className="text-gray-600">Cấp quỷ:</span> {sk.ghost_level_effect as string}</p> : null}
                     </div>
                   </div>
