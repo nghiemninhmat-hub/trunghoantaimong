@@ -14,6 +14,7 @@ import ConfirmDialog from '@/components/ConfirmDialog';
 import PlayerDetailCard from '@/components/PlayerDetailCard';
 import StatusTagSelector from '@/components/StatusTagSelector';
 import NghiepThuatAdmin from '@/components/admin/NghiepThuatAdmin';
+import Avatar from '@/components/Avatar';
 
 const STATUS_TAGS = [
   { value: 'Bình Thường', label: 'Thẻ lá', badgeClass: 'bg-emerald-500/20 text-emerald-300', activeClass: 'bg-emerald-500/30 border-emerald-500/50 text-emerald-200', idleClass: 'bg-emerald-500/5 border-emerald-500/15 text-emerald-400/70' },
@@ -2968,11 +2969,7 @@ export default function AdminDashboard() {
             {approvedProfiles.map(p => (
               <div key={p.id} className="p-4 rounded-xl bg-black/30 border border-white/5">
                 <div className="flex items-center gap-2 mb-3">
-                  {p.avatar_url ? (
-                    <img src={p.avatar_url} alt={p.oc_name} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  ) : (
-                    <div className="w-8 h-8 rounded-lg bg-[#670201]/30 flex items-center justify-center flex-shrink-0"><Users className="w-4 h-4 text-amber-300/60" /></div>
-                  )}
+                  <Avatar src={p.avatar_url} alt={p.oc_name} shape="rounded" className="w-8 h-8 flex-shrink-0" iconClassName="w-4 h-4" />
                   <div className="min-w-0">
                     <p className="font-bold text-amber-100/90 text-sm truncate">{p.oc_name}</p>
                     <p className="text-[10px] text-gray-600 font-mono">ID: {p.id.slice(0, 8)}</p>
@@ -3096,12 +3093,8 @@ export default function AdminDashboard() {
                 {pendingNotices.map(n => (
                   <div key={n.id} className="p-4 rounded-xl bg-black/30 border border-amber-500/20">
                     <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 h-14 w-14 rounded-lg overflow-hidden border border-[#670201]/30 bg-[#670201]/20">
-                        {n.avatar_url ? (
-                          <img src={n.avatar_url} alt={n.target_name} className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center"><FileWarning className="h-5 w-5 text-amber-300/50" /></div>
-                        )}
+                      <div className="flex-shrink-0 h-14 w-14 rounded-lg overflow-hidden border border-[#670201]/30">
+                        <Avatar src={n.avatar_url} alt={n.target_name} shape="rounded" className="w-full h-full" iconClassName="h-5 w-5" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-bold text-amber-100/90 text-sm truncate">{n.target_name}</p>
@@ -3740,11 +3733,7 @@ export default function AdminDashboard() {
                       className="text-left p-4 rounded-xl bg-black/30 border border-white/5 hover:border-amber-500/30 hover:bg-amber-500/5 transition-all group"
                     >
                       <div className="flex items-center gap-3">
-                        {p.avatar_url ? (
-                          <img src={p.avatar_url} alt={p.oc_name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-[#670201]/30 flex items-center justify-center flex-shrink-0"><Users className="w-5 h-5 text-amber-300/60" /></div>
-                        )}
+                        <Avatar src={p.avatar_url} alt={p.oc_name} shape="rounded" className="w-10 h-10 flex-shrink-0" iconClassName="w-5 h-5" />
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-amber-100/90 truncate group-hover:text-amber-100 transition-colors">{p.oc_name}</p>
                           <p className="text-[10px] text-gray-600 font-mono mt-0.5">ID: {p.id.slice(0, 8)}</p>

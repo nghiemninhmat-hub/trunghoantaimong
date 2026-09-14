@@ -6,6 +6,7 @@ import {
   UserCircle, Crown, Ghost, Mail, Eye, EyeOff, UserPlus, Check, Loader2,
   MessageCircle, ArrowLeft, AlertCircle, Building2, Award, Coins, TrendingUp, TrendingDown, History,
 } from 'lucide-react';
+import Avatar from '@/components/Avatar';
 
 type RelationState = 'none' | 'outgoing' | 'incoming' | 'friends';
 
@@ -351,15 +352,9 @@ export default function VisitorProfileCard() {
             <div className="relative group">
               <div className="absolute -inset-2 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(214,65,46,0.25),rgba(140,17,17,0.1)_50%,transparent_75%)] blur-md" />
               <div className="absolute -inset-1.5 rounded-full border border-[#670201]/30" />
-              <div className="relative w-28 h-28 sm:w-40 sm:h-40 rounded-full overflow-hidden border-[3px] border-[#670201]/50 shadow-xl shadow-black/50 bg-gradient-to-br from-[#670201] to-[#a00404]">
+              <div className="relative w-28 h-28 sm:w-40 sm:h-40 rounded-full overflow-hidden border-[3px] border-[#670201]/50 shadow-xl shadow-black/50">
                 <div className="absolute inset-0 rounded-full ring-1 ring-inset ring-amber-200/10 pointer-events-none z-10" />
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt={name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <UserCircle className="w-16 h-16 sm:w-20 sm:h-20 text-amber-100/80" />
-                  </div>
-                )}
+                <Avatar src={avatarUrl} alt={name} className="w-full h-full" iconClassName="w-16 h-16 sm:w-20 sm:h-20" />
               </div>
             </div>
           </div>

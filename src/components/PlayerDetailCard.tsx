@@ -7,6 +7,7 @@ import {
   Zap, Save, X, Edit3,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
+import Avatar from '@/components/Avatar';
 
 const STATUS_TAGS = [
   { value: 'Bình Thường', label: 'Thẻ lá', badgeClass: 'bg-emerald-500/20 text-emerald-300', activeClass: 'bg-emerald-500/30 border-emerald-500/50 text-emerald-200', idleClass: 'bg-emerald-500/5 border-emerald-500/15 text-emerald-400/70' },
@@ -248,13 +249,7 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
       {/* Profile header — anonymous name, email, password */}
       <div className="p-4 sm:p-6 rounded-xl bg-black/30 border border-amber-500/20">
         <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-          {profile.avatar_url ? (
-            <img src={profile.avatar_url} alt={profile.oc_name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover flex-shrink-0 mx-auto sm:mx-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-          ) : (
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-[#670201]/30 flex items-center justify-center flex-shrink-0 mx-auto sm:mx-0">
-              <Users className="w-7 h-7 sm:w-8 sm:h-8 text-amber-300/60" />
-            </div>
-          )}
+          <Avatar src={profile.avatar_url} alt={profile.oc_name} shape="rounded" className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 mx-auto sm:mx-0" iconClassName="w-7 h-7 sm:w-8 sm:h-8" />
           <div className="min-w-0 flex-1 text-center sm:text-left">
             <h3 className="text-lg sm:text-xl font-serif font-bold text-amber-100/90 truncate">{profile.oc_name}</h3>
             {profile.danh_vong && profile.danh_vong !== 'Vô Danh' && (

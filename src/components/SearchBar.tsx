@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, SearchProfile, Friendship } from '@/lib/supabase';
 import { Search, UserPlus, Check, Loader2, User, X } from 'lucide-react';
+import Avatar from '@/components/Avatar';
 
 type PendingState = Record<string, 'sending' | 'sent' | 'error'>;
 
@@ -150,13 +151,7 @@ export default function SearchBar() {
                       onClick={() => handleResultClick(person.id)}
                       className="flex items-center gap-3 flex-1 min-w-0 text-left"
                     >
-                      <div className="w-9 h-9 rounded-full bg-[#670201]/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        {person.avatar_url ? (
-                          <img src={person.avatar_url} alt={person.oc_name} className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="w-4 h-4 text-amber-300/70" />
-                        )}
-                      </div>
+                      <Avatar src={person.avatar_url} alt={person.oc_name} className="w-9 h-9 flex-shrink-0" iconClassName="w-4 h-4" />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-amber-100/90 truncate">{person.oc_name}</p>
                         <p className="text-xs text-gray-500 truncate">{isAdmin ? (person.anonymous_name ?? '—') : 'Danh tính ẩn'}</p>

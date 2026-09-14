@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Message, Profile, Friendship } from '@/lib/supabase';
 import { Scroll, Send, Clock, User, Inbox, UserPlus, Check, X, Users, ChevronDown, ChevronUp, Pencil } from 'lucide-react';
+import Avatar from '@/components/Avatar';
 
 export default function MessagesPage() {
   const { user, profile } = useAuth();
@@ -226,13 +227,7 @@ export default function MessagesPage() {
                       : 'hover:bg-white/5 border border-transparent'
                   }`}
                 >
-                  <div className="w-9 h-9 rounded-full bg-[#670201]/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {contact.avatar_url ? (
-                      <img src={contact.avatar_url} alt={contact.oc_name} className="w-full h-full object-cover" />
-                    ) : (
-                      <User className="w-4 h-4 text-amber-300/70" />
-                    )}
-                  </div>
+                  <Avatar src={contact.avatar_url} alt={contact.oc_name} className="w-9 h-9 flex-shrink-0" iconClassName="w-4 h-4" />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-amber-100/90 truncate">{contact.oc_name}</p>
                     <p className="text-xs text-gray-500 truncate">{contact.anonymous_name}</p>
@@ -257,13 +252,7 @@ export default function MessagesPage() {
             <>
               {/* Conversation Header */}
               <div className="p-4 border-b border-white/10 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-[#670201]/30 flex items-center justify-center overflow-hidden">
-                  {selectedContact.avatar_url ? (
-                    <img src={selectedContact.avatar_url} alt={selectedContact.oc_name} className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="w-5 h-5 text-amber-300/70" />
-                  )}
-                </div>
+                <Avatar src={selectedContact.avatar_url} alt={selectedContact.oc_name} className="w-10 h-10" iconClassName="w-5 h-5" />
                 <div>
                   <p className="text-sm font-bold text-amber-100/90">{selectedContact.oc_name}</p>
                   <p className="text-xs text-gray-500">{selectedContact.anonymous_name}</p>

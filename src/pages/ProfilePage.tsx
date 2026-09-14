@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import VisitorProfileCard from '@/components/VisitorProfileCard';
+import Avatar from '@/components/Avatar';
 
 const PROFILE_STATUS_TAGS = [
   { value: 'Bình Thường', cardClass: 'border-emerald-500/20 bg-emerald-500/5', iconClass: 'text-emerald-400', dotClass: 'bg-emerald-400', textClass: 'text-emerald-300' },
@@ -547,7 +548,7 @@ export default function ProfilePage() {
                     </div>
                   )
                 ) : avatarUrl ? (
-                  <img src={avatarUrl} alt={profile.oc_name} className="w-full h-full object-cover transition-opacity duration-300" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  <Avatar src={avatarUrl} alt={profile.oc_name} className="w-full h-full" iconClassName="w-16 h-16 sm:w-20 sm:h-20" eager />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <UserCircle className="w-16 h-16 sm:w-20 sm:h-20 text-amber-100/80" />
@@ -1170,14 +1171,8 @@ export default function ProfilePage() {
                             }}
                             className="flex items-center gap-2.5 w-full px-3 py-2.5 hover:bg-[#670201]/30 transition-all text-left border-b border-white/5 last:border-0"
                           >
-                            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-[#670201]/30 border border-white/10">
-                              {p.avatar_url ? (
-                                <img src={p.avatar_url} alt={p.oc_name} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <UserCircle className="w-4 h-4 text-gray-500" />
-                                </div>
-                              )}
+                            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-white/10">
+                              <Avatar src={p.avatar_url} alt={p.oc_name} className="w-full h-full" iconClassName="w-4 h-4" />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-sm text-amber-100/90 font-semibold truncate">{p.oc_name}</p>
@@ -1192,14 +1187,8 @@ export default function ProfilePage() {
                 </div>
                 {transferSelected && (
                   <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                    <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 bg-[#670201]/30 border border-white/10">
-                      {transferSelected.avatar_url ? (
-                        <img src={transferSelected.avatar_url} alt={transferSelected.oc_name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <UserCircle className="w-3.5 h-3.5 text-gray-500" />
-                        </div>
-                      )}
+                    <div className="w-7 h-7 rounded-full overflow-hidden flex-shrink-0 border border-white/10">
+                      <Avatar src={transferSelected.avatar_url} alt={transferSelected.oc_name} className="w-full h-full" iconClassName="w-3.5 h-3.5" />
                     </div>
                     <span className="text-sm text-emerald-200 font-bold flex-1 truncate">{transferSelected.oc_name}</span>
                     <button

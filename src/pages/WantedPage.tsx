@@ -6,6 +6,7 @@ import {
   Eye, FileWarning, KeyRound, MapPin, Plus, ShieldAlert, Target, UserRound,
   X, Loader2, Send, Lock, Ghost
 } from 'lucide-react';
+import Avatar from '@/components/Avatar';
 
 const defaultWantedImage = '/images/wanted/569353577901495689.jpg';
 
@@ -48,14 +49,8 @@ function WantedCard({ notice }: { notice: WantedNotice }) {
       >
         {/* Avatar thumbnail */}
         <div className="relative flex-shrink-0">
-          <div className="h-16 w-16 overflow-hidden rounded-xl border-2 border-[#670201]/40 bg-gradient-to-br from-[#670201] to-[#a00404] sm:h-20 sm:w-20">
-            {notice.avatar_url ? (
-              <img src={notice.avatar_url} alt={notice.target_name} className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center">
-                <UserRound className="h-8 w-8 text-amber-100/60" />
-              </div>
-            )}
+          <div className="h-16 w-16 sm:h-20 sm:w-20 border-2 border-[#670201]/40">
+            <Avatar src={notice.avatar_url} alt={notice.target_name} shape="rounded" className="w-full h-full" iconClassName="h-8 w-8" />
           </div>
           {isActive && (
             <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#0f0606] bg-emerald-500">
