@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import Avatar from '@/components/Avatar';
+import StatusTagSelector from '@/components/StatusTagSelector';
 
 const STATUS_TAGS = [
   { value: 'Bình Thường', label: 'Thẻ lá', badgeClass: 'bg-emerald-500/20 text-emerald-300', activeClass: 'bg-emerald-500/30 border-emerald-500/50 text-emerald-200', idleClass: 'bg-emerald-500/5 border-emerald-500/15 text-emerald-400/70' },
@@ -577,7 +578,7 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng tinh thần</label>
-                      <input type="text" value={editSkillDraft.mental_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, mental_effect: e.target.value }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                      <StatusTagSelector category="mental" value={editSkillDraft.mental_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, mental_effect: v }))} compact />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian tinh thần (cmt, tối đa 50)</label>
@@ -585,7 +586,7 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng sức khỏe</label>
-                      <input type="text" value={editSkillDraft.health_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, health_effect: e.target.value }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                      <StatusTagSelector category="health" value={editSkillDraft.health_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, health_effect: v }))} compact />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian sức khỏe (cmt, tối đa 50)</label>
@@ -593,7 +594,7 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng tâm linh</label>
-                      <input type="text" value={editSkillDraft.spiritual_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, spiritual_effect: e.target.value }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                      <StatusTagSelector category="spiritual" value={editSkillDraft.spiritual_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, spiritual_effect: v }))} compact />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian tâm linh (cmt, tối đa 50)</label>
