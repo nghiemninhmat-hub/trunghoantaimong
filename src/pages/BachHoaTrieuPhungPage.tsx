@@ -90,9 +90,10 @@ export default function BachHoaTrieuPhungPage() {
       setVoteMsg(`Lỗi: ${error.message}`);
       setTimeout(() => setVoteMsg(''), 3000);
     } else {
-      const result = data as { new_vote_count: number; new_balance: number } | null;
-      const newCount = result?.new_vote_count;
-      const newBal = result?.new_balance;
+      const result = data as { new_vote_count: number; new_balance: number }[] | null;
+      const row = result?.[0];
+      const newCount = row?.new_vote_count;
+      const newBal = row?.new_balance;
       if (newBal !== undefined && newBal !== null) setBalance(newBal);
       setEntries(prev => prev.map(e => e.id === entryId ? { ...e, vote_count: newCount ?? e.vote_count } : e).sort((a, b) => b.vote_count - a.vote_count));
       setVoteMsg('Đã bình chọn! Trừ 10 hoa tiền.');
