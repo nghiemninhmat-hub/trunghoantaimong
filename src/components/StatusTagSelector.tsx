@@ -1,4 +1,4 @@
-import { MENTAL_SUB_TAGS, STATUS_TAGS, HEALTH_SUB_TAGS, SPIRITUAL_SUB_TAGS, parseMultiValue, toggleTag, joinMultiValue, type MentalTag, type MentalSubTag } from '@/lib/skillTags';
+import { MENTAL_SUB_TAGS, STATUS_TAGS, HEALTH_SUB_TAGS, SPIRITUAL_SUB_TAGS, parseMultiValue, toggleTag, joinMultiValue, type MentalSubTag } from '@/lib/skillTags';
 import { Brain, Heart, Sparkle, Check } from 'lucide-react';
 
 type Category = 'mental' | 'health' | 'spiritual';
@@ -7,20 +7,24 @@ type Props = {
   category: Category;
   value: string;
   onChange: (newValue: string) => void;
-  compact?: boolean;
 };
 
-const CATEGORY_CONFIG: Record<Category, { icon: typeof Brain; label: string; color: string }> = {
-  mental: { icon: Brain, label: 'Tinh Thần', color: 'text-purple-400' },
-  health: { icon: Heart, label: 'Thể Chất', color: 'text-red-400' },
-  spiritual: { icon: Sparkle, label: 'Tâm Linh', color: 'text-amber-400' },
+const CATEGORY_CONFIG: Record<Category, { icon: typeof Brain; label: string; color: string; dot: string }> = {
+  mental: { icon: Brain, label: 'Tinh Thần', color: 'text-purple-400', dot: 'bg-purple-400' },
+  health: { icon: Heart, label: 'Thể Chất', color: 'text-red-400', dot: 'bg-red-400' },
+  spiritual: { icon: Sparkle, label: 'Tâm Linh', color: 'text-amber-400', dot: 'bg-amber-400' },
 };
 
-const TAG_STYLE = 'px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all hover:scale-105 cursor-pointer';
-const TAG_ACTIVE = 'bg-amber-500/25 border-amber-500/50 text-amber-200';
-const TAG_IDLE = 'bg-white/5 border-white/10 text-gray-400/80 hover:border-amber-500/30';
+const DOT_COLOR: Record<string, string> = {
+  'Bình Thường': 'bg-emerald-400',
+  'Ảnh hưởng nhẹ': 'bg-yellow-400',
+  'Nghiêm trọng': 'bg-red-400',
+  'Cực kỳ nghiêm trọng': 'bg-red-600',
+  'Suy kiệt': 'bg-purple-400',
+  'Ngưỡng sinh tử': 'bg-purple-700',
+};
 
-function GroupedTagSelector({ subTags, value, onChange, compact }: { subTags: MentalSubTag[]; value: string; onChange: (v: string) => void; compact?: boolean }) {
+function GroupedTagSelector({ subTags, value, onChange }: { subTags: MentalSubTag[]; value: string; onChange: (v: string) => void }) {
   const selected = parseMultiValue(value);
   const selectedSet = new Set(selected);
 
@@ -30,62 +34,53 @@ function GroupedTagSelector({ subTags, value, onChange, compact }: { subTags: Me
   }).filter(g => g.subs.length > 0);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       {grouped.map(({ tag, subs }) => {
         const hasSelected = subs.some(s => selectedSet.has(s.value));
         return (
-          <div key={tag.value} className={`rounded-lg border ${hasSelected ? tag.activeClass : 'border-white/5 bg-black/20'} p-2`}>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className={`text-[10px] font-bold uppercase tracking-wider ${hasSelected ? '' : 'text-gray-500'}`}>{tag.label}</span>
-              {hasSelected && <Check className="w-3 h-3" />}
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {subs.map(sub => {
-                const isActive = selectedSet.has(sub.value);
-                return (
-                  <button
-                    key={sub.value}
-                    type="button"
-                    onClick={() => onChange(joinMultiValue(toggleTag(selected, sub.value)))}
-                    className={`${TAG_STYLE} ${isActive ? TAG_ACTIVE : TAG_IDLE}`}
-                  >
-                    {sub.value}
-                  </button>
-                );
-              })}
-            </div>
+          <div key={tag.value} className="flex flex-wrap items-center gap-1.5">
+            <span className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide whitespace-nowrap ${hasSelected ? 'text-gray-300' : 'text-gray-600'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${DOT_COLOR[tag.value] || 'bg-gray-500'}`} />
+              {tag.label}
+              {hasSelected && <Check className="w-2.5 h-2.5 text-emerald-400" />}
+            </span>
+            {subs.map(sub => {
+              const isActive = selectedSet.has(sub.value);
+              return (
+                <button
+                  key={sub.value}
+                  type="button"
+                  onClick={() => onChange(joinMultiValue(toggleTag(selected, sub.value)))}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-amber-500/20 text-amber-200 ring-1 ring-amber-500/40'
+                      : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-gray-300'
+                  }`}
+                >
+                  {sub.value}
+                </button>
+              );
+            })}
           </div>
         );
       })}
-      {selected.length > 0 && !compact && (
-        <div className="flex flex-wrap gap-1 pt-1">
-          {selected.map(tag => {
-            const tagInfo = STATUS_TAGS.find(t => t.value === subTags.find(s => s.value === tag)?.parent);
-            return (
-              <span key={tag} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${tagInfo?.badgeClass ?? 'bg-white/10 text-gray-300'}`}>
-                {tag}
-              </span>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }
 
-export default function StatusTagSelector({ category, value, onChange, compact }: Props) {
+export default function StatusTagSelector({ category, value, onChange }: Props) {
   const config = CATEGORY_CONFIG[category];
   const Icon = config.icon;
 
   const subTags = category === 'mental' ? MENTAL_SUB_TAGS : category === 'health' ? HEALTH_SUB_TAGS : SPIRITUAL_SUB_TAGS;
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <Icon className={`w-3.5 h-3.5 ${config.color} flex-shrink-0`} />
-        <span className="text-[10px] uppercase tracking-wider text-gray-500">{config.label}</span>
+    <div className="rounded-lg bg-black/20 p-2 space-y-1.5">
+      <div className="flex items-center gap-1.5">
+        <Icon className={`w-3 h-3 ${config.color} flex-shrink-0`} />
+        <span className="text-[9px] uppercase tracking-wider text-gray-500 font-semibold">{config.label}</span>
       </div>
-      <GroupedTagSelector subTags={subTags} value={value} onChange={onChange} compact={compact} />
+      <GroupedTagSelector subTags={subTags} value={value} onChange={onChange} />
     </div>
   );
 }

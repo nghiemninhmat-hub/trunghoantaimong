@@ -578,7 +578,7 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng tinh thần</label>
-                      <StatusTagSelector category="mental" value={editSkillDraft.mental_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, mental_effect: v }))} compact />
+                      <StatusTagSelector category="mental" value={editSkillDraft.mental_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, mental_effect: v }))} />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian tinh thần (cmt, tối đa 50)</label>
@@ -586,7 +586,7 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng sức khỏe</label>
-                      <StatusTagSelector category="health" value={editSkillDraft.health_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, health_effect: v }))} compact />
+                      <StatusTagSelector category="health" value={editSkillDraft.health_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, health_effect: v }))} />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian sức khỏe (cmt, tối đa 50)</label>
@@ -594,7 +594,7 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng tâm linh</label>
-                      <StatusTagSelector category="spiritual" value={editSkillDraft.spiritual_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, spiritual_effect: v }))} compact />
+                      <StatusTagSelector category="spiritual" value={editSkillDraft.spiritual_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, spiritual_effect: v }))} />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian tâm linh (cmt, tối đa 50)</label>
