@@ -412,6 +412,28 @@ export interface SkillTemplate {
   phe_duyet: string | null;
 }
 
+export interface CharacterSkill {
+  id: string;
+  user_id: string;
+  slot: number;
+  name: string;
+  usage_detail: string | null;
+  effect: string | null;
+  tradeoff: string | null;
+  cong_duc_cost: number | null;
+  am_duc_cost: number | null;
+  duration: string | null;
+  mental_effect: string | null;
+  mental_duration: number | null;
+  health_effect: string | null;
+  health_duration: number | null;
+  spiritual_effect: string | null;
+  spiritual_duration: number | null;
+  ghost_level_effect: string | null;
+  destruction_percent: number | null;
+  skill_status: string | null;
+}
+
 export type WillStatus = 'pending' | 'approved' | 'revision_requested' | 'rejected';
 
 export type HiepLuuStatus = 'pending' | 'approved' | 'rejected';

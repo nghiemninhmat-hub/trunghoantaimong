@@ -1,4 +1,4 @@
-import { Profile, Transaction, InventoryItem, ShopItem, CURRENCY_LABELS, UserTitle, TITLE_COLORS } from '@/lib/supabase';
+import { Profile, Transaction, InventoryItem, ShopItem, CURRENCY_LABELS, UserTitle, TITLE_COLORS, CharacterSkill } from '@/lib/supabase';
 import { supabase } from '@/lib/supabase';
 import {
   ArrowLeft, Users, Package, History, Mail, Lock, Eye, EyeOff,
@@ -53,9 +53,9 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
   const [playerTitles, setPlayerTitles] = useState<UserTitle[]>([]);
 
   // Skills state
-  const [skills, setSkills] = useState<Record<string, unknown>[]>([]);
+  const [skills, setSkills] = useState<CharacterSkill[]>([]);
   const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
-  const [editSkillDraft, setEditSkillDraft] = useState<Record<string, unknown>>({});
+  const [editSkillDraft, setEditSkillDraft] = useState<Partial<CharacterSkill>>({});
 
   // Chức nghiệp level state
   const [levelInput, setLevelInput] = useState(1);
@@ -72,7 +72,7 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
     if (txRes.data) setAllTransactions(txRes.data as Transaction[]);
     if (invRes.data) setAllInventory(invRes.data as (InventoryItem & { shop_items?: ShopItem | null; profiles?: { oc_name: string } | null })[]);
     if (titleRes.data) setPlayerTitles(titleRes.data as UserTitle[]);
-    if (skillRes.data) setSkills(skillRes.data as Record<string, unknown>[]);
+    if (skillRes.data) setSkills(skillRes.data as CharacterSkill[]);
     setTxLoading(false);
   }, [profile]);
 
@@ -515,31 +515,31 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
         ) : (
           <div className="space-y-2">
             {skills.map(sk => (
-              <div key={sk.id as string} className="p-3 rounded-lg bg-black/20 border border-white/5">
+              <div key={sk.id} className="p-3 rounded-lg bg-black/20 border border-white/5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-amber-100/90">{sk.name as string}</p>
+                    <p className="text-sm font-bold text-amber-100/90">{sk.name}</p>
                     <div className="mt-1 space-y-0.5 text-xs text-gray-500">
-                      {sk.usage_detail ? <p><span className="text-gray-600">Cách dùng:</span> {sk.usage_detail as string}</p> : null}
-                      {sk.effect ? <p><span className="text-gray-600">Hiệu quả:</span> {sk.effect as string}</p> : null}
-                      {sk.tradeoff ? <p><span className="text-gray-600">Đánh đổi:</span> {sk.tradeoff as string}</p> : null}
+                      {sk.usage_detail ? <p><span className="text-gray-600">Cách dùng:</span> {sk.usage_detail}</p> : null}
+                      {sk.effect ? <p><span className="text-gray-600">Hiệu quả:</span> {sk.effect}</p> : null}
+                      {sk.tradeoff ? <p><span className="text-gray-600">Đánh đổi:</span> {sk.tradeoff}</p> : null}
                       <div className="flex flex-wrap gap-2 mt-1">
-                        {Number(sk.cong_duc_cost) > 0 && <span className="text-cyan-400">Tiêu hao CD: {sk.cong_duc_cost}</span>}
-                        {Number(sk.am_duc_cost) > 0 && <span className="text-amber-400">Tiêu hao AD: {sk.am_duc_cost}</span>}
-                        {sk.duration ? <span className="text-gray-400">Duy trì: {sk.duration as string}</span> : null}
-                        {Number(sk.destruction_percent) > 0 && <span className="text-red-400">Tiêu diệt: {sk.destruction_percent}%</span>}
+                        {(sk.cong_duc_cost ?? 0) > 0 && <span className="text-cyan-400">Tiêu hao CD: {sk.cong_duc_cost}</span>}
+                        {(sk.am_duc_cost ?? 0) > 0 && <span className="text-amber-400">Tiêu hao AD: {sk.am_duc_cost}</span>}
+                        {sk.duration ? <span className="text-gray-400">Duy trì: {sk.duration}</span> : null}
+                        {(sk.destruction_percent ?? 0) > 0 && <span className="text-red-400">Tiêu diệt: {sk.destruction_percent}%</span>}
                       </div>
-                      {sk.mental_effect ? <p className="mt-0.5"><span className="text-gray-600">Tinh thần:</span> {sk.mental_effect as string} ({sk.mental_duration as number}cmt)</p> : null}
-                      {sk.health_effect ? <p><span className="text-gray-600">Sức khỏe:</span> {sk.health_effect as string} ({sk.health_duration as number}cmt)</p> : null}
-                      {sk.spiritual_effect ? <p><span className="text-gray-600">Tâm linh:</span> {sk.spiritual_effect as string} ({sk.spiritual_duration as number}cmt)</p> : null}
-                      {sk.ghost_level_effect ? <p><span className="text-gray-600">Cấp quỷ:</span> {sk.ghost_level_effect as string}</p> : null}
+                      {sk.mental_effect ? <p className="mt-0.5"><span className="text-gray-600">Tinh thần:</span> {sk.mental_effect} ({sk.mental_duration ?? 0}cmt)</p> : null}
+                      {sk.health_effect ? <p><span className="text-gray-600">Sức khỏe:</span> {sk.health_effect} ({sk.health_duration ?? 0}cmt)</p> : null}
+                      {sk.spiritual_effect ? <p><span className="text-gray-600">Tâm linh:</span> {sk.spiritual_effect} ({sk.spiritual_duration ?? 0}cmt)</p> : null}
+                      {sk.ghost_level_effect ? <p><span className="text-gray-600">Cấp quỷ:</span> {sk.ghost_level_effect}</p> : null}
                     </div>
                   </div>
                   <div className="flex gap-1.5 flex-shrink-0">
-                    <button onClick={() => { setEditingSkillId(sk.id as string); setEditSkillDraft({ ...sk }); }} className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 transition-all">
+                    <button onClick={() => { setEditingSkillId(sk.id); setEditSkillDraft({ ...sk }); }} className="p-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 transition-all">
                       <Edit3 className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => handleDeleteSkill(sk.id as string)} disabled={actionLoading} className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all disabled:opacity-50">
+                    <button onClick={() => handleDeleteSkill(sk.id)} disabled={actionLoading} className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-all disabled:opacity-50">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -548,68 +548,68 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                   <div className="mt-2 p-2.5 rounded-lg bg-black/30 border border-amber-500/10 space-y-2.5">
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Tên kỹ năng</label>
-                      <input type="text" value={editSkillDraft.name as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, name: e.target.value }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                      <input type="text" value={editSkillDraft.name || ''} onChange={e => setEditSkillDraft(d => ({ ...d, name: e.target.value }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Cách dùng</label>
-                      <textarea value={editSkillDraft.usage_detail as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, usage_detail: e.target.value }))} rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                      <textarea value={editSkillDraft.usage_detail || ''} onChange={e => setEditSkillDraft(d => ({ ...d, usage_detail: e.target.value }))} rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Hiệu quả</label>
-                      <textarea value={editSkillDraft.effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, effect: e.target.value }))} rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                      <textarea value={editSkillDraft.effect || ''} onChange={e => setEditSkillDraft(d => ({ ...d, effect: e.target.value }))} rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Đánh đổi</label>
-                      <textarea value={editSkillDraft.tradeoff as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, tradeoff: e.target.value }))} rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                      <textarea value={editSkillDraft.tradeoff || ''} onChange={e => setEditSkillDraft(d => ({ ...d, tradeoff: e.target.value }))} rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Tiêu hao CD</label>
-                        <input type="number" value={editSkillDraft.cong_duc_cost as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, cong_duc_cost: parseInt(e.target.value) || 0 }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                        <input type="number" value={editSkillDraft.cong_duc_cost || 0} onChange={e => setEditSkillDraft(d => ({ ...d, cong_duc_cost: parseInt(e.target.value) || 0 }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
                       </div>
                       <div>
                         <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Tiêu hao AD</label>
-                        <input type="number" value={editSkillDraft.am_duc_cost as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, am_duc_cost: parseInt(e.target.value) || 0 }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                        <input type="number" value={editSkillDraft.am_duc_cost || 0} onChange={e => setEditSkillDraft(d => ({ ...d, am_duc_cost: parseInt(e.target.value) || 0 }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian duy trì</label>
-                      <input type="text" value={editSkillDraft.duration as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, duration: e.target.value }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                      <input type="text" value={editSkillDraft.duration || ''} onChange={e => setEditSkillDraft(d => ({ ...d, duration: e.target.value }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng tinh thần</label>
-                      <StatusTagSelector category="mental" value={editSkillDraft.mental_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, mental_effect: v }))} />
+                      <StatusTagSelector category="mental" value={editSkillDraft.mental_effect || ''} onChange={v => setEditSkillDraft(d => ({ ...d, mental_effect: v }))} />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian tinh thần (cmt, tối đa 50)</label>
-                      <input type="number" max={50} value={editSkillDraft.mental_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                      <input type="number" max={50} value={editSkillDraft.mental_duration || 0} onChange={e => setEditSkillDraft(d => ({ ...d, mental_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng sức khỏe</label>
-                      <StatusTagSelector category="health" value={editSkillDraft.health_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, health_effect: v }))} />
+                      <StatusTagSelector category="health" value={editSkillDraft.health_effect || ''} onChange={v => setEditSkillDraft(d => ({ ...d, health_effect: v }))} />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian sức khỏe (cmt, tối đa 50)</label>
-                      <input type="number" max={50} value={editSkillDraft.health_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                      <input type="number" max={50} value={editSkillDraft.health_duration || 0} onChange={e => setEditSkillDraft(d => ({ ...d, health_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng tâm linh</label>
-                      <StatusTagSelector category="spiritual" value={editSkillDraft.spiritual_effect as string || ''} onChange={v => setEditSkillDraft(d => ({ ...d, spiritual_effect: v }))} />
+                      <StatusTagSelector category="spiritual" value={editSkillDraft.spiritual_effect || ''} onChange={v => setEditSkillDraft(d => ({ ...d, spiritual_effect: v }))} />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Thời gian tâm linh (cmt, tối đa 50)</label>
-                      <input type="number" max={50} value={editSkillDraft.spiritual_duration as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                      <input type="number" max={50} value={editSkillDraft.spiritual_duration || 0} onChange={e => setEditSkillDraft(d => ({ ...d, spiritual_duration: Math.min(50, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">Ảnh hưởng lên từng cấp quỷ</label>
-                      <textarea value={editSkillDraft.ghost_level_effect as string || ''} onChange={e => setEditSkillDraft(d => ({ ...d, ghost_level_effect: e.target.value }))} rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
+                      <textarea value={editSkillDraft.ghost_level_effect || ''} onChange={e => setEditSkillDraft(d => ({ ...d, ghost_level_effect: e.target.value }))} rows={2} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 resize-none focus:outline-none focus:border-amber-500/40" />
                     </div>
                     <div>
                       <label className="block text-[10px] text-gray-500 mb-1 uppercase tracking-wider">% tiêu diệt</label>
-                      <input type="number" max={100} value={editSkillDraft.destruction_percent as number || 0} onChange={e => setEditSkillDraft(d => ({ ...d, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
+                      <input type="number" max={100} value={editSkillDraft.destruction_percent || 0} onChange={e => setEditSkillDraft(d => ({ ...d, destruction_percent: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) }))} className="w-full px-2 py-1.5 bg-black/40 border border-white/10 rounded text-xs text-gray-200 focus:outline-none focus:border-amber-500/40" />
                     </div>
                     <div className="flex gap-2">
-                      <button onClick={() => handleSaveSkill(sk.id as string)} disabled={actionLoading} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold transition-all disabled:opacity-50">
+                      <button onClick={() => handleSaveSkill(sk.id)} disabled={actionLoading} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold transition-all disabled:opacity-50">
                         {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Lưu
                       </button>
                       <button onClick={() => { setEditingSkillId(null); setEditSkillDraft({}); }} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 text-xs font-bold transition-all">

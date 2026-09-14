@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase, Transaction, InventoryItem, CURRENCY_LABELS, Organization, UserTitle, TITLE_COLORS, OrgTreasury, OrgTreasuryLog, HiepLuuRegistration } from '@/lib/supabase';
+import { supabase, Transaction, InventoryItem, CURRENCY_LABELS, Organization, UserTitle, TITLE_COLORS, OrgTreasury, OrgTreasuryLog, HiepLuuRegistration, CharacterSkill } from '@/lib/supabase';
 import {
   UserCircle, Coins, Sparkles, Skull, Package, History, Edit3,
   CheckCircle2, Clock, AlertCircle, Ghost, Plus, Minus, Send,
@@ -76,7 +76,7 @@ export default function ProfilePage() {
   const [titleMsg, setTitleMsg] = useState('');
 
   // Skills (read-only)
-  const [mySkills, setMySkills] = useState<Record<string, unknown>[]>([]);
+  const [mySkills, setMySkills] = useState<CharacterSkill[]>([]);
 
   // Collapsible sections
   const [inventoryOpen, setInventoryOpen] = useState(false);
@@ -171,7 +171,7 @@ export default function ProfilePage() {
       setUserTitles(titlesRes.data as UserTitle[]);
     }
     if (skillRes.data) {
-      setMySkills(skillRes.data as Record<string, unknown>[]);
+      setMySkills(skillRes.data as CharacterSkill[]);
     }
     setLoading(false);
   }, [user]);
@@ -838,22 +838,22 @@ export default function ProfilePage() {
         ) : (
           <div className="space-y-2">
             {mySkills.map(sk => (
-              <div key={sk.id as string} className="p-3 rounded-lg bg-black/20 border border-white/5">
-                <p className="text-sm font-bold text-amber-100/90">{sk.name as string}</p>
+              <div key={sk.id} className="p-3 rounded-lg bg-black/20 border border-white/5">
+                <p className="text-sm font-bold text-amber-100/90">{sk.name}</p>
                 <div className="mt-1 space-y-0.5 text-xs text-gray-500">
-                  {sk.usage_detail ? <p><span className="text-gray-600">Cách dùng:</span> {sk.usage_detail as string}</p> : null}
-                  {sk.effect ? <p><span className="text-gray-600">Hiệu quả:</span> {sk.effect as string}</p> : null}
-                  {sk.tradeoff ? <p><span className="text-gray-600">Đánh đổi:</span> {sk.tradeoff as string}</p> : null}
+                  {sk.usage_detail ? <p><span className="text-gray-600">Cách dùng:</span> {sk.usage_detail}</p> : null}
+                  {sk.effect ? <p><span className="text-gray-600">Hiệu quả:</span> {sk.effect}</p> : null}
+                  {sk.tradeoff ? <p><span className="text-gray-600">Đánh đổi:</span> {sk.tradeoff}</p> : null}
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {Number(sk.cong_duc_cost) > 0 && <span className="text-cyan-400">Tiêu hao CD: {sk.cong_duc_cost}</span>}
-                    {Number(sk.am_duc_cost) > 0 && <span className="text-amber-400">Tiêu hao AD: {sk.am_duc_cost}</span>}
-                    {sk.duration ? <span className="text-gray-400">Duy trì: {sk.duration as string}</span> : null}
-                    {Number(sk.destruction_percent) > 0 && <span className="text-red-400">Tiêu diệt: {sk.destruction_percent}%</span>}
+                    {(sk.cong_duc_cost ?? 0) > 0 && <span className="text-cyan-400">Tiêu hao CD: {sk.cong_duc_cost}</span>}
+                    {(sk.am_duc_cost ?? 0) > 0 && <span className="text-amber-400">Tiêu hao AD: {sk.am_duc_cost}</span>}
+                    {sk.duration ? <span className="text-gray-400">Duy trì: {sk.duration}</span> : null}
+                    {(sk.destruction_percent ?? 0) > 0 && <span className="text-red-400">Tiêu diệt: {sk.destruction_percent}%</span>}
                   </div>
-                  {sk.mental_effect ? <p className="mt-0.5"><span className="text-gray-600">Tinh thần:</span> {sk.mental_effect as string} ({sk.mental_duration as number}cmt)</p> : null}
-                  {sk.health_effect ? <p><span className="text-gray-600">Sức khỏe:</span> {sk.health_effect as string} ({sk.health_duration as number}cmt)</p> : null}
-                  {sk.spiritual_effect ? <p><span className="text-gray-600">Tâm linh:</span> {sk.spiritual_effect as string} ({sk.spiritual_duration as number}cmt)</p> : null}
-                  {sk.ghost_level_effect ? <p><span className="text-gray-600">Cấp quỷ:</span> {sk.ghost_level_effect as string}</p> : null}
+                  {sk.mental_effect ? <p className="mt-0.5"><span className="text-gray-600">Tinh thần:</span> {sk.mental_effect} ({sk.mental_duration ?? 0}cmt)</p> : null}
+                  {sk.health_effect ? <p><span className="text-gray-600">Sức khỏe:</span> {sk.health_effect} ({sk.health_duration ?? 0}cmt)</p> : null}
+                  {sk.spiritual_effect ? <p><span className="text-gray-600">Tâm linh:</span> {sk.spiritual_effect} ({sk.spiritual_duration ?? 0}cmt)</p> : null}
+                  {sk.ghost_level_effect ? <p><span className="text-gray-600">Cấp quỷ:</span> {sk.ghost_level_effect}</p> : null}
                 </div>
               </div>
             ))}
