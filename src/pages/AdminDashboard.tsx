@@ -545,7 +545,7 @@ export default function AdminDashboard() {
   };
 
   const fetchAllData = useCallback(async () => {
-    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData, titlesData, couponData, skillTemplateData, orgTreasData, orgTreasLogData, hiepLuuData] = await Promise.all([
+    const [pending, approved, all, items, pages, txs, inv, settings, pendingWanted, activeWanted, kimBang, audit, spins, willData, bachHoaData, orgData, orgMemData, titlesData, couponData, skillTemplateData, orgTreasData, orgTreasLogData, hiepLuuData, allSkillsData] = await Promise.all([
       supabase.from('profiles').select('*').eq('is_approved', false).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').eq('is_approved', true).order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
@@ -569,7 +569,16 @@ export default function AdminDashboard() {
       supabase.from('organization_treasuries').select('*'),
       supabase.from('organization_treasury_logs').select('*').order('created_at', { ascending: false }).limit(200),
       supabase.from('hiep_luu_registrations').select('*, profiles:profiles!hiep_luu_registrations_user_id_fkey(oc_name, anonymous_name, avatar_url)').order('created_at', { ascending: false }),
+      supabase.from('character_skills').select('id, user_id, slot, name'),
     ]);
+    if (allSkillsData?.data) {
+      const skillsMap: Record<string, unknown[]> = {};
+      (allSkillsData.data as { id: string; user_id: string; slot: number; name: string }[]).forEach(s => {
+        if (!skillsMap[s.user_id]) skillsMap[s.user_id] = [];
+        skillsMap[s.user_id].push(s);
+      });
+      setAllSkills(skillsMap);
+    }
     if (titlesData?.data) setTitles(titlesData.data as Title[]);
     if (couponData?.data) setCoupons(couponData.data as (Coupon & { profiles?: { oc_name: string } | null })[]);
     if (skillTemplateData?.data) setSkillTemplates(skillTemplateData.data as SkillTemplate[]);
@@ -771,7 +780,6 @@ export default function AdminDashboard() {
   };
 
   const fetchSkillsForUser = async (userId: string) => {
-    if (allSkills[userId]) return;
     const { data } = await supabase.from('character_skills').select('*').eq('user_id', userId).order('slot', { ascending: true });
     setAllSkills(prev => ({ ...prev, [userId]: data || [] }));
   };

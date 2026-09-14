@@ -140,15 +140,27 @@ export default function NghiepThuatAdmin(props: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <select value={assignTemplateId || ''} onChange={e => setAssignTemplateId(e.target.value || null)} className={inputCls}>
               <option value="">Chọn mẫu...</option>
-              {skillTemplates.map(t => (
-                <option key={t.id} value={t.id}>{t.name}{t.oc_name ? ` — ${t.oc_name}` : ''}{t.category ? ` (${t.category})` : ''}</option>
-              ))}
+              {skillTemplates.map(t => {
+                const userSkills = (allSkills[assignTargetUserId] || []) as { name: string }[];
+ const alreadyHas = assignTargetUserId && userSkills.some(s => s.name === t.name);
+                return (
+                  <option key={t.id} value={t.id} disabled={alreadyHas || undefined}>
+                    {t.name}{t.oc_name ? ` — ${t.oc_name}` : ''}{t.category ? ` (${t.category})` : ''}{alreadyHas ? ' (đã cấp)' : ''}
+                  </option>
+                );
+              })}
             </select>
             <select value={assignTargetUserId} onChange={e => { const userId = e.target.value; setAssignTargetUserId(userId); if (userId) fetchSkillsForUser(userId); }} className={inputCls}>
               <option value="">Chọn người chơi...</option>
-              {allProfiles.map(p => (
-                <option key={p.id} value={p.id}>{p.oc_name} · {p.email}</option>
-              ))}
+              {allProfiles.map(p => {
+                const skillCount = ((allSkills[p.id] || []) as unknown[]).length;
+                const isFull = skillCount >= 4;
+                return (
+                  <option key={p.id} value={p.id} disabled={isFull || undefined}>
+                    {p.oc_name} · {p.email}{isFull ? ' (đã đủ 4 kỹ năng)' : skillCount > 0 ? ` (${skillCount}/4)` : ''}
+                  </option>
+                );
+              })}
             </select>
             <select value={assignSlot} onChange={e => setAssignSlot(Math.min(4, Math.max(1, parseInt(e.target.value) || 1)))} className={inputCls}>
               <option value={1}>Slot 1</option>
