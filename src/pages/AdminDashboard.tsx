@@ -351,39 +351,25 @@ export default function AdminDashboard() {
     fetchAllData();
   };
 
-  const handleDeleteUser = (userId: string, isSecondConfirm = false) => {
+  const handleDeleteUser = (userId: string) => {
     const targetUser = allProfiles.find(p => p.id === userId);
     const name = targetUser?.oc_name || userId.slice(0, 8);
     const email = targetUser?.email || '';
-    if (!isSecondConfirm) {
-      requireConfirm(
-        'Xóa Tài Khoản — Bước 1/2',
-        `Bạn sắp XÓA tài khoản "${name}". Tài khoản sẽ bị xóa khỏi danh sách thành viên và không thể đăng nhập nữa. Hành động này KHÔNG THỂ HOÀN TÁC. Vui lòng xác nhận lần thứ hai ở bước tiếp theo.`,
-        () => { handleDeleteUser(userId, true); },
-        [
-          { label: 'Người chơi', value: name },
-          { label: 'Email', value: email },
-        ],
-        'Tiếp tục',
-      );
-    } else {
-      requireConfirm(
-        'Xóa Tài Khoản — Xác Nhận Cuối Cùng (Bước 2/2)',
-        `XÁC NHẬN XÓA "${name}". Đây là xác nhận cuối cùng. Sau khi nhấn nút bên dưới, tài khoản sẽ bị xóa vĩnh viễn và không thể khôi phục.`,
-        async () => {
-          const { error } = await supabase.rpc('admin_delete_user', { p_user_id: userId });
-          if (error) { alert(`Lỗi: ${error.message}`); return; }
-          logAction('delete_user', userId, `Xóa vĩnh viễn tài khoản ${name} (${email})`, { user_id: userId });
-          alert(`Đã xóa vĩnh viễn tài khoản "${name}".`);
-          fetchAllData();
-        },
-        [
-          { label: 'Người chơi', value: name },
-          { label: 'Email', value: email },
-        ],
-        'Xóa vĩnh viễn',
-      );
-    }
+    requireConfirm(
+      'Xóa Tài Khoản',
+      `Bạn sắp XÓA vĩnh viễn tài khoản "${name}". Tài khoản sẽ bị xóa khỏi danh sách thành viên, tất cả dữ liệu liên quan sẽ bị xóa, và người chơi sẽ không thể đăng nhập nữa. Hành động này KHÔNG THỂ HOÀN TÁC.`,
+      async () => {
+        const { error } = await supabase.rpc('admin_delete_user', { p_user_id: userId });
+        if (error) { throw new Error(error.message); }
+        await logAction('delete_user', userId, `Xóa vĩnh viễn tài khoản ${name} (${email})`, { user_id: userId });
+        fetchAllData();
+      },
+      [
+        { label: 'Người chơi', value: name },
+        { label: 'Email', value: email },
+      ],
+      'Xóa vĩnh viễn',
+    );
   };
 
   // ===== Coupon handlers =====
