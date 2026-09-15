@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase, Profile, ShopItem, SitePage, Transaction, InventoryItem, CURRENCY_LABELS, WantedNotice, KimBangEntry, AuditLog, PasswordHistoryEntry, WheelSpinLog, Will, WillStatus, BachHoaEntry, BachHoaVote, Organization, OrganizationMember, Title, UserTitle, TITLE_COLORS, Coupon, SkillTemplate, OrgTreasury, OrgTreasuryLog, HiepLuuRegistration } from '@/lib/supabase';
 import {
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
   const [assignTargetUserId, setAssignTargetUserId] = useState('');
   const [assignSlot, setAssignSlot] = useState(1);
   const [newTemplate, setNewTemplate] = useState({ name: '', usage_detail: '', effect: '', tradeoff: '', cong_duc_cost: 0, am_duc_cost: 0, duration: '', mental_effect: '', mental_duration: 0, health_effect: '', health_duration: 0, spiritual_effect: '', spiritual_duration: 0, ghost_level_effect: '', destruction_percent: 0, category: '', oc_name: '' });
-  const [scrollToTemplateId, setScrollToTemplateId] = useState<string | null>(null);
+  const preserveScrollRef = useRef<number | null>(null);
 
   // Coupons
   const [coupons, setCoupons] = useState<(Coupon & { profiles?: { oc_name: string } | null })[]>([]);
@@ -491,7 +491,7 @@ export default function AdminDashboard() {
     setEditingTemplateId(null);
     setEditTemplate({});
     setTemplateMsg('Đã cập nhật mẫu kỹ năng.');
-    setScrollToTemplateId(templateId);
+    preserveScrollRef.current = window.scrollY;
     setTimeout(() => setTemplateMsg(''), 3000);
     fetchAllData();
   };
@@ -504,7 +504,7 @@ export default function AdminDashboard() {
     const t = skillTemplates.find(t => t.id === templateId);
     logAction('approve_skill_template', undefined, `Phê duyệt mẫu kỹ năng "${t?.name || templateId.slice(0, 8)}"`);
     setTemplateMsg('Đã phê duyệt mẫu kỹ năng.');
-    setScrollToTemplateId(templateId);
+    preserveScrollRef.current = window.scrollY;
     setTimeout(() => setTemplateMsg(''), 3000);
     fetchAllData();
   };
@@ -517,7 +517,7 @@ export default function AdminDashboard() {
     const t = skillTemplates.find(t => t.id === templateId);
     logAction('reject_skill_template', undefined, `Bỏ phê duyệt mẫu kỹ năng "${t?.name || templateId.slice(0, 8)}"`);
     setTemplateMsg('Đã chuyển về chưa duyệt.');
-    setScrollToTemplateId(templateId);
+    preserveScrollRef.current = window.scrollY;
     setTimeout(() => setTemplateMsg(''), 3000);
     fetchAllData();
   };
@@ -717,6 +717,13 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchAllData();
   }, [fetchAllData]);
+
+  useEffect(() => {
+    if (preserveScrollRef.current !== null) {
+      window.scrollTo(0, preserveScrollRef.current);
+      preserveScrollRef.current = null;
+    }
+  }, [skillTemplates]);
 
   const approveUser = async (userId: string) => {
     const { error } = await supabase.rpc('admin_approve_user', {
@@ -3997,8 +4004,6 @@ export default function AdminDashboard() {
           onAssign={handleAssignTemplate}
           onApproveTemplate={handleApproveTemplate}
           onRejectTemplate={handleRejectTemplate}
-          scrollToTemplateId={scrollToTemplateId}
-          onScrolledToTemplate={() => setScrollToTemplateId(null)}
           fetchSkillsForUser={fetchSkillsForUser}
           inputCls={inputCls}
           labelCls={labelCls}
