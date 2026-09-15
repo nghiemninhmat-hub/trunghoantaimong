@@ -203,7 +203,7 @@ export default function AdminDashboard() {
   const [assignTemplateId, setAssignTemplateId] = useState<string | null>(null);
   const [assignTargetUserId, setAssignTargetUserId] = useState('');
   const [assignSlot, setAssignSlot] = useState(1);
-  const [newTemplate, setNewTemplate] = useState({ name: '', usage_detail: '', effect: '', tradeoff: '', cong_duc_cost: 0, am_duc_cost: 0, duration: '', mental_effect: '', mental_duration: 0, health_effect: '', health_duration: 0, spiritual_effect: '', spiritual_duration: 0, ghost_level_effect: '', destruction_percent: 0, category: '' });
+  const [newTemplate, setNewTemplate] = useState({ name: '', usage_detail: '', effect: '', tradeoff: '', cong_duc_cost: 0, am_duc_cost: 0, duration: '', mental_effect: '', mental_duration: 0, health_effect: '', health_duration: 0, spiritual_effect: '', spiritual_duration: 0, ghost_level_effect: '', destruction_percent: 0, category: '', oc_name: '' });
 
   // Coupons
   const [coupons, setCoupons] = useState<(Coupon & { profiles?: { oc_name: string } | null })[]>([]);
@@ -458,11 +458,11 @@ export default function AdminDashboard() {
       health_effect: n.health_effect, health_duration: n.health_duration,
       spiritual_effect: n.spiritual_effect, spiritual_duration: n.spiritual_duration,
       ghost_level_effect: n.ghost_level_effect, destruction_percent: n.destruction_percent,
-      category: n.category,
+      category: n.category, oc_name: n.oc_name.trim() || null, phe_duyet: 'Chưa duyệt',
     }]);
     if (error) { setTemplateMsg(`Lỗi: ${error.message}`); return; }
     logAction('add_skill_template', undefined, `Thêm mẫu kỹ năng "${n.name.trim()}"`);
-    setNewTemplate({ name: '', usage_detail: '', effect: '', tradeoff: '', cong_duc_cost: 0, am_duc_cost: 0, duration: '', mental_effect: '', mental_duration: 0, health_effect: '', health_duration: 0, spiritual_effect: '', spiritual_duration: 0, ghost_level_effect: '', destruction_percent: 0, category: '' });
+    setNewTemplate({ name: '', usage_detail: '', effect: '', tradeoff: '', cong_duc_cost: 0, am_duc_cost: 0, duration: '', mental_effect: '', mental_duration: 0, health_effect: '', health_duration: 0, spiritual_effect: '', spiritual_duration: 0, ghost_level_effect: '', destruction_percent: 0, category: '', oc_name: '' });
     setShowAddTemplate(false);
     setTemplateMsg(`Đã thêm mẫu kỹ năng "${n.name.trim()}".`);
     setTimeout(() => setTemplateMsg(''), 3000);
@@ -482,13 +482,38 @@ export default function AdminDashboard() {
       health_effect: editTemplate.health_effect, health_duration: editTemplate.health_duration,
       spiritual_effect: editTemplate.spiritual_effect, spiritual_duration: editTemplate.spiritual_duration,
       ghost_level_effect: editTemplate.ghost_level_effect, destruction_percent: editTemplate.destruction_percent,
-      category: editTemplate.category, updated_at: new Date().toISOString(),
+      category: editTemplate.category, oc_name: editTemplate.oc_name ?? null,
+      updated_at: new Date().toISOString(),
     }).eq('id', templateId);
     if (error) { setTemplateMsg(`Lỗi: ${error.message}`); return; }
     logAction('edit_skill_template', undefined, `Sửa mẫu kỹ năng "${editTemplate.name}"`, { template_id: templateId });
     setEditingTemplateId(null);
     setEditTemplate({});
     setTemplateMsg('Đã cập nhật mẫu kỹ năng.');
+    setTimeout(() => setTemplateMsg(''), 3000);
+    fetchAllData();
+  };
+
+  const handleApproveTemplate = async (templateId: string) => {
+    const { error } = await supabase.from('skill_templates').update({
+      phe_duyet: 'Đã duyệt', updated_at: new Date().toISOString(),
+    }).eq('id', templateId);
+    if (error) { setTemplateMsg(`Lỗi: ${error.message}`); return; }
+    const t = skillTemplates.find(t => t.id === templateId);
+    logAction('approve_skill_template', undefined, `Phê duyệt mẫu kỹ năng "${t?.name || templateId.slice(0, 8)}"`);
+    setTemplateMsg('Đã phê duyệt mẫu kỹ năng.');
+    setTimeout(() => setTemplateMsg(''), 3000);
+    fetchAllData();
+  };
+
+  const handleRejectTemplate = async (templateId: string) => {
+    const { error } = await supabase.from('skill_templates').update({
+      phe_duyet: 'Chưa duyệt', updated_at: new Date().toISOString(),
+    }).eq('id', templateId);
+    if (error) { setTemplateMsg(`Lỗi: ${error.message}`); return; }
+    const t = skillTemplates.find(t => t.id === templateId);
+    logAction('reject_skill_template', undefined, `Bỏ phê duyệt mẫu kỹ năng "${t?.name || templateId.slice(0, 8)}"`);
+    setTemplateMsg('Đã chuyển về chưa duyệt.');
     setTimeout(() => setTemplateMsg(''), 3000);
     fetchAllData();
   };
@@ -528,12 +553,17 @@ export default function AdminDashboard() {
       ghost_level_effect: tpl.ghost_level_effect, destruction_percent: tpl.destruction_percent,
     };
     let error;
+    let skillId: string | null = null;
     if (existing) {
-      ({ error } = await supabase.from('character_skills').update(payload).eq('id', (existing as { id: string }).id));
+      skillId = (existing as { id: string }).id;
+      ({ error } = await supabase.from('character_skills').update(payload).eq('id', skillId));
     } else {
-      ({ error } = await supabase.from('character_skills').insert([payload]));
+      const { data: inserted } = await supabase.from('character_skills').insert([payload]).select('id').single();
+      error = inserted ? null : { message: 'Insert failed' };
+      if (inserted) skillId = (inserted as { id: string }).id;
     }
     if (error) { setTemplateMsg(`Lỗi: ${error.message}`); return; }
+    if (skillId) await supabase.rpc('sync_skill_to_template', { p_skill_id: skillId });
     logAction('assign_skill_template', assignTargetUserId, `Cấp mẫu kỹ năng "${tpl.name}" cho ${target?.oc_name || assignTargetUserId.slice(0, 8)} (slot ${assignSlot})`, { template_id: assignTemplateId, slot: assignSlot });
     setTemplateMsg(`Đã cấp kỹ năng "${tpl.name}" vào slot ${assignSlot} cho ${target?.oc_name || 'người chơi'}.`);
     setAssignTemplateId(null);
@@ -787,6 +817,7 @@ export default function AdminDashboard() {
   const handleSaveSkill = async (skillId: string) => {
     const { error } = await supabase.from('character_skills').update(editSkillDraft).eq('id', skillId);
     if (error) { setReviewMsg(`Lỗi: ${error.message}`); return; }
+    await supabase.rpc('sync_skill_to_template', { p_skill_id: skillId });
     setEditingSkillId(null);
     setEditSkillDraft({});
     setAllSkills({});
@@ -797,6 +828,7 @@ export default function AdminDashboard() {
     if (!confirm('Xóa kỹ năng này?')) return;
     const { error } = await supabase.from('character_skills').delete().eq('id', skillId);
     if (error) { setReviewMsg(`Lỗi: ${error.message}`); return; }
+    await supabase.rpc('sync_skill_to_template', { p_skill_id: skillId });
     setAllSkills({});
     fetchAllData();
   };
@@ -808,6 +840,7 @@ export default function AdminDashboard() {
       skill_reviewed_by: profile?.id,
     }).eq('id', skillId);
     if (error) { setReviewMsg(`Lỗi: ${error.message}`); return; }
+    await supabase.rpc('sync_skill_to_template', { p_skill_id: skillId });
     setAllSkills({});
     fetchAllData();
   };
@@ -819,6 +852,7 @@ export default function AdminDashboard() {
       skill_reviewed_by: profile?.id,
     }).eq('id', skillId);
     if (error) { setReviewMsg(`Lỗi: ${error.message}`); return; }
+    await supabase.rpc('sync_skill_to_template', { p_skill_id: skillId });
     setAllSkills({});
     fetchAllData();
   };
@@ -827,10 +861,11 @@ export default function AdminDashboard() {
     const existing = allSkills[userId] || [];
     const nextSlot = existing.length + 1;
     if (nextSlot > 4) { setReviewMsg('Đã đủ 4 kỹ năng.'); return; }
-    const { error } = await supabase.from('character_skills').insert({
+    const { data, error } = await supabase.from('character_skills').insert({
       user_id: userId, slot: nextSlot, name: 'Kỹ năng mới',
-    });
+    }).select('id').single();
     if (error) { setReviewMsg(`Lỗi: ${error.message}`); return; }
+    if (data?.id) await supabase.rpc('sync_skill_to_template', { p_skill_id: data.id });
     setAllSkills({});
     fetchSkillsForUser(userId);
     fetchAllData();
@@ -3956,6 +3991,8 @@ export default function AdminDashboard() {
           onSaveEdit={handleSaveEditTemplate}
           onDelete={handleDeleteTemplate}
           onAssign={handleAssignTemplate}
+          onApproveTemplate={handleApproveTemplate}
+          onRejectTemplate={handleRejectTemplate}
           fetchSkillsForUser={fetchSkillsForUser}
           inputCls={inputCls}
           labelCls={labelCls}

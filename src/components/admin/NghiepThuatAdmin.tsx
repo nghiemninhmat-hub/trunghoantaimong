@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import {
   Sparkles, Plus, Save, Edit3, Trash2, Search, UserSearch, User,
   Brain, Heart, Sparkle, AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Lock,
+  Check, X,
 } from 'lucide-react';
 import StatusTagSelector from '@/components/StatusTagSelector';
 import type { Profile, SkillTemplate } from '@/lib/supabase';
@@ -13,6 +14,7 @@ type NewTemplate = {
   health_effect: string; health_duration: number;
   spiritual_effect: string; spiritual_duration: number;
   ghost_level_effect: string; destruction_percent: number; category: string;
+  oc_name: string;
 };
 
 type Props = {
@@ -39,6 +41,8 @@ type Props = {
   onSaveEdit: (id: string) => void;
   onDelete: (id: string, name: string) => void;
   onAssign: () => void;
+  onApproveTemplate: (id: string) => void;
+  onRejectTemplate: (id: string) => void;
   fetchSkillsForUser: (userId: string) => void;
   inputCls: string;
   labelCls: string;
@@ -56,6 +60,7 @@ export default function NghiepThuatAdmin(props: Props) {
     assignTargetUserId, setAssignTargetUserId,
     assignSlot, setAssignSlot,
     onAdd, onEdit, onSaveEdit, onDelete, onAssign,
+    onApproveTemplate, onRejectTemplate,
     fetchSkillsForUser,
     inputCls, labelCls, cardCls,
   } = props;
@@ -236,6 +241,8 @@ export default function NghiepThuatAdmin(props: Props) {
                 onSave={() => onSaveEdit(t.id)}
                 onCancel={() => { setEditingTemplateId(null); setEditTemplate({}); }}
                 onDelete={() => onDelete(t.id, t.name)}
+                onApprove={() => onApproveTemplate(t.id)}
+                onReject={() => onRejectTemplate(t.id)}
                 inputCls={inputCls}
                 labelCls={labelCls}
               />
@@ -267,6 +274,8 @@ export default function NghiepThuatAdmin(props: Props) {
                     onSave={() => onSaveEdit(t.id)}
                     onCancel={() => { setEditingTemplateId(null); setEditTemplate({}); }}
                     onDelete={() => onDelete(t.id, t.name)}
+                    onApprove={() => onApproveTemplate(t.id)}
+                    onReject={() => onRejectTemplate(t.id)}
                     inputCls={inputCls}
                     labelCls={labelCls}
                   />
@@ -321,7 +330,7 @@ function ExpandedDetails({ t }: { t: SkillTemplate }) {
 /** Mobile card layout for each skill template */
 function TemplateCard({
   template: t, isEditing, editTemplate, setEditTemplate,
-  onEdit, onSave, onCancel, onDelete, inputCls, labelCls,
+  onEdit, onSave, onCancel, onDelete, onApprove, onReject, inputCls, labelCls,
 }: {
   template: SkillTemplate;
   isEditing: boolean;
@@ -331,6 +340,8 @@ function TemplateCard({
   onSave: () => void;
   onCancel: () => void;
   onDelete: () => void;
+  onApprove: () => void;
+  onReject: () => void;
   inputCls: string;
   labelCls: string;
 }) {
@@ -347,6 +358,7 @@ function TemplateCard({
           template={{
             name: editTemplate.name ?? '',
             category: editTemplate.category ?? '',
+            oc_name: editTemplate.oc_name ?? '',
             usage_detail: editTemplate.usage_detail ?? '',
             effect: editTemplate.effect ?? '',
             tradeoff: editTemplate.tradeoff ?? '',
@@ -419,10 +431,19 @@ function TemplateCard({
         <div className="px-3 pb-3 border-t border-white/5 pt-3">
           <ExpandedDetails t={t} />
           {/* Action buttons */}
-          <div className="flex gap-2 mt-3">
+          <div className="flex flex-wrap gap-2 mt-3">
             <button onClick={onEdit} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-bold transition-all">
               <Edit3 className="w-3.5 h-3.5" /> Sửa
             </button>
+            {t.phe_duyet !== 'Đã duyệt' ? (
+              <button onClick={onApprove} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-xs font-bold transition-all">
+                <Check className="w-3.5 h-3.5" /> Duyệt
+              </button>
+            ) : (
+              <button onClick={onReject} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 text-xs font-bold transition-all">
+                <X className="w-3.5 h-3.5" /> Bỏ duyệt
+              </button>
+            )}
             <button onClick={onDelete} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold transition-all">
               <Trash2 className="w-3.5 h-3.5" /> Xóa
             </button>
@@ -436,7 +457,7 @@ function TemplateCard({
 /** Desktop table row for each skill template */
 function TemplateRow({
   template: t, isEditing, editTemplate, setEditTemplate,
-  onEdit, onSave, onCancel, onDelete, inputCls, labelCls,
+  onEdit, onSave, onCancel, onDelete, onApprove, onReject, inputCls, labelCls,
 }: {
   template: SkillTemplate;
   isEditing: boolean;
@@ -446,6 +467,8 @@ function TemplateRow({
   onSave: () => void;
   onCancel: () => void;
   onDelete: () => void;
+  onApprove: () => void;
+  onReject: () => void;
   inputCls: string;
   labelCls: string;
 }) {
@@ -460,6 +483,7 @@ function TemplateRow({
               template={{
                 name: editTemplate.name ?? '',
                 category: editTemplate.category ?? '',
+                oc_name: editTemplate.oc_name ?? '',
                 usage_detail: editTemplate.usage_detail ?? '',
                 effect: editTemplate.effect ?? '',
                 tradeoff: editTemplate.tradeoff ?? '',
@@ -532,6 +556,15 @@ function TemplateRow({
           <button onClick={onEdit} className="p-1.5 text-gray-500 hover:text-amber-300 hover:bg-amber-500/10 rounded-lg transition-all" title="Sửa">
             <Edit3 className="w-3.5 h-3.5" />
           </button>
+          {t.phe_duyet !== 'Đã duyệt' ? (
+            <button onClick={onApprove} className="p-1.5 text-gray-500 hover:text-emerald-300 hover:bg-emerald-500/10 rounded-lg transition-all" title="Phê duyệt">
+              <Check className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <button onClick={onReject} className="p-1.5 text-gray-500 hover:text-orange-300 hover:bg-orange-500/10 rounded-lg transition-all" title="Bỏ duyệt">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
           <button onClick={onDelete} className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all" title="Xóa">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -551,7 +584,7 @@ function TemplateRow({
 }
 
 type FieldValues = {
-  name: string; category: string; usage_detail: string; effect: string; tradeoff: string;
+  name: string; category: string; oc_name: string; usage_detail: string; effect: string; tradeoff: string;
   cong_duc_cost: number; am_duc_cost: number; duration: string;
   mental_effect: string; mental_duration: number;
   health_effect: string; health_duration: number;
@@ -569,8 +602,8 @@ function TemplateFormFields({
 }) {
   return (
     <div className="space-y-3">
-      {/* Row 1: name + category */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* Row 1: name + category + oc_name */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className={labelCls}>Tên kỹ năng</label>
           <input type="text" value={template.name} onChange={e => setTemplate({ name: e.target.value })} placeholder="vd: Đồng Sinh..." required className={inputCls} />
@@ -578,6 +611,10 @@ function TemplateFormFields({
         <div>
           <label className={labelCls}>Nhóm (tùy chọn)</label>
           <input type="text" value={template.category} onChange={e => setTemplate({ category: e.target.value })} placeholder="vd: Y sư, Đạo sĩ..." className={inputCls} />
+        </div>
+        <div>
+          <label className={labelCls}>Tên OC</label>
+          <input type="text" value={template.oc_name} onChange={e => setTemplate({ oc_name: e.target.value })} placeholder="vd: Trần Kiểm..." className={inputCls} />
         </div>
       </div>
 
