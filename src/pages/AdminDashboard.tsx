@@ -1256,14 +1256,17 @@ export default function AdminDashboard() {
     );
   };
 
+  const [bachHoaVoterError, setBachHoaVoterError] = useState('');
   const fetchBachHoaVotes = useCallback(async () => {
     setBachHoaVoterLoading(true);
+    setBachHoaVoterError('');
     const { data, error } = await supabase
       .from('bach_hoa_votes')
-      .select('id, entry_id, user_id, created_at, profiles(oc_name, anonymous_name)')
+      .select('id, entry_id, user_id, created_at, profiles!bach_hoa_votes_user_id_fkey(oc_name, anonymous_name)')
       .order('created_at', { ascending: false });
     if (error) {
       console.error('Lỗi tải lượt bình chọn Bách Hoa:', error.message);
+      setBachHoaVoterError(error.message);
     } else if (data) {
       const grouped: Record<string, BachHoaVote[]> = {};
       for (const v of data as BachHoaVote[]) {
@@ -3749,7 +3752,11 @@ export default function AdminDashboard() {
 
                 {isExpanded && (
                   <div className="mt-2 space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                    {voters.length === 0 ? (
+                    {bachHoaVoterError ? (
+                      <p className="text-xs text-red-400 text-center py-3 flex items-center justify-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5" /> Lỗi tải: {bachHoaVoterError}
+                      </p>
+                    ) : voters.length === 0 ? (
                       <p className="text-xs text-gray-600 text-center py-3">Chưa có lượt bình chọn nào.</p>
                     ) : (
                       (() => {
