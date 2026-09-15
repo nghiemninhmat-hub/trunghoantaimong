@@ -12,6 +12,8 @@ export const ADMIN_EMAILS = [
   'thanhhuyenbsc@gmail.com',
   'dungchikienn@gmail.com',
   'vinhtongthuong@gmail.com',
+  'trinhhoaiquang@gmail.com',
+  'tkplaygame1510@gmail.com',
 ];
 
 export const ADMIN_PASSWORD_DEFAULT = 'TrungHoanTai@2026!';
