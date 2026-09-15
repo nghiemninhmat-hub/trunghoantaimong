@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Sparkles, Plus, Save, Edit3, Trash2, Search, UserSearch, User,
   Brain, Heart, Sparkle, AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Lock,
@@ -347,6 +347,10 @@ function TemplateCard({
 }) {
   const [expanded, setExpanded] = useState(false);
 
+  useEffect(() => {
+    if (!isEditing) setExpanded(false);
+  }, [isEditing]);
+
   if (isEditing) {
     return (
       <div className="p-3 rounded-xl bg-black/30 border border-amber-500/20 space-y-3">
@@ -473,6 +477,10 @@ function TemplateRow({
   labelCls: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!isEditing) setExpanded(false);
+  }, [isEditing]);
 
   if (isEditing) {
     return (
