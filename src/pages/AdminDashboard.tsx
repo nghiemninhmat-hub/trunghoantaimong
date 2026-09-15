@@ -204,6 +204,7 @@ export default function AdminDashboard() {
   const [assignTargetUserId, setAssignTargetUserId] = useState('');
   const [assignSlot, setAssignSlot] = useState(1);
   const [newTemplate, setNewTemplate] = useState({ name: '', usage_detail: '', effect: '', tradeoff: '', cong_duc_cost: 0, am_duc_cost: 0, duration: '', mental_effect: '', mental_duration: 0, health_effect: '', health_duration: 0, spiritual_effect: '', spiritual_duration: 0, ghost_level_effect: '', destruction_percent: 0, category: '', oc_name: '' });
+  const [scrollToTemplateId, setScrollToTemplateId] = useState<string | null>(null);
 
   // Coupons
   const [coupons, setCoupons] = useState<(Coupon & { profiles?: { oc_name: string } | null })[]>([]);
@@ -490,6 +491,7 @@ export default function AdminDashboard() {
     setEditingTemplateId(null);
     setEditTemplate({});
     setTemplateMsg('Đã cập nhật mẫu kỹ năng.');
+    setScrollToTemplateId(templateId);
     setTimeout(() => setTemplateMsg(''), 3000);
     fetchAllData();
   };
@@ -502,6 +504,7 @@ export default function AdminDashboard() {
     const t = skillTemplates.find(t => t.id === templateId);
     logAction('approve_skill_template', undefined, `Phê duyệt mẫu kỹ năng "${t?.name || templateId.slice(0, 8)}"`);
     setTemplateMsg('Đã phê duyệt mẫu kỹ năng.');
+    setScrollToTemplateId(templateId);
     setTimeout(() => setTemplateMsg(''), 3000);
     fetchAllData();
   };
@@ -514,6 +517,7 @@ export default function AdminDashboard() {
     const t = skillTemplates.find(t => t.id === templateId);
     logAction('reject_skill_template', undefined, `Bỏ phê duyệt mẫu kỹ năng "${t?.name || templateId.slice(0, 8)}"`);
     setTemplateMsg('Đã chuyển về chưa duyệt.');
+    setScrollToTemplateId(templateId);
     setTimeout(() => setTemplateMsg(''), 3000);
     fetchAllData();
   };
@@ -3993,6 +3997,8 @@ export default function AdminDashboard() {
           onAssign={handleAssignTemplate}
           onApproveTemplate={handleApproveTemplate}
           onRejectTemplate={handleRejectTemplate}
+          scrollToTemplateId={scrollToTemplateId}
+          onScrolledToTemplate={() => setScrollToTemplateId(null)}
           fetchSkillsForUser={fetchSkillsForUser}
           inputCls={inputCls}
           labelCls={labelCls}

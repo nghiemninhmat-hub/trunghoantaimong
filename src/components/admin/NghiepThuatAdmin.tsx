@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Sparkles, Plus, Save, Edit3, Trash2, Search, UserSearch, User,
   Brain, Heart, Sparkle, AlertCircle, CheckCircle2, ChevronDown, ChevronUp, Lock,
@@ -43,6 +43,8 @@ type Props = {
   onAssign: () => void;
   onApproveTemplate: (id: string) => void;
   onRejectTemplate: (id: string) => void;
+  scrollToTemplateId: string | null;
+  onScrolledToTemplate: () => void;
   fetchSkillsForUser: (userId: string) => void;
   inputCls: string;
   labelCls: string;
@@ -61,6 +63,7 @@ export default function NghiepThuatAdmin(props: Props) {
     assignSlot, setAssignSlot,
     onAdd, onEdit, onSaveEdit, onDelete, onAssign,
     onApproveTemplate, onRejectTemplate,
+    scrollToTemplateId, onScrolledToTemplate,
     fetchSkillsForUser,
     inputCls, labelCls, cardCls,
   } = props;
@@ -69,6 +72,23 @@ export default function NghiepThuatAdmin(props: Props) {
   const [filterCategory, setFilterCategory] = useState('');
   const [filterPheDuyet, setFilterPheDuyet] = useState('');
   const [showAssignPanel, setShowAssignPanel] = useState(false);
+  const [autoExpandedId, setAutoExpandedId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollToTemplateId && containerRef.current) {
+      const el = containerRef.current.querySelector(`[data-template-id="${scrollToTemplateId}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setAutoExpandedId(scrollToTemplateId);
+        onScrolledToTemplate();
+        const timer = setTimeout(() => setAutoExpandedId(null), 4000);
+        return () => clearTimeout(timer);
+      } else {
+        onScrolledToTemplate();
+      }
+    }
+  }, [scrollToTemplateId, onScrolledToTemplate, skillTemplates]);
 
   const categories = useMemo(
     () => Array.from(new Set(skillTemplates.map(t => t.category).filter(Boolean))) as string[],
@@ -90,7 +110,7 @@ export default function NghiepThuatAdmin(props: Props) {
   }, [skillTemplates, search, filterCategory, filterPheDuyet]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={containerRef}>
       {templateMsg && (
         <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${templateMsg.startsWith('Lỗi') ? 'bg-red-500/10 border border-red-500/20 text-red-300' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'}`}>
           {templateMsg.startsWith('Lỗi') ? <AlertCircle className="w-4 h-4 flex-shrink-0" /> : <CheckCircle2 className="w-4 h-4 flex-shrink-0" />}
@@ -235,6 +255,7 @@ export default function NghiepThuatAdmin(props: Props) {
                 key={t.id}
                 template={t}
                 isEditing={editingTemplateId === t.id}
+                forceExpanded={autoExpandedId === t.id}
                 editTemplate={editTemplate}
                 setEditTemplate={setEditTemplate}
                 onEdit={() => onEdit(t)}
@@ -268,6 +289,7 @@ export default function NghiepThuatAdmin(props: Props) {
                     key={t.id}
                     template={t}
                     isEditing={editingTemplateId === t.id}
+                    forceExpanded={autoExpandedId === t.id}
                     editTemplate={editTemplate}
                     setEditTemplate={setEditTemplate}
                     onEdit={() => onEdit(t)}
@@ -329,11 +351,12 @@ function ExpandedDetails({ t }: { t: SkillTemplate }) {
 
 /** Mobile card layout for each skill template */
 function TemplateCard({
-  template: t, isEditing, editTemplate, setEditTemplate,
+  template: t, isEditing, forceExpanded, editTemplate, setEditTemplate,
   onEdit, onSave, onCancel, onDelete, onApprove, onReject, inputCls, labelCls,
 }: {
   template: SkillTemplate;
   isEditing: boolean;
+  forceExpanded: boolean;
   editTemplate: Partial<SkillTemplate>;
   setEditTemplate: (v: Partial<SkillTemplate>) => void;
   onEdit: () => void;
@@ -346,6 +369,7 @@ function TemplateCard({
   labelCls: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const isExpanded = forceExpanded || expanded;
 
   if (isEditing) {
     return (
@@ -389,10 +413,10 @@ function TemplateCard({
   }
 
   return (
-    <div className="rounded-xl bg-black/20 border border-white/10 overflow-hidden">
+    <div className="rounded-xl bg-black/20 border border-white/10 overflow-hidden" data-template-id={t.id}>
       {/* Header: tap to expand */}
       <button
-        onClick={() => setExpanded(!expanded)}
+        onClick={() => setExpanded(!isExpanded)}
         className="w-full flex items-start justify-between gap-2 p-3 text-left"
       >
         <div className="min-w-0 flex-1">
@@ -422,12 +446,12 @@ function TemplateCard({
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <span className="text-gray-600">{expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
+          <span className="text-gray-600">{isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</span>
         </div>
       </button>
 
       {/* Expanded details */}
-      {expanded && (
+      {isExpanded && (
         <div className="px-3 pb-3 border-t border-white/5 pt-3">
           <ExpandedDetails t={t} />
           {/* Action buttons */}
@@ -456,11 +480,12 @@ function TemplateCard({
 
 /** Desktop table row for each skill template */
 function TemplateRow({
-  template: t, isEditing, editTemplate, setEditTemplate,
+  template: t, isEditing, forceExpanded, editTemplate, setEditTemplate,
   onEdit, onSave, onCancel, onDelete, onApprove, onReject, inputCls, labelCls,
 }: {
   template: SkillTemplate;
   isEditing: boolean;
+  forceExpanded: boolean;
   editTemplate: Partial<SkillTemplate>;
   setEditTemplate: (v: Partial<SkillTemplate>) => void;
   onEdit: () => void;
@@ -473,6 +498,7 @@ function TemplateRow({
   labelCls: string;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const isExpanded = forceExpanded || expanded;
 
   if (isEditing) {
     return (
@@ -517,11 +543,11 @@ function TemplateRow({
 
   return (
     <>
-      <tr className="hover:bg-white/[0.02] transition-colors">
+      <tr className="hover:bg-white/[0.02] transition-colors" data-template-id={t.id}>
         <td className="px-3 py-2.5 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <button onClick={() => setExpanded(!expanded)} className="text-gray-500 hover:text-amber-300 transition-colors flex-shrink-0">
-              {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            <button onClick={() => setExpanded(!isExpanded)} className="text-gray-500 hover:text-amber-300 transition-colors flex-shrink-0">
+              {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
             <span className="font-semibold text-amber-100/90 truncate">{t.name}</span>
             {t.destruction_percent > 0 && (
@@ -570,7 +596,7 @@ function TemplateRow({
           </button>
         </td>
       </tr>
-      {expanded && (
+      {isExpanded && (
         <tr>
           <td colSpan={6} className="p-0">
             <div className="p-4 bg-black/20">
