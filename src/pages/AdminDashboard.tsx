@@ -3752,19 +3752,32 @@ export default function AdminDashboard() {
                     {voters.length === 0 ? (
                       <p className="text-xs text-gray-600 text-center py-3">Chưa có lượt bình chọn nào.</p>
                     ) : (
-                      voters.map((v) => {
-                        const name = v.profiles?.oc_name || v.profiles?.anonymous_name || `ID:${v.user_id.slice(0, 8)}`;
-                        return (
-                          <div key={v.id} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/20 border border-white/5">
+                      (() => {
+                        const grouped: Record<string, { name: string; count: number; latest: string }> = {};
+                        for (const v of voters) {
+                          const name = v.profiles?.oc_name || v.profiles?.anonymous_name || `ID:${v.user_id.slice(0, 8)}`;
+                          if (grouped[v.user_id]) {
+                            grouped[v.user_id].count++;
+                            if (v.created_at > grouped[v.user_id].latest) grouped[v.user_id].latest = v.created_at;
+                          } else {
+                            grouped[v.user_id] = { name, count: 1, latest: v.created_at };
+                          }
+                        }
+                        const rows = Object.values(grouped).sort((a, b) => b.count - a.count || b.latest.localeCompare(a.latest));
+                        return rows.map((r, i) => (
+                          <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/20 border border-white/5">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-400/50 flex-shrink-0" />
-                            <span className="text-xs text-amber-100/80 font-medium truncate flex-1">{name}</span>
+                            <span className="text-xs text-amber-100/80 font-medium truncate flex-1">{r.name}</span>
+                            {r.count > 1 && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold flex-shrink-0">x{r.count}</span>
+                            )}
                             <span className="flex items-center gap-1 text-[10px] text-gray-600 flex-shrink-0">
                               <Clock className="w-2.5 h-2.5" />
-                              {new Date(v.created_at).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                              {new Date(r.latest).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
-                        );
-                      })
+                        ));
+                      })()
                     )}
                   </div>
                 )}
