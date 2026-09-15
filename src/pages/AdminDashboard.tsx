@@ -3600,6 +3600,7 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {bachHoaEntries.map((entry, idx) => {
               const voters = bachHoaVotes[entry.id] || [];
+              const uniqueVoterCount = new Set(voters.map(v => v.user_id)).size;
               const isExpanded = expandedBachHoaVoters.has(entry.id);
               const isEditing = !!bachHoaEditing[entry.id];
               const draft = bachHoaEditing[entry.id];
@@ -3743,7 +3744,7 @@ export default function AdminDashboard() {
                 >
                   <Users className="w-3.5 h-3.5 text-amber-300/60 flex-shrink-0" />
                   <span className="text-xs text-amber-300/80 font-semibold">Người bình chọn</span>
-                  <span className="text-[10px] text-gray-500 ml-1">({voters.length})</span>
+                  <span className="text-[10px] text-gray-500 ml-1">{uniqueVoterCount} người · {voters.length} lượt</span>
                   {bachHoaVoterLoading && <Loader2 className="w-3 h-3 animate-spin text-amber-300/40 ml-1" />}
                   <span className="ml-auto">
                     {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-gray-500" /> : <ChevronDown className="w-3.5 h-3.5 text-gray-500" />}
