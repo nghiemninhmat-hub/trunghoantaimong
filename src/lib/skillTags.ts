@@ -180,7 +180,7 @@ export const emptySkill: SkillFormData = {
   destruction_percent: 0,
 };
 
-export const SKILL_FIELDS: { key: keyof SkillFormData; label: string; type: 'text' | 'textarea' | 'number' | 'select' | 'mental'; placeholder?: string; max?: number }[] = [
+export const SKILL_FIELDS: { key: keyof SkillFormData; label: string; type: 'text' | 'textarea' | 'number' | 'multitag'; placeholder?: string; max?: number; category?: 'mental' | 'health' | 'spiritual' }[] = [
   { key: 'name', label: 'Tên kỹ năng', type: 'text', placeholder: 'Tên kỹ năng...' },
   { key: 'usage_detail', label: 'Chi tiết cách sử dụng', type: 'textarea', placeholder: 'Mô tả cách sử dụng...' },
   { key: 'effect', label: 'Hiệu quả', type: 'textarea', placeholder: 'Mô tả hiệu quả...' },
@@ -188,11 +188,11 @@ export const SKILL_FIELDS: { key: keyof SkillFormData; label: string; type: 'tex
   { key: 'cong_duc_cost', label: 'Tiêu hao công đức', type: 'number' },
   { key: 'am_duc_cost', label: 'Tiêu hao âm đức', type: 'number' },
   { key: 'duration', label: 'Thời gian duy trì', type: 'text', placeholder: 'vd: 3 dị sự, 1 ngày...' },
-  { key: 'mental_effect', label: 'Ảnh hưởng tinh thần', type: 'mental' },
+  { key: 'mental_effect', label: 'Ảnh hưởng tinh thần', type: 'multitag', category: 'mental' },
   { key: 'mental_duration', label: 'Thời gian ảnh hưởng tinh thần (tối đa 50)', type: 'number', max: 50 },
-  { key: 'health_effect', label: 'Ảnh hưởng sức khỏe', type: 'select' },
+  { key: 'health_effect', label: 'Ảnh hưởng sức khỏe', type: 'multitag', category: 'health' },
   { key: 'health_duration', label: 'Thời gian ảnh hưởng sức khỏe (tối đa 50)', type: 'number', max: 50 },
-  { key: 'spiritual_effect', label: 'Ảnh hưởng tâm linh', type: 'select' },
+  { key: 'spiritual_effect', label: 'Ảnh hưởng tâm linh', type: 'multitag', category: 'spiritual' },
   { key: 'spiritual_duration', label: 'Thời gian ảnh hưởng tâm linh (tối đa 50)', type: 'number', max: 50 },
   { key: 'ghost_level_effect', label: 'Ảnh hưởng lên từng cấp quỷ', type: 'textarea', placeholder: 'vd: Quỷ cấp 1: 100%, cấp 2: 80%...' },
   { key: 'destruction_percent', label: 'Gây bao nhiêu % tiêu diệt', type: 'number', max: 100 },

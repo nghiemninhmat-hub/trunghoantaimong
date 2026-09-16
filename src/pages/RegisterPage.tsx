@@ -7,9 +7,9 @@ import {
   Sparkles, Heart, Brain, Zap,
 } from 'lucide-react';
 import {
-  STATUS_TAGS, MENTAL_SUB_TAGS, MENTAL_TAG_DESCRIPTIONS,
   SKILL_FIELDS, emptySkill, type SkillFormData,
 } from '@/lib/skillTags';
+import StatusTagSelector from '@/components/StatusTagSelector';
 
 const TOTAL_STEPS = 5; // 1 account + 4 skills
 
@@ -176,57 +176,15 @@ export default function RegisterPage() {
               </div>
             );
           }
-          if (field.type === 'select') {
+          if (field.type === 'multitag' && field.category) {
             return (
               <div key={field.key}>
-                <label className={labelClass}>{field.label}</label>
-                <select value={val as string} onChange={e => updateSkill(slot, field.key, e.target.value)} className={`${inputClass} appearance-none`}>
-                  <option value="">— Chọn mức —</option>
-                  {STATUS_TAGS.map(t => <option key={t.value} value={t.value}>{t.label} ({t.value})</option>)}
-                </select>
-              </div>
-            );
-          }
-          if (field.type === 'mental') {
-            const parentTag = STATUS_TAGS.find(t => t.value === s.mental_effect);
-            const subTags = MENTAL_SUB_TAGS.filter(t => t.parent === s.mental_effect);
-            return (
-              <div key={field.key} className="space-y-3">
-                <div>
-                  <label className={labelClass}>{field.label} — chọn mức ảnh hưởng</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {STATUS_TAGS.map(tag => (
-                      <button
-                        key={tag.value}
-                        type="button"
-                        onClick={() => updateSkill(slot, 'mental_effect', tag.value)}
-                        className={`px-2.5 py-1.5 rounded-lg text-[10px] font-semibold border transition-all ${s.mental_effect === tag.value ? tag.activeClass : `${tag.idleClass} hover:scale-105`}`}
-                      >
-                        {tag.label}
-                      </button>
-                    ))}
-                  </div>
-                  {parentTag && (
-                    <p className="mt-2 text-[11px] text-gray-500 italic leading-5">{MENTAL_TAG_DESCRIPTIONS[parentTag.value]}</p>
-                  )}
-                </div>
-                {subTags.length > 0 && (
-                  <div>
-                    <label className={labelClass}>Trạng thái cụ thể</label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {subTags.map(sub => (
-                        <button
-                          key={sub.value}
-                          type="button"
-                          onClick={() => updateSkill(slot, 'mental_effect', sub.value)}
-                          className={`px-2 py-1 rounded-md text-[10px] font-medium border transition-all ${s.mental_effect === sub.value ? `${parentTag!.activeClass} border-amber-300/50` : 'border-white/10 bg-black/30 text-gray-500 hover:border-amber-300/30 hover:text-amber-200'}`}
-                        >
-                          {sub.value}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <label className={labelClass}>{field.label} — chọn một hoặc nhiều tag</label>
+                <StatusTagSelector
+                  category={field.category}
+                  value={val as string}
+                  onChange={v => updateSkill(slot, field.key, v)}
+                />
               </div>
             );
           }
