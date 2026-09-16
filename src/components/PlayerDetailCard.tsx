@@ -9,7 +9,7 @@ import {
 import { useState, useEffect, useCallback } from 'react';
 import Avatar from '@/components/Avatar';
 import StatusTagSelector from '@/components/StatusTagSelector';
-import { parseMultiValue, STATUS_TAGS } from '@/lib/skillTags';
+import { parseMultiValue, STATUS_TAGS, MENTAL_SUB_TAGS, PHYSICAL_SUB_TAGS, SPIRITUAL_SUB_TAGS, joinMultiValue, toggleTag } from '@/lib/skillTags';
 
 interface Props {
   profile?: Profile;
@@ -216,17 +216,17 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
 
   const handleResetStatus = async (field: 'status_physical' | 'status_spiritual' | 'status_mental') => {
     const fieldLabel = field === 'status_physical' ? 'Thể Chất' : field === 'status_spiritual' ? 'Tâm Linh' : 'Tinh Thần';
-    if (!confirm(`Đặt lại ${fieldLabel} của ${profile.oc_name} về Bình Thường?`)) return;
+    if (!confirm(`Đặt lại ${fieldLabel} của ${profile.oc_name} về Khỏe mạnh?`)) return;
     setActionLoading(true);
     const { error } = await supabase.rpc('admin_update_status', {
       p_user_id: profile.id,
       p_field: field,
-      p_value: 'Bình Thường',
+      p_value: 'Khỏe mạnh',
     });
     setActionLoading(false);
     if (error) { showMsg(error.message, true); return; }
-    onLogAction?.('reset_status', profile.id, `Đặt lại ${fieldLabel} của ${profile.oc_name} về Bình Thường`, { field, previous_value: (profile as Record<string, unknown>)[field], new_value: 'Bình Thường' });
-    showMsg(`Đã đặt lại ${fieldLabel} về Bình Thường.`);
+    onLogAction?.('reset_status', profile.id, `Đặt lại ${fieldLabel} của ${profile.oc_name} về Khỏe mạnh`, { field, previous_value: (profile as Record<string, unknown>)[field], new_value: 'Khỏe mạnh' });
+    showMsg(`Đã đặt lại ${fieldLabel} về Khỏe mạnh.`);
     onRefresh?.();
   };
 
@@ -430,31 +430,47 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                 { field: 'status_mental' as const, label: 'Tinh Thần', icon: Brain, color: 'text-purple-400' },
               ]).map(({ field, label, icon: Icon, color }) => {
                 const currentVal = (profile as Record<string, unknown>)[field] as string;
-                const tagInfo = STATUS_TAGS.find(t => t.value === currentVal) || STATUS_TAGS[0];
+                const currentTags = parseMultiValue(currentVal);
                 return (
                   <div key={field}>
                     <div className="flex items-center gap-2 mb-1">
                       <Icon className={`w-3.5 h-3.5 ${color} flex-shrink-0`} />
                       <span className="text-[10px] uppercase tracking-wider text-gray-500">{label}</span>
-                      <span className={`ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold ${tagInfo.badgeClass}`}>{currentVal}</span>
-                      {currentVal !== 'Bình Thường' && (
+                      {currentTags.length > 0 && currentTags[0] !== 'Khỏe mạnh' && (
                         <button
                           onClick={() => handleResetStatus(field)}
                           disabled={actionLoading}
-                          className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-bold border border-red-500/15 transition-all disabled:opacity-50"
-                          title="Đặt về Bình Thường"
+                          className="ml-auto flex items-center gap-1 px-2 py-0.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-bold border border-red-500/15 transition-all disabled:opacity-50"
+                          title="Đặt về Khỏe mạnh"
                         >
                           <Trash2 className="w-3 h-3" /> Xóa
                         </button>
                       )}
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {STATUS_TAGS.map(tag => (
-                        <button key={tag.value} onClick={() => { if (tag.value !== currentVal) handleStatus(field, tag.value); }}
-                          className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all ${tag.value === currentVal ? `${tag.activeClass} cursor-default` : `${tag.idleClass} hover:scale-105`}`}>
-                          {tag.label}
-                        </button>
-                      ))}
+                      {STATUS_TAGS.map(parentTag => {
+                        const subTagSource = field === 'status_physical' ? PHYSICAL_SUB_TAGS : field === 'status_spiritual' ? SPIRITUAL_SUB_TAGS : MENTAL_SUB_TAGS;
+                        const subTags = subTagSource.filter(st => st.parent === parentTag.value);
+                        return (
+                          <div key={parentTag.value} className="flex flex-wrap gap-1 items-center">
+                            {subTags.map(st => {
+                              const active = currentTags.includes(st.value);
+                              return (
+                                <button
+                                  key={st.value}
+                                  onClick={() => {
+                                    const newTags = toggleTag(currentTags, st.value);
+                                    handleStatus(field, joinMultiValue(newTags));
+                                  }}
+                                  className={`px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all ${active ? parentTag.activeClass : `${parentTag.idleClass} hover:scale-105`}`}
+                                >
+                                  {st.value}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );

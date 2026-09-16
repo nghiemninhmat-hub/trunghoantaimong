@@ -23,7 +23,7 @@ export type MentalSubTag = {
 
 export const MENTAL_SUB_TAGS: MentalSubTag[] = [
   // Xanh lá
-  { value: 'Tỉnh táo', parent: 'Bình Thường' },
+  { value: 'Khỏe mạnh', parent: 'Bình Thường' },
   // Vàng
   { value: 'Bất an', parent: 'Ảnh hưởng nhẹ' },
   { value: 'Nóng nảy', parent: 'Ảnh hưởng nhẹ' },
@@ -61,8 +61,67 @@ export const MENTAL_SUB_TAGS: MentalSubTag[] = [
   { value: 'Cuồng loạn', parent: 'Ngưỡng sinh tử' },
 ];
 
-// All 3 categories (Tinh Thần, Thể Chất, Tâm Linh) share the same tag list.
-// HEALTH_SUB_TAGS and SPIRITUAL_SUB_TAGS are removed — use MENTAL_SUB_TAGS for all.
+export const PHYSICAL_SUB_TAGS: MentalSubTag[] = [
+  // Xanh lá
+  { value: 'Khỏe mạnh', parent: 'Bình Thường' },
+  // Vàng
+  { value: 'Vết rách nhỏ trên da', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Bỏng rát', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Mất một phần thị lực', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Khó thở', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Hoa mắt, choáng váng', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Đau nhức', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Đau đầu', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Ù tai', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Buồn nôn', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Bong gân', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Tê buốt kinh mạch', parent: 'Ảnh hưởng nhẹ' },
+  // Đỏ nhạt
+  { value: 'Gãy tay', parent: 'Nghiêm trọng' },
+  { value: 'Gãy chân', parent: 'Nghiêm trọng' },
+  { value: 'Suy nhược', parent: 'Nghiêm trọng' },
+  { value: 'Mất máu', parent: 'Nghiêm trọng' },
+  { value: 'Trật khớp', parent: 'Nghiêm trọng' },
+  { value: 'Suy giảm nặng các giác quan', parent: 'Nghiêm trọng' },
+  { value: 'Thị lực suy giảm mạnh', parent: 'Nghiêm trọng' },
+  // Đỏ đậm
+  { value: 'Xuất huyết nặng', parent: 'Cực kỳ nghiêm trọng' },
+  { value: 'Bỏng nặng', parent: 'Cực kỳ nghiêm trọng' },
+  { value: 'Suy hô hấp', parent: 'Cực kỳ nghiêm trọng' },
+  // Tím nhạt
+  { value: 'Ngất', parent: 'Suy kiệt' },
+  { value: 'Nhiễm độc', parent: 'Suy kiệt' },
+  { value: 'Kiệt sức', parent: 'Suy kiệt' },
+  // Tím đậm
+  { value: 'Mất thính giác', parent: 'Ngưỡng sinh tử' },
+  { value: 'Mù lòa', parent: 'Ngưỡng sinh tử' },
+  { value: 'Liệt chi', parent: 'Ngưỡng sinh tử' },
+  { value: 'Tê liệt', parent: 'Ngưỡng sinh tử' },
+  { value: 'Các giác quan suy kiệt', parent: 'Ngưỡng sinh tử' },
+  { value: 'Hấp hối', parent: 'Ngưỡng sinh tử' },
+];
+
+export const SPIRITUAL_SUB_TAGS: MentalSubTag[] = [
+  // Xanh lá
+  { value: 'Thanh khiết', parent: 'Bình Thường' },
+  // Vàng
+  { value: 'Bất tịnh', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Linh hồn chịu áp lực lớn', parent: 'Ảnh hưởng nhẹ' },
+  // Hồng nhạt (map to Nghiêm trọng - đỏ nhạt tier)
+  { value: 'Âm khí xâm nhập', parent: 'Nghiêm trọng' },
+  { value: 'Tà khí nhập thể', parent: 'Nghiêm trọng' },
+  { value: 'Suy giảm khả năng phân biệt âm dương', parent: 'Nghiêm trọng' },
+  // Đỏ đậm
+  { value: 'Oán khí quấn thân', parent: 'Cực kỳ nghiêm trọng' },
+  { value: 'Chấp niệm ăn mòn', parent: 'Cực kỳ nghiêm trọng' },
+  { value: 'Mất phách', parent: 'Cực kỳ nghiêm trọng' },
+  // Tím đậm
+  { value: 'Quỷ khí bám thân', parent: 'Ngưỡng sinh tử' },
+  { value: 'Dính lời nguyền', parent: 'Ngưỡng sinh tử' },
+  { value: 'Quỷ ám', parent: 'Ngưỡng sinh tử' },
+];
+
+// Tinh Thần uses MENTAL_SUB_TAGS. Tâm Linh uses SPIRITUAL_SUB_TAGS. Thể Chất uses PHYSICAL_SUB_TAGS.
 
 export const MENTAL_TAG_DESCRIPTIONS: Record<string, string> = {
   'Bình Thường': 'Trạng thái khỏe mạnh.',

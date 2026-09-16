@@ -1,4 +1,4 @@
-import { MENTAL_SUB_TAGS, STATUS_TAGS, parseMultiValue, toggleTag, joinMultiValue, type MentalSubTag } from '@/lib/skillTags';
+import { MENTAL_SUB_TAGS, PHYSICAL_SUB_TAGS, SPIRITUAL_SUB_TAGS, STATUS_TAGS, parseMultiValue, toggleTag, joinMultiValue, type MentalSubTag } from '@/lib/skillTags';
 import { Brain, Heart, Sparkle, Check } from 'lucide-react';
 
 type Category = 'mental' | 'health' | 'spiritual';
@@ -72,7 +72,7 @@ export default function StatusTagSelector({ category, value, onChange }: Props) 
   const config = CATEGORY_CONFIG[category];
   const Icon = config.icon;
 
-  const subTags = MENTAL_SUB_TAGS;
+  const subTags = category === 'health' ? PHYSICAL_SUB_TAGS : category === 'spiritual' ? SPIRITUAL_SUB_TAGS : MENTAL_SUB_TAGS;
 
   return (
     <div className="rounded-lg bg-black/20 p-2 space-y-1.5">
