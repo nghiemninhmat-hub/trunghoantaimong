@@ -11,15 +11,6 @@ import Avatar from '@/components/Avatar';
 import StatusTagSelector from '@/components/StatusTagSelector';
 import { parseMultiValue, STATUS_TAGS } from '@/lib/skillTags';
 
-const STATUS_TAGS = [
-  { value: 'Bình Thường', label: 'Thẻ lá', badgeClass: 'bg-emerald-500/20 text-emerald-300', activeClass: 'bg-emerald-500/30 border-emerald-500/50 text-emerald-200', idleClass: 'bg-emerald-500/5 border-emerald-500/15 text-emerald-400/70' },
-  { value: 'Ảnh hưởng nhẹ', label: 'Thẻ vàng', badgeClass: 'bg-yellow-500/20 text-yellow-300', activeClass: 'bg-yellow-500/30 border-yellow-500/50 text-yellow-200', idleClass: 'bg-yellow-500/5 border-yellow-500/15 text-yellow-400/70' },
-  { value: 'Nghiêm trọng', label: 'Thẻ đỏ nhạt', badgeClass: 'bg-red-400/20 text-red-300', activeClass: 'bg-red-400/30 border-red-400/50 text-red-200', idleClass: 'bg-red-400/5 border-red-400/15 text-red-400/70' },
-  { value: 'Cực kỳ nghiêm trọng', label: 'Thẻ đỏ đậm', badgeClass: 'bg-red-600/20 text-red-400', activeClass: 'bg-red-600/30 border-red-600/50 text-red-300', idleClass: 'bg-red-600/5 border-red-600/15 text-red-500/70' },
-  { value: 'Suy kiệt', label: 'Thẻ tím nhạt', badgeClass: 'bg-purple-400/20 text-purple-300', activeClass: 'bg-purple-400/30 border-purple-400/50 text-purple-200', idleClass: 'bg-purple-400/5 border-purple-400/15 text-purple-400/70' },
-  { value: 'Ngưỡng sinh tử', label: 'Thẻ tím đậm', badgeClass: 'bg-purple-700/20 text-purple-400', activeClass: 'bg-purple-700/30 border-purple-700/50 text-purple-300', idleClass: 'bg-purple-700/5 border-purple-700/15 text-purple-500/70' },
-];
-
 interface Props {
   profile?: Profile;
   transactions: Transaction[];
