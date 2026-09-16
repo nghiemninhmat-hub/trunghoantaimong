@@ -11,7 +11,15 @@ import {
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import VisitorProfileCard from '@/components/VisitorProfileCard';
 import Avatar from '@/components/Avatar';
-import { parseMultiValue, STATUS_TAGS, MENTAL_SUB_TAGS } from '@/lib/skillTags';
+
+const PROFILE_STATUS_TAGS = [
+  { value: 'Bình Thường', cardClass: 'border-emerald-500/20 bg-emerald-500/5', iconClass: 'text-emerald-400', dotClass: 'bg-emerald-400', textClass: 'text-emerald-300' },
+  { value: 'Ảnh hưởng nhẹ', cardClass: 'border-yellow-500/20 bg-yellow-500/5', iconClass: 'text-yellow-400', dotClass: 'bg-yellow-400', textClass: 'text-yellow-300' },
+  { value: 'Nghiêm trọng', cardClass: 'border-red-400/25 bg-red-400/5', iconClass: 'text-red-400', dotClass: 'bg-red-300', textClass: 'text-red-300' },
+  { value: 'Cực kỳ nghiêm trọng', cardClass: 'border-red-700/25 bg-red-700/5', iconClass: 'text-red-500', dotClass: 'bg-red-600', textClass: 'text-red-400' },
+  { value: 'Suy kiệt', cardClass: 'border-purple-400/25 bg-purple-400/5', iconClass: 'text-purple-400', dotClass: 'bg-purple-300', textClass: 'text-purple-300' },
+  { value: 'Ngưỡng sinh tử', cardClass: 'border-purple-800/25 bg-purple-800/5', iconClass: 'text-purple-500', dotClass: 'bg-purple-600', textClass: 'text-purple-400' },
+];
 
 export default function ProfilePage() {
   const { id: visitorId } = useParams<{ id: string }>();
@@ -842,36 +850,9 @@ export default function ProfilePage() {
                     {sk.duration ? <span className="text-gray-400">Duy trì: {sk.duration}</span> : null}
                     {(sk.destruction_percent ?? 0) > 0 && <span className="text-red-400">Tiêu diệt: {sk.destruction_percent}%</span>}
                   </div>
-                  {(() => {
-                    const tags = parseMultiValue(sk.mental_effect || '');
-                    return tags.length > 0 ? (
-                      <div className="mt-0.5 flex flex-wrap items-center gap-1">
-                        <span className="text-gray-600">Tinh thần:</span>
-                        {tags.map(t => <span key={t} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${STATUS_TAGS.find(s => s.value === t)?.badgeClass ?? 'bg-white/10 text-gray-300'}`}>{t}</span>)}
-                        <span className="text-[10px] text-gray-500">({sk.mental_duration ?? 0}cmt)</span>
-                      </div>
-                    ) : null;
-                  })()}
-                  {(() => {
-                    const tags = parseMultiValue(sk.health_effect || '');
-                    return tags.length > 0 ? (
-                      <div className="mt-0.5 flex flex-wrap items-center gap-1">
-                        <span className="text-gray-600">Sức khỏe:</span>
-                        {tags.map(t => <span key={t} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${STATUS_TAGS.find(s => s.value === t)?.badgeClass ?? 'bg-white/10 text-gray-300'}`}>{t}</span>)}
-                        <span className="text-[10px] text-gray-500">({sk.health_duration ?? 0}cmt)</span>
-                      </div>
-                    ) : null;
-                  })()}
-                  {(() => {
-                    const tags = parseMultiValue(sk.spiritual_effect || '');
-                    return tags.length > 0 ? (
-                      <div className="mt-0.5 flex flex-wrap items-center gap-1">
-                        <span className="text-gray-600">Tâm linh:</span>
-                        {tags.map(t => <span key={t} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${STATUS_TAGS.find(s => s.value === t)?.badgeClass ?? 'bg-white/10 text-gray-300'}`}>{t}</span>)}
-                        <span className="text-[10px] text-gray-500">({sk.spiritual_duration ?? 0}cmt)</span>
-                      </div>
-                    ) : null;
-                  })()}
+                  {sk.mental_effect ? <p className="mt-0.5"><span className="text-gray-600">Tinh thần:</span> {sk.mental_effect} ({sk.mental_duration ?? 0}cmt)</p> : null}
+                  {sk.health_effect ? <p><span className="text-gray-600">Sức khỏe:</span> {sk.health_effect} ({sk.health_duration ?? 0}cmt)</p> : null}
+                  {sk.spiritual_effect ? <p><span className="text-gray-600">Tâm linh:</span> {sk.spiritual_effect} ({sk.spiritual_duration ?? 0}cmt)</p> : null}
                   {sk.ghost_level_effect ? <p><span className="text-gray-600">Cấp quỷ:</span> {sk.ghost_level_effect}</p> : null}
                 </div>
               </div>
@@ -961,25 +942,16 @@ export default function ProfilePage() {
             { field: 'status_mental' as const, label: 'Tinh Thần', icon: Brain },
           ]).map(({ field, label, icon: Icon }) => {
             const currentVal = profile[field];
-            const currentTags = parseMultiValue(currentVal);
-            const topParent = currentTags.length > 0 ? (MENTAL_SUB_TAGS.find(st => st.value === currentTags[0])?.parent || 'Bình Thường') : 'Bình Thường';
-            const tag = STATUS_TAGS.find(t => t.value === topParent) || STATUS_TAGS[0];
+            const tag = PROFILE_STATUS_TAGS.find(t => t.value === currentVal) || PROFILE_STATUS_TAGS[0];
             return (
-              <div key={field} className={`rounded-lg border p-3 ${tag.badgeClass.replace(/text-\S+/, 'bg-' + (tag.badgeClass.match(/bg-(\S+)/)?.[1] || 'emerald-500/5'))} border-current/20`}>
+              <div key={field} className={`rounded-lg border p-3 ${tag.cardClass}`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <Icon className={`w-4 h-4 ${tag.badgeClass.replace(/bg-\S+/, '').trim()}`} />
+                  <Icon className={`w-4 h-4 ${tag.iconClass}`} />
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">{label}</span>
                 </div>
-                <div className="flex flex-wrap gap-1">
-                  {currentTags.length === 0 ? (
-                    <span className="text-sm font-bold text-emerald-300">Khỏe mạnh</span>
-                  ) : currentTags.map(t => {
-                    const parent = MENTAL_SUB_TAGS.find(st => st.value === t)?.parent || 'Bình Thường';
-                    const parentTag = STATUS_TAGS.find(pt => pt.value === parent) || STATUS_TAGS[0];
-                    return (
-                      <span key={t} className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${parentTag.badgeClass}`}>{t}</span>
-                    );
-                  })}
+                <div className="flex items-center gap-2">
+                  <span className={`inline-block w-2.5 h-2.5 rounded-full flex-shrink-0 ${tag.dotClass}`} />
+                  <span className={`text-sm font-bold ${tag.textClass}`}>{currentVal}</span>
                 </div>
               </div>
             );
