@@ -9,6 +9,7 @@ import {
 import { useState, useEffect, useCallback } from 'react';
 import Avatar from '@/components/Avatar';
 import StatusTagSelector from '@/components/StatusTagSelector';
+import { parseMultiValue, STATUS_TAGS } from '@/lib/skillTags';
 
 const STATUS_TAGS = [
   { value: 'Bình Thường', label: 'Thẻ lá', badgeClass: 'bg-emerald-500/20 text-emerald-300', activeClass: 'bg-emerald-500/30 border-emerald-500/50 text-emerald-200', idleClass: 'bg-emerald-500/5 border-emerald-500/15 text-emerald-400/70' },
@@ -529,9 +530,36 @@ export default function PlayerDetailCard({ profile, transactions: initialTx, inv
                         {sk.duration ? <span className="text-gray-400">Duy trì: {sk.duration}</span> : null}
                         {(sk.destruction_percent ?? 0) > 0 && <span className="text-red-400">Tiêu diệt: {sk.destruction_percent}%</span>}
                       </div>
-                      {sk.mental_effect ? <p className="mt-0.5"><span className="text-gray-600">Tinh thần:</span> {sk.mental_effect} ({sk.mental_duration ?? 0}cmt)</p> : null}
-                      {sk.health_effect ? <p><span className="text-gray-600">Sức khỏe:</span> {sk.health_effect} ({sk.health_duration ?? 0}cmt)</p> : null}
-                      {sk.spiritual_effect ? <p><span className="text-gray-600">Tâm linh:</span> {sk.spiritual_effect} ({sk.spiritual_duration ?? 0}cmt)</p> : null}
+                      {(() => {
+                        const tags = parseMultiValue(sk.mental_effect || '');
+                        return tags.length > 0 ? (
+                          <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                            <span className="text-gray-600">Tinh thần:</span>
+                            {tags.map(t => <span key={t} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${STATUS_TAGS.find(s => s.value === t)?.badgeClass ?? 'bg-white/10 text-gray-300'}`}>{t}</span>)}
+                            <span className="text-[10px] text-gray-500">({sk.mental_duration ?? 0}cmt)</span>
+                          </div>
+                        ) : null;
+                      })()}
+                      {(() => {
+                        const tags = parseMultiValue(sk.health_effect || '');
+                        return tags.length > 0 ? (
+                          <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                            <span className="text-gray-600">Sức khỏe:</span>
+                            {tags.map(t => <span key={t} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${STATUS_TAGS.find(s => s.value === t)?.badgeClass ?? 'bg-white/10 text-gray-300'}`}>{t}</span>)}
+                            <span className="text-[10px] text-gray-500">({sk.health_duration ?? 0}cmt)</span>
+                          </div>
+                        ) : null;
+                      })()}
+                      {(() => {
+                        const tags = parseMultiValue(sk.spiritual_effect || '');
+                        return tags.length > 0 ? (
+                          <div className="mt-0.5 flex flex-wrap items-center gap-1">
+                            <span className="text-gray-600">Tâm linh:</span>
+                            {tags.map(t => <span key={t} className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${STATUS_TAGS.find(s => s.value === t)?.badgeClass ?? 'bg-white/10 text-gray-300'}`}>{t}</span>)}
+                            <span className="text-[10px] text-gray-500">({sk.spiritual_duration ?? 0}cmt)</span>
+                          </div>
+                        ) : null;
+                      })()}
                       {sk.ghost_level_effect ? <p><span className="text-gray-600">Cấp quỷ:</span> {sk.ghost_level_effect}</p> : null}
                     </div>
                   </div>

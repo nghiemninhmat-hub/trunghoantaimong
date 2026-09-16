@@ -65,7 +65,7 @@ export const HEALTH_SUB_TAGS: MentalSubTag[] = [
   // Xanh lá
   { value: 'Khỏe mạnh', parent: 'Bình Thường' },
   // Vàng
-  { value: 'Hoa mắt, choáng váng', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Hoa mắt choáng váng', parent: 'Ảnh hưởng nhẹ' },
   { value: 'Đau đầu', parent: 'Ảnh hưởng nhẹ' },
   { value: 'Buồn nôn', parent: 'Ảnh hưởng nhẹ' },
   { value: 'Ù tai', parent: 'Ảnh hưởng nhẹ' },
@@ -86,6 +86,9 @@ export const HEALTH_SUB_TAGS: MentalSubTag[] = [
   { value: 'Tê liệt', parent: 'Suy kiệt' },
   // Tím đậm
   { value: 'Mất thính giác', parent: 'Ngưỡng sinh tử' },
+  { value: 'Mất một phần thị lực', parent: 'Ngưỡng sinh tử' },
+  { value: 'Thị lực suy giảm mạnh', parent: 'Ngưỡng sinh tử' },
+  { value: 'Vết rách nhỏ trên da', parent: 'Ngưỡng sinh tử' },
 ];
 
 export const SPIRITUAL_SUB_TAGS: MentalSubTag[] = [
@@ -163,7 +166,7 @@ export const emptySkill: SkillFormData = {
   destruction_percent: 0,
 };
 
-export const SKILL_FIELDS: { key: keyof SkillFormData; label: string; type: 'text' | 'textarea' | 'number' | 'select' | 'mental'; placeholder?: string; max?: number }[] = [
+export const SKILL_FIELDS: { key: keyof SkillFormData; label: string; type: 'text' | 'textarea' | 'number' | 'select' | 'mental' | 'health' | 'spiritual'; placeholder?: string; max?: number }[] = [
   { key: 'name', label: 'Tên kỹ năng', type: 'text', placeholder: 'Tên kỹ năng...' },
   { key: 'usage_detail', label: 'Chi tiết cách sử dụng', type: 'textarea', placeholder: 'Mô tả cách sử dụng...' },
   { key: 'effect', label: 'Hiệu quả', type: 'textarea', placeholder: 'Mô tả hiệu quả...' },
@@ -173,9 +176,9 @@ export const SKILL_FIELDS: { key: keyof SkillFormData; label: string; type: 'tex
   { key: 'duration', label: 'Thời gian duy trì', type: 'text', placeholder: 'vd: 3 dị sự, 1 ngày...' },
   { key: 'mental_effect', label: 'Ảnh hưởng tinh thần', type: 'mental' },
   { key: 'mental_duration', label: 'Thời gian ảnh hưởng tinh thần (tối đa 50)', type: 'number', max: 50 },
-  { key: 'health_effect', label: 'Ảnh hưởng sức khỏe', type: 'select' },
+  { key: 'health_effect', label: 'Ảnh hưởng sức khỏe', type: 'health' },
   { key: 'health_duration', label: 'Thời gian ảnh hưởng sức khỏe (tối đa 50)', type: 'number', max: 50 },
-  { key: 'spiritual_effect', label: 'Ảnh hưởng tâm linh', type: 'select' },
+  { key: 'spiritual_effect', label: 'Ảnh hưởng tâm linh', type: 'spiritual' },
   { key: 'spiritual_duration', label: 'Thời gian ảnh hưởng tâm linh (tối đa 50)', type: 'number', max: 50 },
   { key: 'ghost_level_effect', label: 'Ảnh hưởng lên từng cấp quỷ', type: 'textarea', placeholder: 'vd: Quỷ cấp 1: 100%, cấp 2: 80%...' },
   { key: 'destruction_percent', label: 'Gây bao nhiêu % tiêu diệt', type: 'number', max: 100 },
