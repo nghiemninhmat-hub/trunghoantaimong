@@ -23,7 +23,7 @@ export type MentalSubTag = {
 
 export const MENTAL_SUB_TAGS: MentalSubTag[] = [
   // Xanh lá
-  { value: 'Tỉnh táo', parent: 'Bình Thường' },
+  { value: 'Khỏe mạnh', parent: 'Bình Thường' },
   // Vàng
   { value: 'Bất an', parent: 'Ảnh hưởng nhẹ' },
   { value: 'Nóng nảy', parent: 'Ảnh hưởng nhẹ' },
@@ -31,9 +31,9 @@ export const MENTAL_SUB_TAGS: MentalSubTag[] = [
   { value: 'Không thể tập trung', parent: 'Ảnh hưởng nhẹ' },
   { value: 'Căng thẳng', parent: 'Ảnh hưởng nhẹ' },
   { value: 'Thất thần', parent: 'Ảnh hưởng nhẹ' },
-  { value: 'Nhạy cảm giác quan', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Nhạy cảm với các giác quan', parent: 'Ảnh hưởng nhẹ' },
   { value: 'Rối trí', parent: 'Ảnh hưởng nhẹ' },
-  // Đỏ nhạt
+  // Đỏ nhạt (Hồng nhạt)
   { value: 'Lãnh cảm', parent: 'Nghiêm trọng' },
   { value: 'Quá tải giác quan', parent: 'Nghiêm trọng' },
   { value: 'Suy sụp', parent: 'Nghiêm trọng' },
@@ -41,14 +41,14 @@ export const MENTAL_SUB_TAGS: MentalSubTag[] = [
   { value: 'Ám ảnh', parent: 'Nghiêm trọng' },
   { value: 'Mê man', parent: 'Nghiêm trọng' },
   { value: 'Mộng du', parent: 'Nghiêm trọng' },
-  { value: 'Tâm trí hoen ố', parent: 'Nghiêm trọng' },
+  { value: 'Tâm trí có dấu hiệu hoen ố', parent: 'Nghiêm trọng' },
   // Đỏ đậm
   { value: 'Ảo giác', parent: 'Cực kỳ nghiêm trọng' },
   { value: 'Thần trí lúc tỉnh lúc mê', parent: 'Cực kỳ nghiêm trọng' },
   { value: 'Kinh hãi', parent: 'Cực kỳ nghiêm trọng' },
   { value: 'Ký ức hỗn loạn', parent: 'Cực kỳ nghiêm trọng' },
   { value: 'Tâm trí hoen ố nặng', parent: 'Cực kỳ nghiêm trọng' },
-  // Tím
+  // Tím nhạt
   { value: 'Mất lòng tin', parent: 'Suy kiệt' },
   { value: 'Kiệt quệ', parent: 'Suy kiệt' },
   { value: 'Mất phương hướng', parent: 'Suy kiệt' },
@@ -65,27 +65,40 @@ export const HEALTH_SUB_TAGS: MentalSubTag[] = [
   // Xanh lá
   { value: 'Khỏe mạnh', parent: 'Bình Thường' },
   // Vàng
+  { value: 'Vết rách nhỏ trên da', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Bỏng rát', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Mất một phần thị lực', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Khó thở', parent: 'Ảnh hưởng nhẹ' },
   { value: 'Hoa mắt, choáng váng', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Đau nhức', parent: 'Ảnh hưởng nhẹ' },
   { value: 'Đau đầu', parent: 'Ảnh hưởng nhẹ' },
-  { value: 'Buồn nôn', parent: 'Ảnh hưởng nhẹ' },
   { value: 'Ù tai', parent: 'Ảnh hưởng nhẹ' },
-  { value: 'Chóng mặt', parent: 'Ảnh hưởng nhẹ' },
-  { value: 'Mệt mỏi', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Buồn nôn', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Bong gân', parent: 'Ảnh hưởng nhẹ' },
+  { value: 'Tê buốt kinh mạch', parent: 'Ảnh hưởng nhẹ' },
   // Đỏ nhạt
-  { value: 'Đau nhức', parent: 'Nghiêm trọng' },
-  { value: 'Khó thở', parent: 'Nghiêm trọng' },
-  { value: 'Tê buốt kinh mạch', parent: 'Nghiêm trọng' },
-  { value: 'Bỏng rát', parent: 'Nghiêm trọng' },
+  { value: 'Gãy tay', parent: 'Nghiêm trọng' },
+  { value: 'Gãy chân', parent: 'Nghiêm trọng' },
   { value: 'Suy nhược', parent: 'Nghiêm trọng' },
+  { value: 'Mất máu', parent: 'Nghiêm trọng' },
+  { value: 'Trật khớp', parent: 'Nghiêm trọng' },
+  { value: 'Suy giảm nặng các giác quan', parent: 'Nghiêm trọng' },
+  { value: 'Thị lực suy giảm mạnh', parent: 'Nghiêm trọng' },
   // Đỏ đậm
-  { value: 'Mất máu', parent: 'Cực kỳ nghiêm trọng' },
   { value: 'Xuất huyết nặng', parent: 'Cực kỳ nghiêm trọng' },
-  { value: 'Kiệt sức', parent: 'Cực kỳ nghiêm trọng' },
-  // Tím
-  { value: 'Suy giảm nặng các giác quan', parent: 'Suy kiệt' },
-  { value: 'Tê liệt', parent: 'Suy kiệt' },
+  { value: 'Bỏng nặng', parent: 'Cực kỳ nghiêm trọng' },
+  { value: 'Suy hô hấp', parent: 'Cực kỳ nghiêm trọng' },
+  // Tím nhạt
+  { value: 'Ngất', parent: 'Suy kiệt' },
+  { value: 'Nhiễm độc', parent: 'Suy kiệt' },
+  { value: 'Kiệt sức', parent: 'Suy kiệt' },
   // Tím đậm
   { value: 'Mất thính giác', parent: 'Ngưỡng sinh tử' },
+  { value: 'Mù lòa', parent: 'Ngưỡng sinh tử' },
+  { value: 'Liệt chi', parent: 'Ngưỡng sinh tử' },
+  { value: 'Tê liệt', parent: 'Ngưỡng sinh tử' },
+  { value: 'Các giác quan suy kiệt', parent: 'Ngưỡng sinh tử' },
+  { value: 'Hấp hối', parent: 'Ngưỡng sinh tử' },
 ];
 
 export const SPIRITUAL_SUB_TAGS: MentalSubTag[] = [
@@ -93,14 +106,18 @@ export const SPIRITUAL_SUB_TAGS: MentalSubTag[] = [
   { value: 'Thanh khiết', parent: 'Bình Thường' },
   // Vàng
   { value: 'Bất tịnh', parent: 'Ảnh hưởng nhẹ' },
-  { value: 'Âm khí xâm nhập', parent: 'Ảnh hưởng nhẹ' },
-  // Đỏ nhạt
+  // Hồng nhạt (mapped to Nghiêm trọng severity)
+  { value: 'Âm khí xâm nhập', parent: 'Nghiêm trọng' },
   { value: 'Tà khí nhập thể', parent: 'Nghiêm trọng' },
-  { value: 'Oán khí quấn thân', parent: 'Nghiêm trọng' },
+  { value: 'Suy giảm khả năng phân biệt âm dương', parent: 'Nghiêm trọng' },
   // Đỏ đậm
-  { value: 'Linh hồn chịu áp lực lớn', parent: 'Cực kỳ nghiêm trọng' },
-  // Tím
-  { value: 'Suy giảm khả năng phân biệt âm dương', parent: 'Suy kiệt' },
+  { value: 'Oán khí quấn thân', parent: 'Cực kỳ nghiêm trọng' },
+  { value: 'Chấp niệm ăn mòn', parent: 'Cực kỳ nghiêm trọng' },
+  { value: 'Mất phách', parent: 'Cực kỳ nghiêm trọng' },
+  // Tím đậm
+  { value: 'Quỷ khí bám thân', parent: 'Ngưỡng sinh tử' },
+  { value: 'Dính lời nguyền', parent: 'Ngưỡng sinh tử' },
+  { value: 'Quỷ ám', parent: 'Ngưỡng sinh tử' },
 ];
 
 export const MENTAL_TAG_DESCRIPTIONS: Record<string, string> = {
