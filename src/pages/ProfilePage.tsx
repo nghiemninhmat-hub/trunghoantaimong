@@ -79,7 +79,7 @@ export default function ProfilePage() {
   const [mySkills, setMySkills] = useState<CharacterSkill[]>([]);
 
   // Collapsible sections
-  const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [inventoryOpen, setInventoryOpen] = useState(true);
   const [transactionsOpen, setTransactionsOpen] = useState(false);
 
   // Org treasury contribution
@@ -1286,8 +1286,8 @@ export default function ProfilePage() {
                   <Package className="w-4 h-4 text-amber-300/70" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-amber-100/90 truncate">{item.shop_items?.name}</p>
-                  <p className="text-xs text-gray-500">{item.shop_items?.category}</p>
+                  <p className="text-sm font-semibold text-amber-100/90 truncate">{item.shop_items?.name || 'Vật phẩm không xác định'}</p>
+                  <p className="text-xs text-gray-500">{item.shop_items?.category || '—'}</p>
                 </div>
                 {item.quantity > 1 && (
                   <span className="flex items-center justify-center min-w-[28px] h-7 px-1.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-xs font-bold text-amber-200">
