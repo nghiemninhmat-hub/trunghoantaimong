@@ -131,11 +131,11 @@ export const MENTAL_TAG_DESCRIPTIONS: Record<string, string> = {
 
 export function parseMultiValue(raw: string): string[] {
   if (!raw || !raw.trim()) return [];
-  return raw.split(/[,;]+/).map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+  return raw.split(/;+/).map(s => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
 }
 
 export function joinMultiValue(tags: string[]): string {
-  return tags.join(', ');
+  return tags.join('; ');
 }
 
 export function toggleTag(currentTags: string[], tag: string): string[] {
