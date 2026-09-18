@@ -5,6 +5,7 @@ import { LotusIcon } from '@/components/LotusIcon';
 import { Heart, Quote, Crown, Loader2, Lock, Coins } from 'lucide-react';
 
 const VOTE_COST = 10;
+const VOTE_DEADLINE = new Date('2026-09-18T19:59:00+07:00');
 
 const RANK_STYLES = [
   { ring: 'ring-amber-300/60', badge: 'bg-gradient-to-r from-amber-300 to-amber-500 text-[#1a0a05]', glow: 'shadow-amber-400/30', label: 'Hoa Quán' },
@@ -19,6 +20,18 @@ export default function BachHoaTrieuPhungPage() {
   const [voting, setVoting] = useState<string | null>(null);
   const [voteMsg, setVoteMsg] = useState('');
   const [balance, setBalance] = useState<number | null>(null);
+  const [votingClosed, setVotingClosed] = useState(() => new Date() >= VOTE_DEADLINE);
+
+  useEffect(() => {
+    if (votingClosed) return;
+    const interval = setInterval(() => {
+      if (new Date() >= VOTE_DEADLINE) {
+        setVotingClosed(true);
+        clearInterval(interval);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [votingClosed]);
 
   const fetchEntries = useCallback(async () => {
     const { data, error } = await supabase
@@ -73,6 +86,11 @@ export default function BachHoaTrieuPhungPage() {
   }, [profile]);
 
   const handleVote = async (entryId: string) => {
+    if (votingClosed) {
+      setVoteMsg('Cổng bình chọn đã đóng. Không thể bình chọn nữa.');
+      setTimeout(() => setVoteMsg(''), 3000);
+      return;
+    }
     if (!profile) {
       setVoteMsg('Vui lòng đăng nhập để bình chọn.');
       setTimeout(() => setVoteMsg(''), 3000);
@@ -147,6 +165,17 @@ export default function BachHoaTrieuPhungPage() {
         </div>
         <div className="absolute left-1/2 -translate-x-1/2 bottom-0 w-40 h-px bg-gradient-to-r from-transparent via-[#670201]/40 to-transparent" />
       </div>
+
+      {/* Voting closed banner */}
+      {votingClosed && (
+        <div className="flex items-center justify-center gap-2 p-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300">
+          <Lock className="w-5 h-5" />
+          <div>
+            <p className="text-sm font-bold">Cổng bình chọn đã đóng</p>
+            <p className="text-xs text-red-300/70 mt-0.5">Hạn chót: 19:59 ngày 18/09/2026 (giờ Việt Nam). Kết quả cuối cùng đã được ghi nhận.</p>
+          </div>
+        </div>
+      )}
 
       {/* Vote message */}
       {voteMsg && (
@@ -248,9 +277,11 @@ export default function BachHoaTrieuPhungPage() {
                 {/* Vote button */}
                 <button
                   onClick={() => handleVote(entry.id)}
-                  disabled={!profile || !canAfford || voting === entry.id}
+                  disabled={!profile || !canAfford || voting === entry.id || votingClosed}
                   className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                    !profile
+                    votingClosed
+                      ? 'bg-gray-600/20 text-gray-500 border border-gray-600/30 cursor-not-allowed'
+                      : !profile
                       ? 'bg-white/5 text-gray-500 border border-white/10 cursor-not-allowed'
                       : !canAfford
                         ? 'bg-red-500/5 text-red-400/60 border border-red-500/15 cursor-not-allowed'
@@ -259,7 +290,9 @@ export default function BachHoaTrieuPhungPage() {
                           : 'bg-[#670201] hover:bg-[#a00404] text-amber-100 border border-[#670201]/30 hover:shadow-md hover:shadow-[#670201]/20'
                   }`}
                 >
-                  {!profile ? (
+                  {votingClosed ? (
+                    <><Lock className="w-4 h-4" /> Đã đóng cổng</>
+                  ) : !profile ? (
                     <><Lock className="w-4 h-4" /> Cần đăng nhập</>
                   ) : !canAfford ? (
                     <><Coins className="w-4 h-4" /> Không đủ hoa tiền</>
