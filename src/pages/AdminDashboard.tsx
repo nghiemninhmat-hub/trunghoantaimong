@@ -3789,6 +3789,10 @@ export default function AdminDashboard() {
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-400/50 flex-shrink-0" />
                             <span className="text-xs text-amber-100/80 font-medium truncate flex-1">{r.name}</span>
                             <span className="text-xs text-amber-300 font-bold flex-shrink-0 whitespace-nowrap">bình chọn {r.count}</span>
+                            <span className="flex items-center gap-1 text-[10px] text-gray-600 flex-shrink-0">
+                              <Clock className="w-2.5 h-2.5" />
+                              {new Date(r.latest).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                            </span>
                           </div>
                         ));
                       })()
