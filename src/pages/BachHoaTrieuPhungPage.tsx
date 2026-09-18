@@ -5,7 +5,7 @@ import { LotusIcon } from '@/components/LotusIcon';
 import { Heart, Quote, Crown, Loader2, Lock, Coins } from 'lucide-react';
 
 const VOTE_COST = 10;
-const VOTE_DEADLINE = new Date('2026-09-18T19:59:00+07:00');
+const VOTE_DEADLINE = new Date('2026-09-18T20:30:00+07:00');
 
 const RANK_STYLES = [
   { ring: 'ring-amber-300/60', badge: 'bg-gradient-to-r from-amber-300 to-amber-500 text-[#1a0a05]', glow: 'shadow-amber-400/30', label: 'Hoa Quán' },
@@ -172,7 +172,7 @@ export default function BachHoaTrieuPhungPage() {
           <Lock className="w-5 h-5" />
           <div>
             <p className="text-sm font-bold">Cổng bình chọn đã đóng</p>
-            <p className="text-xs text-red-300/70 mt-0.5">Hạn chót: 19:59 ngày 18/09/2026 (giờ Việt Nam). Kết quả cuối cùng đã được ghi nhận.</p>
+            <p className="text-xs text-red-300/70 mt-0.5">Hạn chót: 20:30 ngày 18/09/2026 (giờ Việt Nam). Kết quả cuối cùng đã được ghi nhận.</p>
           </div>
         </div>
       )}
