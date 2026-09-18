@@ -1260,16 +1260,28 @@ export default function AdminDashboard() {
   const fetchBachHoaVotes = useCallback(async () => {
     setBachHoaVoterLoading(true);
     setBachHoaVoterError('');
-    const { data, error } = await supabase
-      .from('bach_hoa_votes')
-      .select('id, entry_id, user_id, created_at, profiles!bach_hoa_votes_user_id_fkey(oc_name, anonymous_name)')
-      .order('created_at', { ascending: false });
-    if (error) {
-      console.error('Lỗi tải lượt bình chọn Bách Hoa:', error.message);
-      setBachHoaVoterError(error.message);
-    } else if (data) {
+    const PAGE_SIZE = 1000;
+    const allVotes: BachHoaVote[] = [];
+    let offset = 0;
+    for (;;) {
+      const { data, error } = await supabase
+        .from('bach_hoa_votes')
+        .select('id, entry_id, user_id, created_at, profiles!bach_hoa_votes_user_id_fkey(oc_name, anonymous_name)')
+        .order('created_at', { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1);
+      if (error) {
+        console.error('Lỗi tải lượt bình chọn Bách Hoa:', error.message);
+        setBachHoaVoterError(error.message);
+        break;
+      }
+      if (!data || data.length === 0) break;
+      allVotes.push(...(data as BachHoaVote[]));
+      if (data.length < PAGE_SIZE) break;
+      offset += PAGE_SIZE;
+    }
+    if (allVotes.length > 0 || !bachHoaVoterError) {
       const grouped: Record<string, BachHoaVote[]> = {};
-      for (const v of data as BachHoaVote[]) {
+      for (const v of allVotes) {
         if (!grouped[v.entry_id]) grouped[v.entry_id] = [];
         grouped[v.entry_id].push(v);
       }
