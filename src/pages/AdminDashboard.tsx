@@ -3788,13 +3788,7 @@ export default function AdminDashboard() {
                           <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/20 border border-white/5">
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-400/50 flex-shrink-0" />
                             <span className="text-xs text-amber-100/80 font-medium truncate flex-1">{r.name}</span>
-                            {r.count > 1 && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold flex-shrink-0">x{r.count}</span>
-                            )}
-                            <span className="flex items-center gap-1 text-[10px] text-gray-600 flex-shrink-0">
-                              <Clock className="w-2.5 h-2.5" />
-                              {new Date(r.latest).toLocaleString('vi-VN', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                            </span>
+                            <span className="text-xs text-amber-300 font-bold flex-shrink-0 whitespace-nowrap">bình chọn {r.count}</span>
                           </div>
                         ));
                       })()
