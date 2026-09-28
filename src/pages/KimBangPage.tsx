@@ -30,9 +30,9 @@ function Avatar({ entry, large = false }: { entry: KimBangEntry; large?: boolean
   const [failed, setFailed] = useState(false);
   const avatar = getAvatar(entry);
   return avatar && !failed ? (
-    <img src={avatar} alt={entry.identity_name || `Vị trí ${entry.rank}`} onError={() => setFailed(true)} className="h-full w-full object-cover" />
+    <img src={avatar} alt={entry.identity_name || `Vị trí ${entry.rank}`} onError={() => setFailed(true)} className="h-auto max-h-[400px] w-full object-contain" />
   ) : (
-    <div className="flex h-full w-full items-center justify-center bg-[#1d0c0a]">
+    <div className="flex min-h-[200px] w-full items-center justify-center bg-[#1d0c0a]">
       <Ghost className={large ? 'h-16 w-16 text-[#6b4934]' : 'h-10 w-10 text-[#6b4934]'} />
     </div>
   );
@@ -44,7 +44,7 @@ function DetailPanel({ entry, onClose }: { entry: KimBangEntry; onClose: () => v
       <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[#eeb337]/10 blur-3xl" />
       <div className="absolute bottom-0 left-0 h-40 w-72 bg-[#b73720]/10 blur-3xl" />
       <div className="relative grid gap-6 p-5 sm:grid-cols-[180px_1fr] sm:p-7 lg:grid-cols-[220px_1fr_auto] lg:items-center">
-        <div className="relative mx-auto h-52 w-40 overflow-hidden rounded-2xl border border-[#eeb337]/40 bg-[#160806] shadow-[0_14px_32px_rgba(0,0,0,.35)] sm:mx-0 sm:h-60 sm:w-44">
+        <div className="relative mx-auto w-full max-w-[200px] overflow-hidden rounded-2xl border border-[#eeb337]/40 bg-[#160806] shadow-[0_14px_32px_rgba(0,0,0,.35)] sm:mx-0">
           <Avatar entry={entry} large />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-4 pb-3 pt-10">
             <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#f6ca62]">{rankLabels[entry.rank]}</p>
@@ -100,8 +100,8 @@ export default function KimBangPage() {
 
       {loading ? <div className="flex justify-center py-24"><div className="h-10 w-10 animate-spin rounded-full border-2 border-[#eeb337]/25 border-t-[#eeb337]" /></div> : <>
         {selected && <DetailPanel entry={selected} onClose={() => setSelectedId(null)} />}
-        <section aria-label="Sáu vị trí Kim Bảng" className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
-          {slots.map((entry, index) => entry ? <button key={entry.id} type="button" onClick={() => setSelectedId(entry.id)} aria-pressed={selectedId === entry.id} className={`group relative overflow-hidden rounded-[22px] border bg-[#130807] text-left transition duration-300 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[#eeb337]/70 ${selectedId === entry.id ? 'border-[#f6ca62] shadow-[0_0_0_2px_rgba(238,179,55,.18),0_18px_45px_rgba(0,0,0,.35)]' : 'border-[#eeb337]/20 hover:border-[#eeb337]/55'}`}><div className="aspect-[3/4] overflow-hidden"><Avatar entry={entry} /></div><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0d0504] via-[#0d0504]/90 to-transparent px-3 pb-3 pt-16"><p className="text-[10px] font-semibold uppercase tracking-[.18em] text-[#eeb337]">{rankLabels[entry.rank]}</p><h3 className="mt-1 truncate font-serif text-lg font-bold text-[#fff1cf]">{entry.identity_name}</h3>{entry.honor_title ? <div className="mt-1.5 inline-flex items-center gap-1 rounded-md border border-[#eeb337]/35 bg-[#eeb337]/8 px-1.5 py-0.5"><span className="truncate text-[11px] font-semibold text-[#f6ca62]">{entry.honor_title}</span></div> : <p className="mt-1 truncate text-xs text-[#d7a96d]/60">Người lưu danh</p>}</div><span className={`absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${rankColors[entry.rank]} text-xs font-bold text-[#1a0a05] shadow-lg`}>{String(entry.rank).padStart(2, '0')}</span></button> : <EmptyCard key={`empty-${index}`} rank={index + 1} onSelect={() => setSelectedId(null)} />)}
+        <section aria-label="Sáu vị trí Kim Bảng" className="grid grid-cols-2 items-start gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
+          {slots.map((entry, index) => entry ? <button key={entry.id} type="button" onClick={() => setSelectedId(entry.id)} aria-pressed={selectedId === entry.id} className={`group relative overflow-hidden rounded-[22px] border bg-[#130807] text-left transition duration-300 hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[#eeb337]/70 ${selectedId === entry.id ? 'border-[#f6ca62] shadow-[0_0_0_2px_rgba(238,179,55,.18),0_18px_45px_rgba(0,0,0,.35)]' : 'border-[#eeb337]/20 hover:border-[#eeb337]/55'}`}><div className="w-full overflow-hidden"><Avatar entry={entry} /></div><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0d0504] via-[#0d0504]/90 to-transparent px-3 pb-3 pt-16"><p className="text-[10px] font-semibold uppercase tracking-[.18em] text-[#eeb337]">{rankLabels[entry.rank]}</p><h3 className="mt-1 truncate font-serif text-lg font-bold text-[#fff1cf]">{entry.identity_name}</h3>{entry.honor_title ? <div className="mt-1.5 inline-flex items-center gap-1 rounded-md border border-[#eeb337]/35 bg-[#eeb337]/8 px-1.5 py-0.5"><span className="truncate text-[11px] font-semibold text-[#f6ca62]">{entry.honor_title}</span></div> : <p className="mt-1 truncate text-xs text-[#d7a96d]/60">Người lưu danh</p>}</div><span className={`absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br ${rankColors[entry.rank]} text-xs font-bold text-[#1a0a05] shadow-lg`}>{String(entry.rank).padStart(2, '0')}</span></button> : <EmptyCard key={`empty-${index}`} rank={index + 1} onSelect={() => setSelectedId(null)} />)}
         </section>
 
         {!selected && <div className="rounded-2xl border border-dashed border-[#eeb337]/20 bg-[#130807]/50 px-5 py-5 text-center"><Sparkles className="mx-auto h-5 w-5 text-[#eeb337]/70" /><p className="mt-2 text-sm text-[#c9b493]">Hải bắc nam sơn — vì ngươi vinh danh</p></div>}
